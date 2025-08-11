@@ -1,6 +1,7 @@
-# Farming Simulation Game
+# py-agrifun
+## A Comprehensive 2D Farming Simulation Game
 
-A 2D top-down grid-based farming simulation built in Python with Pygame, focused on educational agricultural management.
+A sophisticated top-down grid-based farming simulation built in Python with Pygame, featuring multi-employee management, economic simulation, and educational agricultural mechanics.
 
 ## Quick Start
 
@@ -14,74 +15,70 @@ A 2D top-down grid-based farming simulation built in Python with Pygame, focused
    python main.py
    ```
 
-## Current Features (MVP Phase 1)
+## Current Features (Phase 2 - Advanced Implementation)
 
-### Core Systems Implemented:
-- **16x16 Grid System**: Interactive tile-based farming grid
-- **Employee AI**: Single employee "Sam" with needs system (hunger, thirst, rest)
-- **Time Management**: 20-minute real-time workday with pause/speed controls (1x, 2x, 4x)
-- **Economy System**: Starting loan of $10,000, daily expenses, government subsidy
-- **Task Assignment**: Drag-and-drop or keyboard shortcuts for assigning work
+### ✅ **Fully Completed Systems:**
+- **Multi-Employee System**: Full hiring system with interview process (not limited to Sam)
+- **Advanced AI**: A* pathfinding with visual debugging and employee needs management  
+- **Economic Simulation**: Loans, subsidies, dynamic market pricing with transaction history
+- **Building System**: Storage silos with capacity upgrades and strategic placement
+- **Professional UI**: pygame-gui interface with real-time displays and comprehensive feedback
 
 ### Controls:
-- **Mouse**: Click and drag to select tiles
+- **Mouse**: Click and drag to select tiles, interact with UI elements
 - **Keyboard Shortcuts**:
   - `T` - Assign Till task to selected tiles
   - `P` - Assign Plant task to selected tiles  
   - `H` - Assign Harvest task to selected tiles
   - `C` - Clear tile selection
-  - `F1` - Toggle debug information
-- **UI Buttons**: Speed controls (Pause, 1x, 2x, 4x)
+  - `F1` - Toggle debug information (pathfinding visualization)
+- **UI Elements**: Speed controls (Pause, 1x, 2x, 4x), hiring button, building purchases
 
 ### Game Flow:
 1. Start with $0 cash and a mandatory $10,000 farmer loan
 2. Receive $100/day government subsidy for first 30 days
-3. Assign your employee Sam to till soil, plant corn, and harvest crops
-4. Sell corn at fluctuating market prices ($2-$8 per unit)
-5. Manage daily expenses (utilities, loan payments, employee wages)
-6. Monitor employee needs and work efficiency
+3. **Hire employees** through the interview system - each with unique traits
+4. Assign tasks and watch employees pathfind autonomously to work sites
+5. **Build storage silos** to increase crop capacity strategically  
+6. Sell corn at market timing of your choice with FIFO inventory management
+7. Monitor real-time employee needs, financial status, and market trends
 
-## Game Systems
+## Advanced Game Systems
 
-### Employee AI:
-- **Sam** starts at grid center with "Hard Worker" trait (+10% efficiency, -5% stamina drain)
-- Automatically pathfinds to assigned tiles and performs work
-- Needs system: Hunger/Thirst/Rest bars decrease over time
-- State indicators: Gray (idle), Blue (moving), Green (working), Yellow (resting)
+### Multi-Employee Management:
+- **Hiring System**: Interview candidates with different traits and stats
+- **Employee Needs**: Visual hunger/thirst/rest bars above each worker
+- **Trait System**: "Hard Worker" trait affects efficiency and stamina drain
+- **AI States**: Idle → Moving → Working → Resting with smooth visual transitions
 
-### Economy:
-- **Starting Loan**: $10,000 at 5% annual interest, 1-year term (~$27.40/day payment)
-- **Daily Expenses**: $20 utilities + loan payments + employee wages ($100/day)
-- **Revenue**: Corn sales at market price
-- **Subsidies**: $100/day for first 30 days
+### Economic Complexity:
+- **Strategic Storage**: Base 100-unit capacity + silos (+50 each, max 5, progressive pricing)  
+- **Market Timing**: 30-day price history tracking for strategic selling decisions
+- **Financial Categories**: Detailed transaction logging with expense categorization
+- **Dynamic Pricing**: Market fluctuations affecting daily crop values
 
-### Crop System (Corn Only):
-- **Growth Stages**: Seed → Sprout → Young → Mature → Harvestable
-- **Growth Time**: 3 game days (accelerated for testing)
-- **Yield**: Based on soil quality and care (5-15 units per tile)
-
-## Technical Architecture
-
-Built with modular, event-driven architecture:
-
-- **Core Systems**: Game manager, event system, time manager, grid manager
-- **Employee System**: AI with pathfinding, needs, and task execution
-- **Economy System**: Financial tracking, loans, market dynamics
-- **UI System**: pygame-gui based interface with tooltips and panels
+### Technical Excellence:
+- **A* Pathfinding**: Optimized pathfinding with visual green path lines
+- **Event-Driven Architecture**: Pub/sub system for modular communication
+- **Real-Time Performance**: Maintains 60 FPS with multiple employees and systems
+- **Professional UI**: Comprehensive status panels and real-time feedback
 
 ## Development Status
 
-✅ **Completed**: Core foundation with all MVP systems functional
-🚧 **In Progress**: Balance testing and bug fixes
-📋 **Next Phase**: Interview system, workstations, multiple crops
+✅ **Phase 1 Complete**: Core foundation  
+✅ **Phase 2 Complete**: Advanced multi-employee systems, buildings, economic depth  
+🚧 **Current Focus**: Balance testing, additional crop types, UI polish  
+📋 **Phase 3 Planned**: Save/load system, tutorial, extended content
 
-## Known Issues
+## Technical Architecture
 
-- Employee pathfinding uses simple direct movement (A* pathfinding planned)
-- No save/load system yet (planned for Phase 3)
-- Limited to corn crop only (multiple crops in Phase 4)
-- UI could use more polish and better tooltips
+Sophisticated modular design:
+- **Core Systems**: Game manager, event system, time/grid managers, inventory system
+- **Employee Systems**: Multi-employee manager, interview system, A* pathfinding  
+- **Economic Systems**: Transaction tracking, market dynamics, loan management
+- **Building Systems**: Strategic placement and capacity management
+- **UI Systems**: Professional pygame-gui implementation with real-time updates
 
 ## Development
 
-See `CLAUDE.md` for detailed development guidance and `DOCUMENTATION.md` for comprehensive game design specifications.
+See `CLAUDE.md` for detailed development guidance, `DEVELOPMENT_STATE.md` for current status, and `DOCUMENTATION.md` for comprehensive design specifications.
