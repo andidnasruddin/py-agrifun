@@ -1,0 +1,26 @@
+pygame-ce 2.5.5 (SDL 2.32.6, Python 3.12.0)
+Grid Manager initialized with 16x16 tiles
+Time Manager initialized - Day 1, 05:00
+Real time per game day: 1200 seconds
+Inventory Manager initialized - Storage capacity: 100 units
+Created starting loan: $10000 at 5.0% annual interest
+Daily payment: $28.77
+Economy Manager initialized - Starting cash: $10000
+First-time farmer loan: $10000
+Daily subsidy: $100 for 30 days
+Building Manager initialized - Storage Silo available for $500
+Interview System initialized - Ready to generate job applicants
+Employee Sam (emp_001) created at (8.0, 8.0)
+Created starting employee: Sam (emp_001) with pathfinding enabled
+Employee Manager initialized with starting employee Sam
+Employee Manager: Direct movement system active
+Employee Manager: Inventory manager connected for synchronous harvests
+DEBUG: Forced applicant panel to hidden state
+DEBUG: Forced interview dialog to hidden state
+DEBUG: All UI dialogs forcefully hidden on startup
+UI Manager initialized with pygame-gui
+Game initialized successfully!
+Starting game loop...
+DEBUG: Startup protection period ended - UI panels can now be shown normally
+Quit event received.
+Game loop ended.

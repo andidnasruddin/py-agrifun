@@ -1,0 +1,72 @@
+pygame-ce 2.5.5 (SDL 2.32.6, Python 3.12.0)
+Grid Manager initialized with 16x16 tiles
+Time Manager initialized - Day 1, 05:00
+Real time per game day: 1200 seconds
+Inventory Manager initialized - Storage capacity: 100 units
+Created starting loan: $10000 at 5.0% annual interest
+Daily payment: $28.77
+Economy Manager initialized - Starting cash: $10000
+First-time farmer loan: $10000
+Daily subsidy: $100 for 30 days
+Building Manager initialized - Storage Silo available for $500
+Interview System initialized - Ready to generate job applicants
+Employee Sam (emp_001) created at (8.0, 8.0)
+Created starting employee: Sam (emp_001) with pathfinding enabled
+Employee Manager initialized with starting employee Sam
+Employee Manager: Direct movement system active
+Employee Manager: Inventory manager connected for synchronous harvests
+DEBUG: Forced applicant panel to hidden state
+DEBUG: Forced interview dialog to hidden state
+DEBUG: All UI dialogs forcefully hidden on startup
+UI Manager initialized with pygame-gui
+Game initialized successfully!
+Starting game loop...
+Generated 3 job applicants for interview
+DEBUG: _handle_applicants_generated called with 3 applicants
+
+=== JOB APPLICANTS (3) ===
+1. Fiona (Age 22) - $390 hiring, $156/day
+   Traits: Hard Worker, Experienced, Type: Efficient
+2. Tara (Age 34) - $184 hiring, $101/day
+   Traits: Runner, Young Energy, Cheap Labor, Type: Fast
+3. Nina (Age 41) - $140 hiring, $80/day
+   Traits: Cheap Labor, Steady Worker, Type: Cheap
+Use 'View Applicants' button to hire via in-game UI!
+
+DEBUG: _show_applicant_panel called - checking applicants
+DEBUG: Showing applicant panel with 3 applicants
+Interview scheduled with Nina for $100 - results tomorrow at 6 AM
+DEBUG: Applicant panel hidden successfully
+Employee Tara (emp_002) created at (8.0, 8.0)
+Hired employee: Tara (emp_002)
+Successfully hired Tara for $184
+Successfully processed hiring for applicant applicant_002
+Assigned till task to 2 tiles for employee Sam
+Assigned till task to 2 tiles for employee Tara
+Assigned till task to 2 tiles
+Employee Sam: Moving to (5, 10)
+Assigned till task to 2 tiles
+Employee Tara: Moving to (5, 11)
+Employee Sam: Reached destination (5, 10)
+Employee Tara: Reached destination (5, 11)
+Time speed changed to 4x
+Employee Sam: Moving to (6, 10)
+Employee Tara: Moving to (6, 11)
+Employee Sam: Reached destination (6, 10)
+Employee Sam: Cleaned up 1 completed tasks (0 remaining)
+Employee Tara: Cleaned up 1 completed tasks (0 remaining)
+DEBUG: Close interview dialog button clicked
+DEBUG: Interview dialog hidden successfully
+DEBUG: Close interview dialog button clicked
+DEBUG: Interview dialog hidden successfully
+DEBUG: Close interview dialog button clicked
+DEBUG: Interview dialog hidden successfully
+DEBUG: Close interview dialog button clicked
+DEBUG: Interview dialog hidden successfully
+DEBUG: Close interview dialog button clicked
+DEBUG: Interview dialog hidden successfully
+DEBUG: Close applicant panel button clicked
+DEBUG: Applicant panel hidden successfully
+DEBUG: Interview dialog hidden successfully
+Quit event received.
+Game loop ended.

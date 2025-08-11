@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(timeout:*)",
+      "Bash(python:*)",
+      "Bash(del:*)",
+      "Bash(rm:*)",
+      "mcp__claude-context__search_code",
+      "Bash(git init:*)",
+      "Bash(git remote add:*)",
+      "Bash(git add:*)"
+    ],
+    "deny": []
+  }
+}

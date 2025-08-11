@@ -1,0 +1,222 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Project Overview
+
+This is a 2D top-down grid-based farming simulation game built in **Python with Pygame**. The game is a solo development project focused on educational agricultural management with the theme "how fun and crazy agriculture really is." The player inherits farmland with $0 and must build an agricultural business from scratch.
+
+## Development Status
+
+**Current Phase:** Phase 2 Nearly Complete - Advanced Features Implemented
+**Target Platform:** Python with Pygame library
+**Architecture:** Event-driven modular system with manager pattern
+**Grid Size:** 16x16 tiles (fully optimized)
+
+**Last Updated:** 2025-08-11
+**Next Priority:** Balance testing, UI polish, and additional crop types
+
+### ✅ **MAJOR SYSTEMS COMPLETED:**
+
+**Core Foundation (100% Complete):**
+- Event-driven architecture with comprehensive pub/sub communication
+- Complete 16x16 grid system with tile management and drag selection
+- Professional pygame-gui UI with resource panels and real-time displays
+- Time management with 20-minute days, speed controls, and work hours
+- Economy system with loans, subsidies, dynamic market pricing
+
+**Advanced Employee System (100% Complete):**
+- **Multi-employee support** (not limited to Sam - full hiring system implemented)
+- A* pathfinding algorithm with visual debugging and path caching
+- Complete needs system (hunger/thirst/rest) with visual status bars
+- Trait system with stat modifications ("hard_worker" trait implemented)
+- State machine AI (Idle→Moving→Working→Resting) with smooth transitions
+
+**Inventory & Buildings (100% Complete):**
+- Strategic crop storage system (100-unit capacity with quality tracking)
+- Manual selling with FIFO inventory management
+- Storage silo buildings (+50 capacity each, max 5 silos, progressive pricing)
+- Complete building purchase system integrated with economy
+
+**Advanced Features (95% Complete):**
+- Real-time pathfinding visualization with green path lines
+- Employee status displays with needs bars above workers
+- Transaction history logging with financial categorization
+- Market price history (30-day tracking) for strategic decisions
+- 5-stage crop growth visualization (seed→sprout→young→mature→harvestable)
+
+### 🎮 **CURRENT GAME STATE - HIGHLY SOPHISTICATED:**
+- **Fully playable multi-employee farming simulation**
+- Complete economic simulation with realistic loan/subsidy mechanics  
+- Strategic building system with meaningful cost/benefit decisions
+- Professional-grade UI with comprehensive feedback systems
+- Real-time gameplay with pause, 1x, 2x, 4x speed controls
+- End-to-end workflows: Till→Plant→Harvest→Store→Sell with market timing
+
+## Planned Code Architecture
+
+Based on the design documentation, the codebase will follow this structure:
+
+```
+/scripts/
+  /core/
+    - main.py (main game loop)
+    - grid_manager.py (tile management)
+    - time_manager.py (day/night cycle)
+  /employee/
+    - employee.py (Employee class and AI)
+    - employee_manager.py (hiring/management)
+  /economy/
+    - economy_manager.py (transactions/loans)
+    - market_system.py (pricing/contracts)
+  /crops/
+    - crop_manager.py (growth/harvesting)
+    - crop_data.py (crop definitions)
+  /ui/
+    - ui_manager.py (primary interface)
+    - task_assignment.py (drag-drop system)
+```
+
+## Key Game Systems
+
+### Grid System
+- Each tile implemented as Python class or dictionary with terrain quality (1-10), crop data, growth stage, water level, and task assignments
+- 16x16 tile MVP expanding to larger grids in future phases
+- Rendered using Pygame's 2D drawing capabilities
+
+### Employee AI
+- Pathfinding-based movement (A* algorithm planned)
+- State machine: Idle → Move → Work → Rest
+- Needs system: Hunger, Thirst, Rest (0-100 scales)
+- Procedural traits affecting efficiency and behavior
+
+### Time Management
+- Real-time with pause/speed controls (1x, 2x, 4x)
+- 20-minute workday simulation
+- Dynamic market price calculation at end of each day
+
+### Economy
+- Starting conditions: $0 cash, $10,000 mandatory loan, $100/day subsidy (30 days)
+- Daily expenses: Employee wages, loan payments, utilities
+- Dynamic crop pricing ($2-$8 per corn unit)
+
+## Development Guidelines
+
+### Core Design Principles
+- **Modularity:** Each system independent and testable
+- **Scalability:** Support future multi-employee/multi-farm expansion  
+- **Realism Balance:** Educational value while maintaining fun gameplay
+- **Player Agency:** All major decisions controlled by player
+
+### Code Comment Requirements
+**IMPORTANT: Line-by-Line Code Explanations Required**
+
+When writing or modifying code, Claude MUST add detailed explanations for every line to help the developer understand what each line does. This is specifically requested by the developer for learning purposes.
+
+**Example Format:**
+```python
+# Initialize the employee position to center of grid
+self.x = 8.0  # Set X coordinate to grid center (8 out of 16)
+self.y = 8.0  # Set Y coordinate to grid center (8 out of 16)
+
+# Create task assignment list to store work orders
+self.assigned_tasks = []  # Empty list to hold task dictionaries
+
+# Set employee speed from config file
+self.speed = EMPLOYEE_SPEED  # Get movement speed from config.py (tiles per second)
+```
+
+This applies to:
+- ✅ New function implementations
+- ✅ Code modifications and updates
+- ✅ Bug fixes and improvements
+- ✅ System integrations and refactoring
+
+Exception: Simple variable assignments in config files or obvious operations may use shorter comments.
+
+### Development Phases
+1. **MVP (Phase 1):** Core foundation - grid, single employee, corn crop, basic economy
+2. **Phase 2:** Enhanced systems - interview system, workstations, advanced AI
+3. **Phase 3:** Polish - save/load system (using `pickle` or `json`), tutorial, balance testing
+4. **Phase 4+:** Agricultural complexity, business expansion, world system
+
+## Implementation Notes
+
+This is a Python/Pygame project with specific technical considerations:
+- Save system using Python's `pickle` or `json` modules for game state serialization
+- UI implementation either custom-built or using Pygame GUI library
+- Tooltip-heavy UI design inspired by RimWorld (challenging in Pygame)
+- Drag-and-drop task assignment system
+- Real-time simulation with pause capabilities
+- Performance optimization needed for real-time grid simulation
+
+## Development Commands
+
+**Current Working Commands:**
+- `python main.py` - Run the farming simulation game
+- `pip install -r requirements.txt` - Install dependencies (pygame, pygame-gui)
+
+**Game Controls:**
+- Mouse: Click and drag to select tiles
+- T: Assign Till task, P: Plant task, H: Harvest task, C: Clear selection
+- F1: Toggle debug information
+- UI Buttons: Pause, 1x, 2x, 4x speed controls
+
+**Future Commands (Planned):**
+- `python -m pytest` - Run unit tests (Phase 2)
+- `python tools/balance_tester.py` - Balance testing utility
+- `python tools/save_converter.py` - Save file migration (Phase 3)
+
+## Context Continuity Files
+
+**Essential files for maintaining development context across sessions:**
+
+### Primary Context Files:
+- **DEVELOPMENT_STATE.md** - Current project status, completed features, known issues
+- **ARCHITECTURE_NOTES.md** - Key design decisions and implementation patterns  
+- **BUG_LOG.md** - Issue tracking and resolution status
+- **DOCUMENTATION.md** - Original game design specification
+
+### Code Context:
+- **scripts/core/config.py** - All game parameters and balance settings
+- **scripts/core/game_manager.py** - Main coordination and system integration
+- **scripts/core/event_system.py** - Event-driven communication patterns
+
+## Session Continuity Protocol
+
+**Before starting development:**
+1. Review DEVELOPMENT_STATE.md for current status
+2. Check BUG_LOG.md for known issues
+3. Run `python main.py` to verify current functionality
+4. Use `--resume` flag to continue from specific conversation
+
+**During development:**
+1. Update DEVELOPMENT_STATE.md when completing major features
+2. Log any bugs discovered in BUG_LOG.md
+3. Update ARCHITECTURE_NOTES.md for significant design decisions
+4. Use TodoWrite tool to track current session progress
+
+**End of session:**
+1. Update all context files with current state
+2. Commit code with descriptive messages
+3. Note next priorities in DEVELOPMENT_STATE.md
+
+## Current Technical Status
+
+**Architecture Health:** ✅ Strong event-driven foundation ready for expansion  
+**Performance:** ✅ 60 FPS target achieved on reference hardware  
+**Code Quality:** ⚠️ Needs comprehensive docstrings and unit tests  
+**Extensibility:** ✅ Well-prepared for Phase 2 features  
+
+**Resolved Technical Items:**
+- ✅ A* pathfinding fully implemented with visualization
+- ✅ Multi-employee system completed and functional
+- ✅ Inventory system with strategic storage management
+- ✅ Building system with storage upgrades
+
+**Remaining Technical Opportunities:**
+- Additional crop types (tomatoes, wheat) for variety
+- Extended balance testing across economic scenarios  
+- Additional employee traits and specializations
+- Save/load system implementation (architecture ready)
+- Automated testing infrastructure for regression prevention
