@@ -31,12 +31,51 @@ HUNGER_DECAY_RATE = 1.0  # points per hour
 THIRST_DECAY_RATE = 2.0  # points per hour
 REST_DECAY_RATE = 1.5   # points per hour when working
 
-# Crop Settings (Corn)
-CORN_GROWTH_STAGES = ['seed', 'sprout', 'young', 'mature', 'harvestable']
-CORN_GROWTH_TIME = 0.042  # game days (1 hour = 3 minutes at 1x speed, 45 seconds at 4x speed)
-CORN_BASE_YIELD = 15  # units per tile (increased from 10 to reward expansion)
-CORN_PRICE_MIN = 2
-CORN_PRICE_MAX = 8
+# Crop Settings - Multiple Crop Types
+
+# Universal growth stages for all crops
+GROWTH_STAGES = ['seed', 'sprout', 'young', 'mature', 'harvestable']
+
+# Crop definitions with different strategic profiles
+CROP_TYPES = {
+    'corn': {
+        'name': 'Corn',
+        'growth_time': 0.125,  # 3 game days (balanced option)
+        'base_yield': 15,      # units per tile (balanced yield)
+        'price_min': 3,        # stable pricing
+        'price_max': 6,
+        'seed_cost': 5,        # cost per seed
+        'description': 'Balanced crop - steady growth and reliable income'
+    },
+    'tomatoes': {
+        'name': 'Tomatoes', 
+        'growth_time': 0.083,  # 2 game days (fast growth)
+        'base_yield': 8,       # lower yield per tile
+        'price_min': 4,        # higher price range
+        'price_max': 10,
+        'seed_cost': 8,        # more expensive seeds
+        'description': 'Fast crop - quick turnaround but lower yield and higher risk'
+    },
+    'wheat': {
+        'name': 'Wheat',
+        'growth_time': 0.208,  # 5 game days (slow growth)
+        'base_yield': 25,      # high bulk yield
+        'price_min': 2,        # lower but stable pricing
+        'price_max': 4,
+        'seed_cost': 3,        # cheaper seeds
+        'description': 'Bulk crop - slow growth but high volume and stable prices'
+    }
+}
+
+# Default crop type for backwards compatibility
+DEFAULT_CROP_TYPE = 'corn'
+
+# Legacy constants for backwards compatibility
+CORN_GROWTH_STAGES = GROWTH_STAGES
+CORN_GROWTH_TIME = CROP_TYPES['corn']['growth_time']
+CORN_BASE_YIELD = CROP_TYPES['corn']['base_yield']
+CORN_PRICE_MIN = CROP_TYPES['corn']['price_min']
+CORN_PRICE_MAX = CROP_TYPES['corn']['price_max']
 
 # Time Settings
 MINUTES_PER_GAME_DAY = 20  # real minutes

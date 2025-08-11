@@ -21,9 +21,9 @@ class Tile:
         self.soil_quality = 5  # 1-10 scale
         self.water_level = 100  # 0-100 scale
         
-        # Crop information
-        self.current_crop = None  # 'corn' or None
-        self.growth_stage = 0  # 0-4 for corn stages
+        # Crop information - now supports multiple crop types
+        self.current_crop = None  # crop type string or None
+        self.growth_stage = 0  # 0-4 for all crops
         self.days_growing = 0
         
         # Task assignment
@@ -47,12 +47,12 @@ class Tile:
         """Check if tile can be planted with a crop"""
         return (self.terrain_type == 'tilled' and 
                 self.current_crop is None and 
-                crop_type == 'corn')  # Only corn for MVP
+                crop_type in CROP_TYPES)  # Support all defined crop types
     
     def can_harvest(self) -> bool:
         """Check if tile can be harvested"""
-        return (self.current_crop == 'corn' and 
-                self.growth_stage >= len(CORN_GROWTH_STAGES) - 1)
+        return (self.current_crop is not None and 
+                self.growth_stage >= len(GROWTH_STAGES) - 1)
     
     def till(self):
         """Till the soil"""
@@ -72,11 +72,14 @@ class Tile:
             return True
         return False
     
-    def harvest(self) -> int:
-        """Harvest the crop and return yield"""
+    def harvest(self) -> Tuple[str, int]:
+        """Harvest the crop and return (crop_type, yield)"""
         if self.can_harvest():
+            crop_type = self.current_crop
+            crop_data = CROP_TYPES[crop_type]
+            
             # Calculate yield based on soil quality and care
-            base_yield = CORN_BASE_YIELD
+            base_yield = crop_data['base_yield']
             quality_modifier = self.soil_quality / 10.0
             water_modifier = self.water_level / 100.0
             
@@ -88,26 +91,27 @@ class Tile:
             self.growth_stage = 0
             self.days_growing = 0
             
-            return max(1, yield_amount)  # Minimum 1 unit
+            return crop_type, max(1, yield_amount)  # Return crop type and amount
         
-        return 0
+        return None, 0
     
     def update_growth(self, days_passed: float):
-        """Update crop growth"""
-        if self.current_crop == 'corn':
+        """Update crop growth for any crop type"""
+        if self.current_crop and self.current_crop in CROP_TYPES:
             self.days_growing += days_passed
+            crop_data = CROP_TYPES[self.current_crop]
             
             # Calculate growth stage based on days
-            days_per_stage = CORN_GROWTH_TIME / len(CORN_GROWTH_STAGES)
+            days_per_stage = crop_data['growth_time'] / len(GROWTH_STAGES)
             new_stage = min(
-                len(CORN_GROWTH_STAGES) - 1,
+                len(GROWTH_STAGES) - 1,
                 int(self.days_growing / days_per_stage)
             )
             
             if new_stage > self.growth_stage:
                 old_stage = self.growth_stage
                 self.growth_stage = new_stage
-                print(f"Crop at ({self.x}, {self.y}) grew from stage {old_stage} to {new_stage} ({CORN_GROWTH_STAGES[new_stage]}) - days: {self.days_growing:.2f}")
+                print(f"{crop_data['name']} at ({self.x}, {self.y}) grew from stage {old_stage} to {new_stage} ({GROWTH_STAGES[new_stage]}) - days: {self.days_growing:.2f}")
                 return True  # Growth stage changed
         
         return False
@@ -122,11 +126,25 @@ class Tile:
         return self._get_base_color()
     
     def _get_base_color(self) -> Tuple[int, int, int]:
-        """Get base color based on tile state"""
-        if self.current_crop == 'corn':
-            # Different shades of green for growth stages
-            green_intensity = 50 + (self.growth_stage * 40)
-            return (0, min(255, green_intensity), 0)
+        """Get base color based on tile state and crop type"""
+        if self.current_crop:
+            # Different colors for different crop types
+            if self.current_crop == 'corn':
+                # Green shades for corn growth stages
+                green_intensity = 50 + (self.growth_stage * 40)
+                return (0, min(255, green_intensity), 0)
+            elif self.current_crop == 'tomatoes':
+                # Red shades for tomato growth stages  
+                red_intensity = 50 + (self.growth_stage * 40)
+                return (min(255, red_intensity), 20, 0)
+            elif self.current_crop == 'wheat':
+                # Golden shades for wheat growth stages
+                gold_intensity = 80 + (self.growth_stage * 35)
+                return (min(255, gold_intensity), min(200, gold_intensity - 20), 0)
+            else:
+                # Default green for unknown crops
+                green_intensity = 50 + (self.growth_stage * 40)
+                return (0, min(255, green_intensity), 0)
         elif self.terrain_type == 'tilled':
             return COLORS['tile_tilled']
         else:

@@ -57,6 +57,7 @@ class UIManager:
         self.event_system.subscribe('employee_count_update', self._handle_employee_count_update)
         self.event_system.subscribe('employee_status_update', self._handle_employee_status_update)
         self.event_system.subscribe('day_passed', self._handle_day_passed)
+        self.event_system.subscribe('get_current_crop_type_requested', self._handle_crop_type_request)
         
         # Track current day for expiration calculations
         self._current_day = 1
@@ -90,7 +91,7 @@ class UIManager:
             container=self.resource_panel
         )
         
-        # Time display  
+        # Time display
         self.time_label = pygame_gui.elements.UILabel(
             relative_rect=pygame.Rect(320, 10, 150, 40),
             text="Day 1 - 5:00 AM",
@@ -106,33 +107,37 @@ class UIManager:
             container=self.resource_panel
         )
         
-        # Speed controls
+        # Speed controls with tooltips for better user experience
         self.pause_button = pygame_gui.elements.UIButton(
             relative_rect=pygame.Rect(WINDOW_WIDTH-160, 10, 40, 40),
             text="||",
             manager=self.gui_manager,
-            container=self.resource_panel
+            container=self.resource_panel,
+            tool_tip_text="Pause/Resume game time"
         )
         
         self.speed_1x_button = pygame_gui.elements.UIButton(
             relative_rect=pygame.Rect(WINDOW_WIDTH-115, 10, 30, 40),
             text="1x",
             manager=self.gui_manager,
-            container=self.resource_panel
+            container=self.resource_panel,
+            tool_tip_text="Normal speed (20 min = 1 game day)"
         )
         
         self.speed_2x_button = pygame_gui.elements.UIButton(
             relative_rect=pygame.Rect(WINDOW_WIDTH-80, 10, 30, 40),
             text="2x", 
             manager=self.gui_manager,
-            container=self.resource_panel
+            container=self.resource_panel,
+            tool_tip_text="Double speed (10 min = 1 game day)"
         )
         
         self.speed_4x_button = pygame_gui.elements.UIButton(
             relative_rect=pygame.Rect(WINDOW_WIDTH-45, 10, 30, 40),
             text="4x",
             manager=self.gui_manager,
-            container=self.resource_panel
+            container=self.resource_panel,
+            tool_tip_text="Fast speed (5 min = 1 game day)"
         )
         
         # Main control panel on right side (taller to accommodate more buttons)
@@ -161,14 +166,16 @@ class UIManager:
             relative_rect=pygame.Rect(10, economy_section_y + 25, 100, 25),
             text="Sell 10 Corn",
             manager=self.gui_manager,
-            container=self.control_panel
+            container=self.control_panel,
+            tool_tip_text="Sell 10 corn units at current market price. Uses FIFO inventory."
         )
         
         self.buy_silo_button = pygame_gui.elements.UIButton(
             relative_rect=pygame.Rect(115, economy_section_y + 25, 115, 25),
             text="Buy Storage Silo",
             manager=self.gui_manager,
-            container=self.control_panel
+            container=self.control_panel,
+            tool_tip_text="Purchase storage silo (+50 capacity). Cost increases with each purchase."
         )
         
         # Employee section
@@ -184,14 +191,16 @@ class UIManager:
             relative_rect=pygame.Rect(10, employee_section_y + 25, 100, 25),
             text="Hire Employee",
             manager=self.gui_manager,
-            container=self.control_panel
+            container=self.control_panel,
+            tool_tip_text="Generate job applicants to hire new workers ($80/day wage)"
         )
         
         self.view_applicants_button = pygame_gui.elements.UIButton(
             relative_rect=pygame.Rect(115, employee_section_y + 25, 115, 25),
             text="View Applicants",
             manager=self.gui_manager,
-            container=self.control_panel
+            container=self.control_panel,
+            tool_tip_text="Review and hire from available job applicants"
         )
         
         self.view_payroll_button = pygame_gui.elements.UIButton(
@@ -227,6 +236,35 @@ class UIManager:
         )
         
         
+        # Crop selection section
+        crop_section_y = shortcuts_section_y - 85
+        self.crop_selection_label = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect(10, crop_section_y, 220, 15),
+            text="Crop Selection",
+            manager=self.gui_manager,
+            container=self.control_panel
+        )
+        
+        # Current selected crop display and dropdown
+        self.current_crop_type = DEFAULT_CROP_TYPE  # Track currently selected crop type
+        crop_data = CROP_TYPES[self.current_crop_type]
+        self.selected_crop_dropdown = pygame_gui.elements.UIDropDownMenu(
+            relative_rect=pygame.Rect(10, crop_section_y + 20, 150, 25),
+            options_list=[f"{CROP_TYPES[crop]['name']} (${CROP_TYPES[crop]['seed_cost']})" for crop in CROP_TYPES],
+            starting_option=f"{crop_data['name']} (${crop_data['seed_cost']})",
+            manager=self.gui_manager,
+            container=self.control_panel
+        )
+        
+        # Crop info button
+        self.crop_info_button = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect(165, crop_section_y + 20, 55, 25),
+            text="Info",
+            manager=self.gui_manager,
+            container=self.control_panel,
+            tool_tip_text="View detailed crop information and growth times"
+        )
+
         # Task control buttons
         task_controls_y = shortcuts_section_y - 35
         self.task_controls_label = pygame_gui.elements.UILabel(
@@ -408,6 +446,9 @@ class UIManager:
             elif event.ui_element == self.cancel_tasks_button:
                 # Cancel tasks on selected tiles
                 self.event_system.emit('cancel_tasks_requested', {})
+            elif event.ui_element == self.crop_info_button:
+                # Show crop information dialog
+                self._show_crop_info_dialog()
             # Handle applicant hire buttons (direct hire only)
             elif hasattr(event.ui_element, 'applicant_id') and hasattr(event.ui_element, 'action_type'):
                 applicant_id = event.ui_element.applicant_id
@@ -423,6 +464,18 @@ class UIManager:
                 applicant_id = event.ui_element.applicant_id
                 self.event_system.emit('hire_applicant_requested', {'applicant_id': applicant_id})
                 self._destroy_applicant_panel()
+        
+        # Handle dropdown selection changes
+        elif event.type == pygame_gui.UI_DROP_DOWN_MENU_CHANGED:
+            if event.ui_element == self.selected_crop_dropdown:
+                # Update current crop selection based on dropdown choice
+                selected_text = event.text
+                for crop_id, crop_data in CROP_TYPES.items():
+                    expected_text = f"{crop_data['name']} (${crop_data['seed_cost']})"
+                    if selected_text == expected_text:
+                        self.current_crop_type = crop_id
+                        print(f"Selected crop type changed to: {crop_data['name']}")
+                        break
         
         # Handle keyboard shortcuts
         elif event.type == pygame.KEYDOWN:
@@ -503,6 +556,51 @@ class UIManager:
     def toggle_debug(self):
         """Toggle debug info display"""
         self.show_debug = not self.show_debug
+    
+    def _show_crop_info_dialog(self):
+        """Show detailed crop information dialog"""
+        crop_data = CROP_TYPES[self.current_crop_type]
+        
+        # Create crop info text with detailed stats
+        info_text = f"<b>{crop_data['name']}</b><br>"
+        info_text += f"{crop_data['description']}<br><br>"
+        info_text += f"<b>Stats:</b><br>"
+        info_text += f"Growth Time: {crop_data['growth_time'] * 24:.1f} hours<br>"
+        info_text += f"Seed Cost: ${crop_data['seed_cost']}<br>"
+        info_text += f"Base Yield: {crop_data['base_yield']} units/tile<br>"
+        info_text += f"Price Range: ${crop_data['price_min']}-${crop_data['price_max']}/unit<br><br>"
+        info_text += f"<b>Profitability:</b><br>"
+        min_profit = (crop_data['base_yield'] * crop_data['price_min']) - crop_data['seed_cost']
+        max_profit = (crop_data['base_yield'] * crop_data['price_max']) - crop_data['seed_cost']
+        info_text += f"Potential Profit: ${min_profit}-${max_profit}/tile"
+        
+        # Create temporary info window
+        if not hasattr(self, 'crop_info_window'):
+            self.crop_info_window = pygame_gui.elements.UIWindow(
+                rect=pygame.Rect(WINDOW_WIDTH//2 - 200, WINDOW_HEIGHT//2 - 150, 400, 300),
+                window_display_title=f"{crop_data['name']} Information",
+                manager=self.gui_manager
+            )
+            
+            self.crop_info_textbox = pygame_gui.elements.UITextBox(
+                relative_rect=pygame.Rect(10, 10, 380, 230),
+                html_text=info_text,
+                manager=self.gui_manager,
+                container=self.crop_info_window
+            )
+            
+            self.crop_info_close_button = pygame_gui.elements.UIButton(
+                relative_rect=pygame.Rect(300, 250, 80, 30),
+                text="Close",
+                manager=self.gui_manager,
+                container=self.crop_info_window
+            )
+    
+    def _handle_crop_type_request(self, event_data):
+        """Handle request for current crop type selection"""
+        self.event_system.emit('crop_type_provided', {
+            'crop_type': self.current_crop_type
+        })
     
     def _add_notification(self, message: str, notification_type: str = "info"):
         """Add a notification to display"""

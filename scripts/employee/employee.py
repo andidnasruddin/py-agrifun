@@ -83,13 +83,14 @@ class Employee:
             self.walking_speed *= 1.1  # +10% speed
             self.speed = self.walking_speed
     
-    def assign_task(self, task_type: str, target_tiles: List):
-        """Assign a new task to the employee"""
+    def assign_task(self, task_type: str, target_tiles: List, **kwargs):
+        """Assign a new task to the employee with optional parameters"""
         task = {
             'type': task_type,
             'tiles': target_tiles,
             'completed_tiles': [],
-            'status': 'pending'
+            'status': 'pending',
+            **kwargs  # Allow additional task parameters like crop_type
         }
         self.assigned_tasks.append(task)
         
@@ -287,20 +288,23 @@ class Employee:
         if task_type == 'till' and tile.can_till():
             return tile.till()
         elif task_type == 'plant' and tile.can_plant():
-            return tile.plant()
+            # Get crop type from current task, default to corn for backward compatibility
+            crop_type = self.current_task.get('crop_type', DEFAULT_CROP_TYPE)
+            return tile.plant(crop_type)
         elif task_type == 'harvest' and tile.can_harvest():
-            yield_amount = tile.harvest()
+            crop_type, yield_amount = tile.harvest()  # Updated to handle new tuple return
             if yield_amount > 0:
                 # Direct synchronous harvest processing to avoid race conditions
                 quality = (tile.soil_quality / 10.0) * (tile.water_level / 100.0)
                 harvest_result = {
-                    'crop_type': 'corn',
+                    'crop_type': crop_type,  # Now uses actual crop type from harvest
                     'quantity': yield_amount,
                     'quality': quality,
                     'tile_position': (tile.x, tile.y),
                     'employee_id': self.id
                 }
-                print(f"Employee {self.name}: Harvested {yield_amount} corn (quality: {quality:.2f})")
+                crop_name = CROP_TYPES[crop_type]['name']
+                print(f"Employee {self.name}: Harvested {yield_amount} {crop_name.lower()} (quality: {quality:.2f})")
                 
                 # Return harvest data for immediate processing
                 self._pending_harvest = harvest_result

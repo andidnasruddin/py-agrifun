@@ -36,6 +36,7 @@ class EmployeeManager:
         self.event_system.subscribe('get_employee_roster', self._handle_roster_request)
         self.event_system.subscribe('get_employee_count_for_ui', self._handle_ui_count_request)
         self.event_system.subscribe('cancel_tasks_requested', self._handle_cancel_tasks_request)
+        self.event_system.subscribe('crop_type_provided', self._handle_crop_type_for_planting)
         
         # Create starting employee for MVP (can be disabled for pure hiring system)
         if create_starting_employee:
@@ -516,7 +517,8 @@ class EmployeeManager:
         if key == pygame.K_t:  # T for Till
             self.assign_task_to_selection('till')
         elif key == pygame.K_p:  # P for Plant
-            self.assign_task_to_selection('plant')
+            # Get current crop selection from UI and assign planting task
+            self.event_system.emit('get_current_crop_type_requested', {})
         elif key == pygame.K_h:  # H for Harvest
             self.assign_task_to_selection('harvest')
         elif key == pygame.K_x:  # X for Cancel tasks
@@ -607,3 +609,73 @@ class EmployeeManager:
     def _handle_cancel_tasks_request(self, event_data):
         """Handle request to cancel tasks on selected tiles"""
         self.cancel_tasks_on_selection()
+    
+    def _handle_crop_type_for_planting(self, event_data):
+        """Handle crop type selection for planting task"""
+        crop_type = event_data.get('crop_type', DEFAULT_CROP_TYPE)
+        print(f"Assigning planting task with crop type: {crop_type}")
+        self.assign_planting_task_to_selection(crop_type)
+    
+    def assign_planting_task_to_selection(self, crop_type: str = DEFAULT_CROP_TYPE) -> bool:
+        """Assign planting task with specific crop type to selected tiles"""
+        if not self.grid_manager.selected_tiles:
+            self.event_system.emit('task_assignment_failed', {
+                'reason': 'no_selection',
+                'message': f'No tiles selected for planting {CROP_TYPES[crop_type]["name"]}',
+                'task_type': 'plant'
+            })
+            return False
+        
+        available_employees = self.get_available_employees()
+        if not available_employees:
+            self.event_system.emit('task_assignment_failed', {
+                'reason': 'no_available_employees',
+                'message': 'No available employees for planting task',
+                'selected_tiles': len(self.grid_manager.selected_tiles)
+            })
+            return False
+        
+        # Filter tiles that can be planted
+        valid_tiles = []
+        for tile in self.grid_manager.selected_tiles:
+            if tile.can_plant(crop_type) and not tile.task_assigned_to:
+                valid_tiles.append(tile)
+        
+        if not valid_tiles:
+            crop_name = CROP_TYPES[crop_type]['name']
+            self.event_system.emit('task_assignment_failed', {
+                'reason': 'no_valid_tiles',
+                'message': f'No tiles can be planted with {crop_name}. Ensure tiles are tilled first.',
+                'task_type': 'plant'
+            })
+            return False
+        
+        # Distribute planting tasks among employees
+        assigned_count = 0
+        for i, tile in enumerate(valid_tiles):
+            employee = available_employees[i % len(available_employees)]
+            
+            # Create task with crop type information
+            task_data = {
+                'type': 'plant',
+                'crop_type': crop_type,
+                'target_tile': (tile.x, tile.y)
+            }
+            
+            employee.assign_task(task_data['type'], [tile], crop_type=crop_type)
+            tile.task_assignment = 'plant'
+            tile.task_assigned_to = employee.id
+            assigned_count += 1
+        
+        crop_name = CROP_TYPES[crop_type]['name']
+        print(f"Assigned {assigned_count} {crop_name} planting tasks among {len(available_employees)} employees")
+        
+        self.event_system.emit('task_assigned_feedback', {
+            'task_type': 'plant',
+            'crop_type': crop_type,
+            'crop_name': crop_name,
+            'tiles_assigned': assigned_count,
+            'employees_involved': len(available_employees)
+        })
+        
+        return True
