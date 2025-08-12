@@ -276,7 +276,9 @@ class SaveManager:
                     'growth_stage': tile.growth_stage,
                     'days_growing': tile.days_growing,
                     'task_assignment': tile.task_assignment,
-                    'task_assigned_to': tile.task_assigned_to
+                    'task_assigned_to': tile.task_assigned_to,
+                    'building_type': tile.building_type,
+                    'is_occupied': tile.is_occupied
                 }
                 row_data.append(tile_data)
             tiles_data.append(row_data)
@@ -371,6 +373,8 @@ class SaveManager:
         for building in building_manager.owned_buildings:
             building_data = {
                 'building_type_id': building.building_type.id,
+                'x': building.x,
+                'y': building.y,
                 'level': building.level,
                 'purchase_day': building.purchase_day
             }
@@ -519,6 +523,9 @@ class SaveManager:
                     tile.days_growing = tile_data.get('days_growing', 0)
                     tile.task_assignment = tile_data.get('task_assignment', None)
                     tile.task_assigned_to = tile_data.get('task_assigned_to', None)
+                    tile.building_type = tile_data.get('building_type', None)
+                    tile.is_occupied = tile_data.get('is_occupied', False)
+                    # Note: building object will be restored by building manager
     
     def _apply_employee_manager_state(self, employee_state: Dict[str, Any]):
         """Apply employee manager state from save file"""
@@ -618,7 +625,10 @@ class SaveManager:
         """Apply building manager state from save file"""
         building_manager = self.game_manager.building_manager
         
-        # Clear existing buildings
+        # Clear existing buildings from both manager and grid
+        for building in building_manager.owned_buildings:
+            if hasattr(building, 'x') and hasattr(building, 'y'):
+                building_manager.grid_manager.remove_building_at(building.x, building.y)
         building_manager.owned_buildings.clear()
         
         # Recreate buildings from save data
@@ -631,10 +641,17 @@ class SaveManager:
                 building_type = building_manager.building_types[building_type_id]
                 building = Building(
                     building_type=building_type,
+                    x=building_data.get('x', 0),
+                    y=building_data.get('y', 0),
                     level=building_data.get('level', 1),
                     purchase_day=building_data.get('purchase_day', 1)
                 )
                 building_manager.owned_buildings.append(building)
+                
+                # Place building on grid if grid manager is available
+                if building_manager.grid_manager and building_data.get('x') is not None:
+                    x, y = building.x, building.y
+                    building_manager.grid_manager.place_building_at(x, y, building_type_id, building)
                 
                 # Re-apply building benefits
                 building_manager._apply_building_benefits(building)

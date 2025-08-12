@@ -1,12 +1,12 @@
 # Development State - Farming Simulation Game
 
-**Last Updated**: 2025-08-11  
-**Current Phase**: Phase 2 Complete - MAJOR UI BUG RESOLVED → Phase 3 Ready  
-**Next Milestone**: Balance testing and additional crop types (UI system now stable)  
+**Last Updated**: 2025-08-12  
+**Current Phase**: Phase 3+ Advanced Agricultural Systems - CROP ROTATION & SOIL HEALTH COMPLETE  
+**Next Milestone**: Farm specialization tracks and agricultural depth expansion  
 
 ## 🎯 Current Development Status
 
-### ✅ Completed Systems (Phases 1 & 2)
+### ✅ Completed Systems (Phases 1, 2 & 3+)
 
 #### Core Foundation (100% Complete)
 - **Project Structure**: Modular Python/Pygame architecture with professional separation of concerns
@@ -65,6 +65,21 @@
 - **Building Limits**: Maximum 5 silos per farm with economic balance
 - **Integration**: Complete integration with economy and inventory systems
 
+#### Advanced Agricultural Systems (100% Complete) 🌾 NEW!
+- **Crop Rotation & Soil Health**: Complete educational agricultural science implementation
+  - **Soil Nutrient Tracking**: Nitrogen, Phosphorus, Potassium levels (0-100) with visual feedback
+  - **Crop Soil Effects**: Realistic nutrient depletion based on crop feeding categories (heavy/balanced/light)
+  - **Rotation Bonuses**: Strategic yield/quality bonuses for proper crop rotation practices
+  - **Crop History Tracking**: Maintains record of previous crops grown on each tile
+  - **Soil Rest Mechanics**: Fallow periods provide significant recovery bonuses (+20% yield)
+  - **Educational Value**: Teaches real agricultural principles through gameplay mechanics
+- **Soil Information Panel**: Interactive UI system for strategic planning
+  - **Click-to-View**: Click any tilled plot to display comprehensive soil information
+  - **Real-Time Data**: Live soil health status, nutrient bars, and rotation recommendations
+  - **Strategic Planning**: Shows rotation bonuses for each crop type with current soil conditions  
+  - **Professional UI**: Left-side panel with solid background, avoids UI overlap issues
+  - **Complete Integration**: Fully integrated with tile selection and event system
+
 #### Advanced User Interface (95% Complete)
 - **pygame-gui Integration**: Professional UI components throughout the game
 - **Resource Panels**: Real-time cash, inventory capacity, time, and employee status displays
@@ -81,6 +96,7 @@
 3. **Economic Strategy**: Loan management, building purchases, and market price optimization
 4. **Resource Management**: Strategic crop storage with capacity upgrades via silo purchases
 5. **Real-Time Operations**: Pause/speed controls with employee needs management
+6. **🌾 Agricultural Science**: Soil health monitoring, crop rotation planning, and educational farming decisions
 
 **Player Actions That Work:**
 - **Hire unlimited employees** with full hiring interface (system supports multi-employee from day 1)
@@ -89,6 +105,8 @@
 - **Purchase storage silos** for capacity expansion ($500-$1687 progressive pricing)
 - **Time control** with pause, 1x, 2x, 4x speed multipliers
 - **Strategic selling** decisions based on market price history and storage capacity
+- **🌾 Click tilled plots** to view detailed soil information and rotation recommendations
+- **🌾 Plan crop rotations** based on soil nutrient levels and historical crop data
 
 ### 🐛 Known Issues & Limitations
 

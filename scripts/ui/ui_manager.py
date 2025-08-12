@@ -64,6 +64,9 @@ class UIManager:
         self.event_system.subscribe('contract_accepted', self._handle_contract_accepted)
         self.event_system.subscribe('contracts_updated', self._handle_contracts_updated)
         self.event_system.subscribe('contract_completed', self._handle_contract_completed)
+        # Soil information panel events
+        self.event_system.subscribe('tile_selected', self._handle_tile_selected)
+        self.event_system.subscribe('tile_deselected', self._handle_tile_deselected)
         
         # Track current day for expiration calculations
         self._current_day = 1
@@ -77,6 +80,11 @@ class UIManager:
         self.current_active_contracts = []
         self.contract_table_rows = []
         self.contract_buttons = []
+        
+        # Soil information panel state
+        self._soil_info_panel_exists = False
+        self.current_selected_tile = None
+        self.soil_info_elements = []
         
         # Request initial inventory status
         self.event_system.emit('get_full_inventory_status', {})
@@ -547,6 +555,10 @@ class UIManager:
                   event.ui_element == self.close_contract_panel_button):
                 print("Contract panel: Close button clicked")
                 self._destroy_contract_panel()  # Destroy the contract management panel
+            elif hasattr(event.ui_element, 'is_soil_panel_close') and event.ui_element.is_soil_panel_close:
+                # Close soil information panel
+                print("Soil info panel: Close button clicked")
+                self._hide_soil_info_panel()
             elif event.ui_element == self.cancel_tasks_button:
                 # Cancel tasks on selected tiles
                 self.event_system.emit('cancel_tasks_requested', {})
@@ -1639,3 +1651,202 @@ class UIManager:
         
         # Refresh contract data to show updated active contracts
         self.event_system.emit('get_contract_data_for_ui', {})
+    
+    def _handle_tile_selected(self, event_data):
+        """Handle tile selection for soil information display"""
+        tile = event_data.get('tile')
+        if tile and tile.terrain_type == 'tilled':
+            self.current_selected_tile = tile
+            self._show_soil_info_panel(tile)
+    
+    def _handle_tile_deselected(self, event_data):
+        """Handle tile deselection to hide soil information panel"""
+        self._hide_soil_info_panel()
+    
+    def _show_soil_info_panel(self, tile):
+        """Show soil information panel for the selected tile"""
+        if self._soil_info_panel_exists:
+            self._hide_soil_info_panel()
+        
+        # Create soil information panel on the left side to avoid control panel overlap
+        panel_width = 280
+        panel_height = 500
+        panel_x = 10  # Left side of screen with margin
+        panel_y = 70  # Below resource bar
+        
+        self.soil_info_panel = pygame_gui.elements.UIPanel(
+            relative_rect=pygame.Rect(panel_x, panel_y, panel_width, panel_height),
+            manager=self.gui_manager
+        )
+        
+        # Set solid background color for the panel to prevent overlap issues
+        self.soil_info_panel.background_colour = pygame.Color(40, 40, 40)  # Dark gray solid background
+        self.soil_info_panel.border_colour = pygame.Color(80, 80, 80)  # Light gray border
+        self.soil_info_panel.border_width = 2  # Visible border
+        
+        # Panel title
+        title_label = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect(10, 10, panel_width - 20, 25),
+            text=f"Soil Information - ({tile.x}, {tile.y})",
+            manager=self.gui_manager,
+            container=self.soil_info_panel
+        )
+        self.soil_info_elements.append(title_label)
+        
+        # Soil health status
+        health_level = tile.get_soil_health_level()
+        health_color = tile.get_soil_health_color()
+        health_label = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect(10, 40, panel_width - 20, 25),
+            text=f"Soil Health: {health_level.title()}",
+            manager=self.gui_manager,
+            container=self.soil_info_panel
+        )
+        self.soil_info_elements.append(health_label)
+        
+        # Soil nutrients section
+        nutrients_label = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect(10, 70, panel_width - 20, 25),
+            text="Soil Nutrients:",
+            manager=self.gui_manager,
+            container=self.soil_info_panel
+        )
+        self.soil_info_elements.append(nutrients_label)
+        
+        # Individual nutrient levels with bars
+        y_offset = 100
+        for nutrient, level in tile.soil_nutrients.items():
+            # Nutrient name and level
+            nutrient_text = f"{SOIL_NUTRIENTS[nutrient]['name']}: {level}%"
+            nutrient_label = pygame_gui.elements.UILabel(
+                relative_rect=pygame.Rect(10, y_offset, 120, 20),
+                text=nutrient_text,
+                manager=self.gui_manager,
+                container=self.soil_info_panel
+            )
+            self.soil_info_elements.append(nutrient_label)
+            
+            # Visual bar representation (simple text bar for now)
+            bar_length = int(level / 10)  # 10 chars max
+            bar_text = "█" * bar_length + "░" * (10 - bar_length)
+            bar_label = pygame_gui.elements.UILabel(
+                relative_rect=pygame.Rect(135, y_offset, 120, 20),
+                text=bar_text,
+                manager=self.gui_manager,
+                container=self.soil_info_panel
+            )
+            self.soil_info_elements.append(bar_label)
+            
+            y_offset += 25
+        
+        # Crop history section
+        y_offset += 10
+        history_label = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect(10, y_offset, panel_width - 20, 25),
+            text="Crop History:",
+            manager=self.gui_manager,
+            container=self.soil_info_panel
+        )
+        self.soil_info_elements.append(history_label)
+        
+        y_offset += 30
+        if tile.crop_history:
+            history_text = " → ".join([CROP_TYPES[crop]['name'] for crop in tile.crop_history[-3:]])
+        else:
+            history_text = "No previous crops"
+        
+        history_display = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect(10, y_offset, panel_width - 20, 25),
+            text=history_text,
+            manager=self.gui_manager,
+            container=self.soil_info_panel
+        )
+        self.soil_info_elements.append(history_display)
+        
+        # Rotation bonuses section
+        y_offset += 40
+        rotation_label = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect(10, y_offset, panel_width - 20, 25),
+            text="Planting Recommendations:",
+            manager=self.gui_manager,
+            container=self.soil_info_panel
+        )
+        self.soil_info_elements.append(rotation_label)
+        
+        # Show rotation bonuses for each crop type
+        y_offset += 30
+        for crop_type, crop_data in CROP_TYPES.items():
+            bonuses = tile.calculate_rotation_bonuses(crop_type)
+            total_bonus = bonuses['yield'] + bonuses['quality']
+            
+            if total_bonus > 0:
+                bonus_text = f"✓ {crop_data['name']}: +{bonuses['yield']*100:.0f}% yield"
+                color = (100, 255, 100)  # Green for good
+            else:
+                bonus_text = f"○ {crop_data['name']}: No bonuses"
+                color = (200, 200, 200)  # Gray for neutral
+            
+            crop_label = pygame_gui.elements.UILabel(
+                relative_rect=pygame.Rect(10, y_offset, panel_width - 20, 20),
+                text=bonus_text,
+                manager=self.gui_manager,
+                container=self.soil_info_panel
+            )
+            self.soil_info_elements.append(crop_label)
+            y_offset += 25
+        
+        # Cultivation options section
+        y_offset += 10
+        options_label = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect(10, y_offset, panel_width - 20, 25),
+            text="Cultivation Options:",
+            manager=self.gui_manager,
+            container=self.soil_info_panel
+        )
+        self.soil_info_elements.append(options_label)
+        
+        y_offset += 30
+        # Soil rest option
+        if tile.seasons_rested == 0:
+            rest_text = "Let soil rest (+20% yield next season)"
+        else:
+            rest_text = f"Soil rested {tile.seasons_rested} season(s)"
+        
+        rest_label = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect(10, y_offset, panel_width - 20, 20),
+            text=rest_text,
+            manager=self.gui_manager,
+            container=self.soil_info_panel
+        )
+        self.soil_info_elements.append(rest_label)
+        
+        # Close button
+        close_button = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect(panel_width - 70, panel_height - 35, 60, 25),
+            text="Close",
+            manager=self.gui_manager,
+            container=self.soil_info_panel
+        )
+        close_button.is_soil_panel_close = True
+        self.soil_info_elements.append(close_button)
+        
+        self._soil_info_panel_exists = True
+        print(f"Showing soil info panel for tile ({tile.x}, {tile.y})")
+    
+    def _hide_soil_info_panel(self):
+        """Hide the soil information panel"""
+        if not self._soil_info_panel_exists:
+            return
+        
+        # Clean up all elements
+        for element in self.soil_info_elements:
+            element.kill()
+        self.soil_info_elements.clear()
+        
+        if hasattr(self, 'soil_info_panel'):
+            self.soil_info_panel.kill()
+            self.soil_info_panel = None
+        
+        self._soil_info_panel_exists = False
+        self.current_selected_tile = None
+        print("Soil info panel hidden")

@@ -193,10 +193,14 @@ class BuildingManager:
     
     def _apply_building_benefits(self, building: Building):
         """Apply the benefits of a building"""
+        # Apply immediate benefits (like storage capacity increases)
         if building.building_type.id == 'storage_silo':
-            # Increase storage capacity by 50
+            # Increase storage capacity by 50 units
             self.inventory_manager.upgrade_storage(50)
             print(f"Storage capacity increased by 50 units")
+        
+        # Spatial benefits are handled dynamically in get_spatial_benefits_at()
+        # This ensures real-time calculation of effects based on building proximity
     
     def get_building_info(self, building_id: str) -> Dict:
         """Get information about a building type"""
@@ -287,6 +291,132 @@ class BuildingManager:
                     'building_id': building_id,
                     'reason': reason
                 })
+    
+    def get_spatial_benefits_at(self, x: int, y: int) -> Dict:
+        """Get all spatial benefits that apply at a specific grid coordinate"""
+        # Dictionary to store cumulative effects at this location
+        benefits = {
+            'crop_yield_multiplier': 1.0,  # Multiplicative bonus to crop yield (1.0 = no bonus)
+            'work_efficiency_multiplier': 1.0,  # Multiplicative bonus to work speed
+            'rest_decay_multiplier': 1.0,  # Multiplicative modifier to rest decay rate
+            'trait_effectiveness_multiplier': 1.0,  # Bonus to employee trait effects
+            'has_water_cooler': False,  # Can employees restore thirst here?
+            'has_housing': False  # Can employees rest here?
+        }
+        
+        # Check each owned building for spatial effects
+        for building in self.owned_buildings:
+            # Calculate distance from building to target coordinate
+            distance = abs(building.x - x) + abs(building.y - y)  # Manhattan distance
+            
+            # Apply building-specific spatial benefits based on proximity
+            if building.building_type.id == 'storage_silo':
+                # Storage silos provide +10% crop yield within 4 tiles radius
+                if distance <= 4:
+                    benefits['crop_yield_multiplier'] *= 1.10  # +10% yield bonus
+            
+            elif building.building_type.id == 'tool_shed':
+                # Tool sheds provide +15% work efficiency within 3 tiles radius
+                if distance <= 3:
+                    benefits['work_efficiency_multiplier'] *= 1.15  # +15% efficiency bonus
+            
+            elif building.building_type.id == 'water_cooler':
+                # Water coolers reduce rest decay by 20% within 2 tiles radius
+                # Also allow employees to restore thirst at this exact location
+                if distance <= 2:
+                    benefits['rest_decay_multiplier'] *= 0.80  # -20% rest decay (80% of normal)
+                if distance == 0:  # Exact location only
+                    benefits['has_water_cooler'] = True  # Can restore thirst here
+            
+            elif building.building_type.id == 'employee_housing':
+                # Employee housing provides +25% trait effectiveness within 2 tiles radius
+                # Also allows employees to rest at this exact location  
+                if distance <= 2:
+                    benefits['trait_effectiveness_multiplier'] *= 1.25  # +25% trait effectiveness
+                if distance == 0:  # Exact location only
+                    benefits['has_housing'] = True  # Can rest here
+        
+        return benefits
+    
+    def get_buildings_in_radius(self, center_x: int, center_y: int, radius: int) -> List[Building]:
+        """Get all buildings within a specific radius of a coordinate"""
+        # List to store buildings within the specified radius
+        nearby_buildings = []
+        
+        # Check each owned building's distance from the center point
+        for building in self.owned_buildings:
+            # Calculate Manhattan distance (sum of horizontal and vertical distance)
+            distance = abs(building.x - center_x) + abs(building.y - center_y)
+            
+            # Add building to list if within radius
+            if distance <= radius:
+                nearby_buildings.append(building)
+        
+        return nearby_buildings
+    
+    def calculate_crop_yield_at(self, x: int, y: int, base_yield: int) -> int:
+        """Calculate final crop yield at a location including building bonuses"""
+        # Get spatial benefits for this location
+        benefits = self.get_spatial_benefits_at(x, y)
+        
+        # Apply yield multiplier to base yield
+        final_yield = int(base_yield * benefits['crop_yield_multiplier'])
+        
+        return final_yield
+    
+    def calculate_work_efficiency_at(self, x: int, y: int, base_efficiency: float) -> float:
+        """Calculate work efficiency at a location including building bonuses"""
+        # Get spatial benefits for this location
+        benefits = self.get_spatial_benefits_at(x, y)
+        
+        # Apply efficiency multiplier to base efficiency
+        final_efficiency = base_efficiency * benefits['work_efficiency_multiplier']
+        
+        return final_efficiency
+    
+    def can_restore_thirst_at(self, x: int, y: int) -> bool:
+        """Check if employees can restore thirst at this location"""
+        # Get spatial benefits to check for water cooler availability
+        benefits = self.get_spatial_benefits_at(x, y)
+        return benefits['has_water_cooler']
+    
+    def can_rest_at(self, x: int, y: int) -> bool:
+        """Check if employees can rest at this location"""
+        # Get spatial benefits to check for housing availability
+        benefits = self.get_spatial_benefits_at(x, y)
+        return benefits['has_housing']
+    
+    def get_spatial_effects_summary(self, x: int, y: int) -> str:
+        """Get a human-readable summary of all spatial effects at a location"""
+        # Get all benefits for this location
+        benefits = self.get_spatial_benefits_at(x, y)
+        effects = []  # List to store effect descriptions
+        
+        # Add descriptions for active bonuses
+        if benefits['crop_yield_multiplier'] > 1.0:
+            bonus_percent = int((benefits['crop_yield_multiplier'] - 1.0) * 100)
+            effects.append(f"+{bonus_percent}% crop yield")
+        
+        if benefits['work_efficiency_multiplier'] > 1.0:
+            bonus_percent = int((benefits['work_efficiency_multiplier'] - 1.0) * 100)
+            effects.append(f"+{bonus_percent}% work efficiency")
+        
+        if benefits['rest_decay_multiplier'] < 1.0:
+            reduction_percent = int((1.0 - benefits['rest_decay_multiplier']) * 100)
+            effects.append(f"-{reduction_percent}% rest decay")
+        
+        if benefits['trait_effectiveness_multiplier'] > 1.0:
+            bonus_percent = int((benefits['trait_effectiveness_multiplier'] - 1.0) * 100)
+            effects.append(f"+{bonus_percent}% trait effectiveness")
+        
+        if benefits['has_water_cooler']:
+            effects.append("Thirst restoration available")
+        
+        if benefits['has_housing']:
+            effects.append("Employee rest area")
+        
+        # Return comma-separated list or default message
+        return ", ".join(effects) if effects else "No building effects"
     
     def update(self, dt: float):
         """Update building systems (future: maintenance, etc.)"""

@@ -8,13 +8,13 @@ This is a 2D top-down grid-based farming simulation game built in **Python with 
 
 ## Development Status
 
-**Current Phase:** Phase 2 Nearly Complete - Advanced Features Implemented
+**Current Phase:** Phase 3+ Agricultural Systems Complete - Educational Science Implementation
 **Target Platform:** Python with Pygame library
 **Architecture:** Event-driven modular system with manager pattern
 **Grid Size:** 16x16 tiles (fully optimized)
 
-**Last Updated:** 2025-08-11
-**Next Priority:** Balance testing, UI polish, and additional crop types
+**Last Updated:** 2025-08-12
+**Next Priority:** Farm specialization tracks and agricultural depth expansion
 
 ### ✅ **MAJOR SYSTEMS COMPLETED:**
 
@@ -44,6 +44,13 @@ This is a 2D top-down grid-based farming simulation game built in **Python with 
 - Transaction history logging with financial categorization
 - Market price history (30-day tracking) for strategic decisions
 - 5-stage crop growth visualization (seed→sprout→young→mature→harvestable)
+
+**🌾 Agricultural Science Systems (100% Complete):**
+- Complete crop rotation and soil health implementation with educational principles
+- Soil nutrient tracking (N-P-K levels) with realistic crop depletion effects
+- Strategic rotation bonuses teaching proper agricultural practices (+15-20% yields)
+- Interactive soil information panel with click-to-view functionality
+- Crop history tracking and soil rest mechanics for long-term planning
 
 ### 🎮 **CURRENT GAME STATE - HIGHLY SOPHISTICATED:**
 - **Fully playable multi-employee farming simulation**
@@ -99,6 +106,17 @@ Based on the design documentation, the codebase will follow this structure:
 - Starting conditions: $0 cash, $10,000 mandatory loan, $100/day subsidy (30 days)
 - Daily expenses: Employee wages, loan payments, utilities
 - Dynamic crop pricing ($2-$8 per corn unit)
+
+### Agricultural Systems 🌾 NEW!
+- **Crop Rotation & Soil Health**: Educational agricultural science implementation
+  - **Soil Nutrients**: Nitrogen, Phosphorus, Potassium tracking (0-100 levels)
+  - **Crop Categories**: Heavy feeders (corn), balanced feeders (tomatoes), light feeders (wheat)
+  - **Rotation Bonuses**: Strategic yield bonuses for proper crop sequencing
+  - **Soil Rest**: Fallow periods provide recovery bonuses (+20% yield)
+- **Soil Information Panel**: Click tilled plots to view comprehensive soil data
+  - **Real-time Display**: Soil health, nutrient bars, crop history, rotation recommendations
+  - **Strategic Planning**: Shows bonus calculations for each potential crop type
+  - **UI Integration**: Left-side panel with solid background, event-driven show/hide
 
 ## Development Guidelines
 
@@ -223,3 +241,8 @@ This is a Python/Pygame project with specific technical considerations:
 - Trying save and load system
 - Grid-Based Building ver. 1
 - Updated buildings ver. 1
+- Click-based placement buildings
+- Multicrop, contracts
+- Soil Nutrient System
+- Added soil information panel system
+- added soil information

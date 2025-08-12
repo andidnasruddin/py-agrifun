@@ -418,6 +418,10 @@ class EmployeeManager:
         
         # Add employee-specific click handling later
     
+    def handle_mouse_motion(self, pos: tuple):
+        """Handle mouse motion for building placement preview"""
+        self.grid_manager.handle_mouse_motion(pos)
+    
     def handle_mouse_drag(self, pos: tuple):
         """Handle mouse drag for tile selection"""
         self.grid_manager.handle_mouse_drag(pos)

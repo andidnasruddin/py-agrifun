@@ -21,6 +21,17 @@ class Tile:
         self.soil_quality = 5  # 1-10 scale
         self.water_level = 100  # 0-100 scale
         
+        # Soil Health System - nutrient levels for crop rotation
+        self.soil_nutrients = {
+            'nitrogen': 100,    # Nitrogen level (0-100)
+            'phosphorus': 100,  # Phosphorus level (0-100) 
+            'potassium': 100    # Potassium level (0-100)
+        }
+        
+        # Crop History for rotation bonuses
+        self.crop_history = []  # List of previous crops grown on this tile
+        self.seasons_rested = 0  # Seasons since last crop (for soil rest bonus)
+        
         # Crop information - now supports multiple crop types
         self.current_crop = None  # crop type string or None
         self.growth_stage = 0  # 0-4 for all crops
@@ -100,13 +111,32 @@ class Tile:
         return False
     
     def plant(self, crop_type: str = 'corn'):
-        """Plant a crop"""
+        """Plant a crop with soil health effects and rotation bonuses"""
         if self.can_plant(crop_type):
+            # Calculate rotation bonuses before planting
+            rotation_bonuses = self.calculate_rotation_bonuses(crop_type)
+            
+            # Apply soil effects from planting this crop
+            self.apply_crop_soil_effects(crop_type)
+            
+            # Plant the crop
             self.current_crop = crop_type
             self.terrain_type = 'planted'
             self.growth_stage = 0
             self.days_growing = 0
-            print(f"Planted {crop_type} at ({self.x}, {self.y})")
+            
+            # Store rotation bonuses for later use in harvest
+            self.rotation_bonuses = rotation_bonuses
+            
+            # Print planting info with bonuses
+            crop_name = CROP_TYPES[crop_type]['name']
+            print(f"Planted {crop_name} at ({self.x}, {self.y})")
+            
+            if rotation_bonuses['descriptions']:
+                print(f"  Rotation bonuses: +{rotation_bonuses['yield']*100:.0f}% yield, +{rotation_bonuses['quality']*100:.0f}% quality")
+                for desc in rotation_bonuses['descriptions']:
+                    print(f"    - {desc}")
+            
             return True
         return False
     
@@ -124,8 +154,36 @@ class Tile:
             # Calculate base yield
             yield_amount = base_yield * quality_modifier * water_modifier
             
-            # Apply storage silo yield bonuses if grid manager available
-            if grid_manager:
+            # Apply crop rotation bonuses if available
+            rotation_yield_bonus = 0.0
+            rotation_quality_bonus = 0.0
+            if hasattr(self, 'rotation_bonuses') and self.rotation_bonuses:
+                rotation_yield_bonus = self.rotation_bonuses.get('yield', 0.0)
+                rotation_quality_bonus = self.rotation_bonuses.get('quality', 0.0)
+                yield_amount *= (1.0 + rotation_yield_bonus)
+                
+                if rotation_yield_bonus > 0:
+                    print(f"  Crop rotation bonuses: +{rotation_yield_bonus*100:.0f}% yield")
+            
+            # Apply soil health effects to quality and yield
+            soil_health_level = self.get_soil_health_level()
+            soil_health_multiplier = SOIL_HEALTH_LEVELS[soil_health_level]['bonus_multiplier']
+            yield_amount *= soil_health_multiplier
+            
+            if soil_health_multiplier != 1.0:
+                effect = "bonus" if soil_health_multiplier > 1.0 else "penalty"
+                print(f"  Soil health ({soil_health_level}): {soil_health_multiplier*100:.0f}% {effect}")
+            
+            # Apply building-based yield bonuses if grid manager available
+            if grid_manager and hasattr(grid_manager, 'building_manager') and grid_manager.building_manager:
+                # Use the unified spatial benefits system from building manager
+                final_yield = grid_manager.building_manager.calculate_crop_yield_at(self.x, self.y, int(yield_amount))
+                if final_yield > yield_amount:
+                    bonus_percent = int(((final_yield / yield_amount) - 1.0) * 100)
+                    print(f"  Building bonuses: +{bonus_percent}% yield at ({self.x}, {self.y})")
+                yield_amount = final_yield
+            else:
+                # Fallback to legacy storage silo bonus system for compatibility
                 silo_bonus = self._calculate_storage_silo_bonus(grid_manager)
                 yield_amount *= (1.0 + silo_bonus)
                 if silo_bonus > 0:
@@ -153,6 +211,98 @@ class Tile:
                 return 0.10  # +10% yield bonus
         
         return 0.0  # No bonus
+    
+    def get_soil_health_level(self) -> str:
+        """Get overall soil health level based on nutrient levels"""
+        # Calculate average soil nutrient level
+        avg_nutrients = sum(self.soil_nutrients.values()) / len(self.soil_nutrients)
+        
+        # Determine health level based on average
+        for level, data in SOIL_HEALTH_LEVELS.items():
+            if avg_nutrients >= data['min']:
+                return level
+        return 'depleted'
+    
+    def get_soil_health_color(self) -> tuple:
+        """Get color for soil health visualization"""
+        health_level = self.get_soil_health_level()
+        return SOIL_HEALTH_LEVELS[health_level]['color']
+    
+    def apply_crop_soil_effects(self, crop_type: str):
+        """Apply soil nutrient changes when a crop is planted"""
+        if crop_type not in CROP_SOIL_EFFECTS:
+            return
+        
+        effects = CROP_SOIL_EFFECTS[crop_type]
+        
+        # Apply nutrient depletion
+        for nutrient, amount in effects['depletes'].items():
+            if nutrient in self.soil_nutrients:
+                self.soil_nutrients[nutrient] = max(0, self.soil_nutrients[nutrient] - amount)
+        
+        # Apply nutrient restoration (for future nitrogen-fixing crops)
+        for nutrient, amount in effects['restores'].items():
+            if nutrient in self.soil_nutrients:
+                self.soil_nutrients[nutrient] = min(100, self.soil_nutrients[nutrient] + amount)
+        
+        # Update crop history
+        self.crop_history.append(crop_type)
+        # Keep only last 3 crops for rotation analysis
+        if len(self.crop_history) > 3:
+            self.crop_history.pop(0)
+        
+        # Reset resting seasons
+        self.seasons_rested = 0
+        
+        print(f"Tile ({self.x}, {self.y}): Applied {crop_type} soil effects - Nutrients now N:{self.soil_nutrients['nitrogen']} P:{self.soil_nutrients['phosphorus']} K:{self.soil_nutrients['potassium']}")
+    
+    def calculate_rotation_bonuses(self, crop_type: str) -> dict:
+        """Calculate rotation bonuses for planting this crop type"""
+        bonuses = {'yield': 0.0, 'quality': 0.0, 'descriptions': []}
+        
+        if not crop_type or crop_type not in CROP_TYPES:
+            return bonuses
+        
+        # Check for soil rest bonus
+        if self.seasons_rested >= 1:  # At least one season of rest
+            rest_bonus = ROTATION_BONUSES['soil_rest']
+            if crop_type in rest_bonus['applicable_to']:
+                bonuses['yield'] += rest_bonus['yield_bonus']
+                bonuses['quality'] += rest_bonus['quality_bonus']
+                bonuses['descriptions'].append(rest_bonus['description'])
+        
+        # Check for crop rotation bonuses
+        if len(self.crop_history) >= 1:
+            last_crop = self.crop_history[-1]
+            last_crop_category = CROP_SOIL_EFFECTS.get(last_crop, {}).get('category', '')
+            
+            # After heavy feeder bonus
+            if last_crop_category == 'heavy_feeder':
+                rotation_bonus = ROTATION_BONUSES['after_heavy_feeder']
+                if crop_type in rotation_bonus['applicable_to']:
+                    bonuses['yield'] += rotation_bonus['yield_bonus']
+                    bonuses['quality'] += rotation_bonus['quality_bonus']
+                    bonuses['descriptions'].append(rotation_bonus['description'])
+        
+        # Check for diverse rotation bonus
+        if len(self.crop_history) >= 2:
+            recent_crops = set(self.crop_history[-2:])  # Last 2 crops
+            if crop_type not in recent_crops:  # Different from recent crops
+                diverse_bonus = ROTATION_BONUSES['diverse_rotation']
+                if crop_type in diverse_bonus['applicable_to']:
+                    bonuses['yield'] += diverse_bonus['yield_bonus']
+                    bonuses['quality'] += diverse_bonus['quality_bonus']
+                    bonuses['descriptions'].append(diverse_bonus['description'])
+        
+        return bonuses
+    
+    def rest_soil(self):
+        """Let soil rest for a season (called when tile is not planted)"""
+        # Gradually restore nutrients when soil rests
+        for nutrient in self.soil_nutrients:
+            self.soil_nutrients[nutrient] = min(100, self.soil_nutrients[nutrient] + 5)
+        
+        self.seasons_rested += 1
     
     def update_growth(self, days_passed: float):
         """Update crop growth for any crop type"""
@@ -239,9 +389,16 @@ class GridManager:
         self.drag_start_pos: Optional[Tuple[int, int]] = None
         self.drag_current_pos: Optional[Tuple[int, int]] = None
         
+        # Building placement preview state
+        self.building_placement_preview = False
+        self.preview_building_type = None
+        self.preview_tile = None
+        
         # Register for events
         self.event_system.subscribe('day_passed', self._handle_day_passed)
         self.event_system.subscribe('task_assigned', self._handle_task_assignment)
+        self.event_system.subscribe('building_placement_preview_start', self._handle_preview_start)
+        self.event_system.subscribe('building_placement_preview_stop', self._handle_preview_stop)
         
         print(f"Grid Manager initialized with {GRID_WIDTH}x{GRID_HEIGHT} tiles")
     
@@ -277,17 +434,56 @@ class GridManager:
         return self.get_tile(grid_x, grid_y)
     
     def handle_mouse_down(self, pos: Tuple[int, int], button: int):
-        """Handle mouse button down for tile selection"""
+        """Handle mouse button down for tile selection or building placement"""
         if button == 1:  # Left click
-            self.drag_start_pos = pos
             tile = self.get_tile_at_pixel(*pos)
-            if tile:
-                self._clear_selection()
-                self.selected_tiles = [tile]
-                tile.highlight = True
+            
+            if self.building_placement_preview and tile and self.preview_building_type:
+                # Handle building placement
+                if tile.can_place_building():
+                    # Emit building placement confirmed event
+                    self.event_system.emit('building_placement_confirmed', {
+                        'x': tile.x,
+                        'y': tile.y
+                    })
+                else:
+                    print(f"Cannot place {self.preview_building_type} at ({tile.x}, {tile.y}) - tile not suitable")
+            else:
+                # Normal tile selection
+                self.drag_start_pos = pos
+                if tile:
+                    # Check if this is a single tile click on a tilled plot for soil info panel
+                    if tile.terrain_type == 'tilled' and len(self.selected_tiles) <= 1:
+                        # Emit tile selected event for soil info panel
+                        self.event_system.emit('tile_selected', {
+                            'tile': tile,
+                            'x': tile.x,
+                            'y': tile.y
+                        })
+                    else:
+                        # Emit tile deselected to close any open panels
+                        self.event_system.emit('tile_deselected', {})
+                    
+                    self._clear_selection()
+                    self.selected_tiles = [tile]
+                    tile.highlight = True
+                else:
+                    # Clicked on empty area - deselect and close panels
+                    self.event_system.emit('tile_deselected', {})
+                    self._clear_selection()
+    
+    def handle_mouse_motion(self, pos: Tuple[int, int]):
+        """Handle mouse motion for building placement preview"""
+        if self.building_placement_preview:
+            tile = self.get_tile_at_pixel(*pos)
+            self.preview_tile = tile
     
     def handle_mouse_drag(self, pos: Tuple[int, int]):
         """Handle mouse drag for area selection"""
+        if self.building_placement_preview:
+            # Skip drag selection during building placement
+            return
+            
         if self.drag_start_pos:
             self.drag_current_pos = pos
             self._update_drag_selection()
@@ -414,6 +610,10 @@ class GridManager:
         # Render selection rectangle if dragging
         if self.drag_start_pos and self.drag_current_pos:
             self._render_selection_rectangle(screen)
+        
+        # Render building placement preview
+        if self.building_placement_preview and self.preview_tile:
+            self._render_building_preview(screen)
     
     def _render_task_indicator(self, screen: pygame.Surface, tile: Tile):
         """Render task assignment indicator on tile"""
@@ -547,3 +747,138 @@ class GridManager:
                         interaction_tiles.append((x, y))
         
         return interaction_tiles
+    
+    def _handle_preview_start(self, event_data):
+        """Handle start of building placement preview"""
+        building_type = event_data.get('building_type')
+        if building_type:
+            self.building_placement_preview = True
+            self.preview_building_type = building_type
+            print(f"Grid Manager: Started building placement preview for {building_type}")
+    
+    def _handle_preview_stop(self, event_data):
+        """Handle end of building placement preview"""
+        self.building_placement_preview = False
+        self.preview_building_type = None
+        self.preview_tile = None
+        print("Grid Manager: Stopped building placement preview")
+    
+    def _render_building_preview(self, screen: pygame.Surface):
+        """Render building placement preview overlay"""
+        if not (self.preview_tile and self.preview_building_type):
+            return
+        
+        # Get building colors based on type
+        building_colors = {
+            'storage_silo': (200, 200, 200, 128),      # Light gray
+            'water_cooler': (100, 200, 255, 128),     # Light blue  
+            'tool_shed': (255, 200, 100, 128),        # Light orange
+            'employee_housing': (200, 255, 200, 128)  # Light green
+        }
+        
+        color = building_colors.get(self.preview_building_type, (255, 255, 255, 128))
+        
+        # Check if placement is valid
+        can_place = self.preview_tile.can_place_building()
+        if not can_place:
+            color = (255, 100, 100, 128)  # Red for invalid placement
+        
+        # Create semi-transparent surface for preview
+        preview_surface = pygame.Surface((TILE_SIZE, TILE_SIZE), pygame.SRCALPHA)
+        preview_surface.fill(color)
+        
+        # Draw preview overlay
+        screen.blit(preview_surface, self.preview_tile.rect.topleft)
+        
+        # Draw border
+        border_color = (0, 255, 0) if can_place else (255, 0, 0)
+        pygame.draw.rect(screen, border_color, self.preview_tile.rect, 2)
+        
+        # Draw building effect radius if placement is valid
+        if can_place:
+            self._render_building_effect_radius(screen, self.preview_tile.x, self.preview_tile.y, self.preview_building_type)
+    
+    def _render_building_effect_radius(self, screen: pygame.Surface, center_x: int, center_y: int, building_type: str):
+        """Render visual indicator of building effect radius"""
+        # Define building effect radius and colors for different building types
+        building_effects = {
+            'storage_silo': {
+                'radius': 4,  # Storage silos affect tiles within 4 tiles (Manhattan distance)
+                'color': (255, 255, 0, 60),  # Semi-transparent yellow for crop yield bonus
+                'border_color': (255, 255, 0, 120),  # More opaque yellow border
+                'description': 'Crop Yield +10%'
+            },
+            'tool_shed': {
+                'radius': 3,  # Tool sheds affect tiles within 3 tiles
+                'color': (255, 150, 0, 60),  # Semi-transparent orange for work efficiency
+                'border_color': (255, 150, 0, 120),  # More opaque orange border
+                'description': 'Work Efficiency +15%'
+            },
+            'water_cooler': {
+                'radius': 2,  # Water coolers affect tiles within 2 tiles
+                'color': (0, 150, 255, 60),  # Semi-transparent blue for rest decay reduction
+                'border_color': (0, 150, 255, 120),  # More opaque blue border
+                'description': 'Rest Decay -20%'
+            },
+            'employee_housing': {
+                'radius': 2,  # Employee housing affects tiles within 2 tiles
+                'color': (0, 255, 0, 60),  # Semi-transparent green for trait effectiveness
+                'border_color': (0, 255, 0, 120),  # More opaque green border
+                'description': 'Trait Effectiveness +25%'
+            }
+        }
+        
+        # Get building effect properties or skip if not defined
+        if building_type not in building_effects:
+            return
+        
+        effect = building_effects[building_type]
+        radius = effect['radius']
+        color = effect['color']
+        border_color = effect['border_color']
+        
+        # Create surface for effect radius visualization
+        effect_surface = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.SRCALPHA)
+        
+        # Draw effect area using Manhattan distance (diamond shape)
+        # Loop through all tiles within the maximum possible radius
+        for dy in range(-radius, radius + 1):
+            for dx in range(-radius, radius + 1):
+                # Calculate Manhattan distance from building center
+                manhattan_distance = abs(dx) + abs(dy)
+                
+                # Skip tiles outside the effect radius
+                if manhattan_distance > radius:
+                    continue
+                
+                # Calculate grid coordinates for this tile
+                tile_x = center_x + dx
+                tile_y = center_y + dy
+                
+                # Skip tiles outside the grid boundaries
+                if tile_x < 0 or tile_x >= GRID_WIDTH or tile_y < 0 or tile_y >= GRID_HEIGHT:
+                    continue
+                
+                # Calculate screen pixel coordinates for this tile
+                screen_x = tile_x * TILE_SIZE
+                screen_y = tile_y * TILE_SIZE + 70  # Add UI offset
+                
+                # Draw effect overlay on this tile
+                tile_rect = pygame.Rect(screen_x, screen_y, TILE_SIZE, TILE_SIZE)
+                effect_tile_surface = pygame.Surface((TILE_SIZE, TILE_SIZE), pygame.SRCALPHA)
+                
+                # Use different opacity based on distance (closer = more opaque)
+                distance_opacity = max(30, int(color[3] * (1.0 - manhattan_distance / (radius + 1))))
+                tile_color = (color[0], color[1], color[2], distance_opacity)
+                effect_tile_surface.fill(tile_color)
+                
+                # Draw the effect tile
+                effect_surface.blit(effect_tile_surface, (screen_x, screen_y))
+                
+                # Draw border for tiles at the edge of effect radius
+                if manhattan_distance == radius:
+                    border_rect = pygame.Rect(screen_x, screen_y, TILE_SIZE, TILE_SIZE)
+                    pygame.draw.rect(effect_surface, border_color, border_rect, 1)
+        
+        # Blit the complete effect surface to the main screen
+        screen.blit(effect_surface, (0, 0))

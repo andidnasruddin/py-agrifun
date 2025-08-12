@@ -14,7 +14,7 @@ GRID_HEIGHT = 16
 TILE_SIZE = 32  # pixels per tile
 
 # Game World Settings
-STARTING_CASH = 0
+STARTING_CASH = 100000  # Increased for building feature testing
 FIRST_TIME_LOAN = 10000
 LOAN_INTEREST_RATE = 0.05  # 5% annual
 DAILY_SUBSIDY = 100
@@ -69,6 +69,66 @@ CROP_TYPES = {
 
 # Default crop type for backwards compatibility
 DEFAULT_CROP_TYPE = 'corn'
+
+# Soil Health and Crop Rotation System
+SOIL_NUTRIENTS = {
+    'nitrogen': {'name': 'Nitrogen', 'max': 100},
+    'phosphorus': {'name': 'Phosphorus', 'max': 100},
+    'potassium': {'name': 'Potassium', 'max': 100}
+}
+
+# Crop nutrient effects (depletion and restoration)
+CROP_SOIL_EFFECTS = {
+    'corn': {
+        'depletes': {'nitrogen': 25, 'phosphorus': 15, 'potassium': 20},  # Heavy feeder
+        'restores': {},
+        'category': 'heavy_feeder',
+        'description': 'Heavy feeder - depletes soil nutrients significantly'
+    },
+    'tomatoes': {
+        'depletes': {'nitrogen': 15, 'phosphorus': 20, 'potassium': 15},  # Balanced consumption
+        'restores': {},
+        'category': 'balanced_feeder', 
+        'description': 'Balanced feeder - moderate nutrient consumption'
+    },
+    'wheat': {
+        'depletes': {'nitrogen': 10, 'phosphorus': 8, 'potassium': 12},   # Light feeder
+        'restores': {},
+        'category': 'light_feeder',
+        'description': 'Light feeder - minimal nutrient depletion'
+    }
+}
+
+# Crop rotation bonuses (educational agricultural principles)
+ROTATION_BONUSES = {
+    'after_heavy_feeder': {
+        'applicable_to': ['wheat', 'tomatoes'],  # Light feeders benefit after heavy feeders
+        'yield_bonus': 0.15,  # +15% yield
+        'quality_bonus': 0.10,  # +10% quality
+        'description': 'Crop rotation bonus: Following heavy feeder with light feeder'
+    },
+    'diverse_rotation': {
+        'applicable_to': ['corn', 'tomatoes', 'wheat'],  # Any crop in diverse rotation
+        'yield_bonus': 0.08,  # +8% yield  
+        'quality_bonus': 0.05,  # +5% quality
+        'description': 'Diverse rotation bonus: Growing different crop types builds soil health'
+    },
+    'soil_rest': {
+        'applicable_to': ['corn', 'tomatoes', 'wheat'],  # Any crop after soil rest
+        'yield_bonus': 0.20,  # +20% yield
+        'quality_bonus': 0.15,  # +15% quality  
+        'description': 'Soil rest bonus: Letting land recover between plantings'
+    }
+}
+
+# Soil health thresholds for visual/gameplay feedback
+SOIL_HEALTH_LEVELS = {
+    'excellent': {'min': 80, 'color': (100, 255, 100), 'bonus_multiplier': 1.1},
+    'good': {'min': 60, 'color': (150, 255, 150), 'bonus_multiplier': 1.0},
+    'fair': {'min': 40, 'color': (255, 255, 100), 'bonus_multiplier': 0.95},
+    'poor': {'min': 20, 'color': (255, 150, 100), 'bonus_multiplier': 0.85},
+    'depleted': {'min': 0, 'color': (255, 100, 100), 'bonus_multiplier': 0.7}
+}
 
 # Legacy constants for backwards compatibility
 CORN_GROWTH_STAGES = GROWTH_STAGES
