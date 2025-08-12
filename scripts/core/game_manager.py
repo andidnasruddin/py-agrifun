@@ -59,6 +59,7 @@ from scripts.economy.economy_manager import EconomyManager
 from scripts.buildings.building_manager import BuildingManager
 from scripts.ui.ui_manager import UIManager
 from scripts.core.save_manager import SaveManager
+from scripts.contracts.contract_manager import ContractManager
 
 
 class GameManager:
@@ -83,7 +84,9 @@ class GameManager:
         self.grid_manager.time_manager = self.time_manager
         self.inventory_manager = InventoryManager(self.event_system)
         self.economy_manager = EconomyManager(self.event_system)
-        self.building_manager = BuildingManager(self.event_system, self.economy_manager, self.inventory_manager)
+        self.building_manager = BuildingManager(self.event_system, self.economy_manager, self.inventory_manager, self.grid_manager)
+        # Connect grid manager to building manager for spatial benefits integration
+        self.grid_manager.building_manager = self.building_manager
         # Create employee manager first, then hiring system that uses it
         self.employee_manager = EmployeeManager(self.event_system, self.grid_manager, time_manager=self.time_manager)
         # Initialize simple hiring system for employee recruitment  
@@ -97,6 +100,9 @@ class GameManager:
         
         self.ui_manager = UIManager(self.event_system, self.screen)
         
+        # Initialize contract system (after economy, time, and inventory systems)
+        self.contract_manager = ContractManager(self.event_system, self.economy_manager, self.time_manager, self.inventory_manager)
+        
         # Initialize save/load system (after all other systems)
         self.save_manager = SaveManager(self.event_system, self)
         
@@ -105,6 +111,15 @@ class GameManager:
         
         # Register for hiring events (connect interview system to employee manager)
         self.event_system.subscribe('hire_applicant_confirmed', self._handle_hire_confirmed)
+        
+        # Building placement state
+        self.building_placement_mode = False
+        self.pending_building_type = None
+        
+        # Register for building placement events
+        self.event_system.subscribe('enter_building_placement_mode', self._handle_enter_placement_mode)
+        self.event_system.subscribe('exit_building_placement_mode', self._handle_exit_placement_mode)
+        self.event_system.subscribe('building_placement_confirmed', self._handle_building_placement_confirmed)
         
         print("Game initialized successfully!")
     
@@ -139,12 +154,20 @@ class GameManager:
             if event.type == pygame.MOUSEBUTTONDOWN:
                 self.employee_manager.handle_mouse_click(event.pos, event.button)
             elif event.type == pygame.MOUSEMOTION:
-                if any(pygame.mouse.get_pressed()):
+                # Always handle motion for building placement preview
+                self.employee_manager.handle_mouse_motion(event.pos)
+                
+                # Handle drag selection only when mouse is pressed and not in building placement mode
+                if any(pygame.mouse.get_pressed()) and not self.building_placement_mode:
                     self.employee_manager.handle_mouse_drag(event.pos)
             elif event.type == pygame.MOUSEBUTTONUP:
                 self.employee_manager.handle_mouse_up(event.pos, event.button)
             elif event.type == pygame.KEYDOWN:
-                self.employee_manager.handle_keyboard_input(event.key)
+                # Check for building placement cancellation
+                if event.key == pygame.K_ESCAPE and self.building_placement_mode:
+                    self.event_system.emit('exit_building_placement_mode', {})
+                else:
+                    self.employee_manager.handle_keyboard_input(event.key)
     
     def _update(self, dt):
         """Update all game systems"""
@@ -153,6 +176,7 @@ class GameManager:
         self.grid_manager.update(dt)
         self.inventory_manager.update(dt)
         self.building_manager.update(dt)
+        self.contract_manager.update(dt)
         # Update hiring system for any time-based operations
         self.hiring_system.update(dt)
         self.employee_manager.update(dt)
@@ -185,3 +209,49 @@ class GameManager:
         """Handle confirmed hiring request - temporarily disabled"""
         # NOTE: Interview system temporarily removed for debugging
         print("Interview system temporarily disabled - hire request ignored")
+    
+    def _handle_enter_placement_mode(self, event_data):
+        """Handle entering building placement mode"""
+        building_type = event_data.get('building_type')
+        if building_type:
+            self.building_placement_mode = True
+            self.pending_building_type = building_type
+            
+            # Notify grid manager to show placement preview
+            self.event_system.emit('building_placement_preview_start', {
+                'building_type': building_type
+            })
+            
+            print(f"Entered building placement mode for {building_type}")
+    
+    def _handle_exit_placement_mode(self, event_data):
+        """Handle exiting building placement mode"""
+        if self.building_placement_mode:
+            self.building_placement_mode = False
+            building_type = self.pending_building_type
+            self.pending_building_type = None
+            
+            # Notify grid manager to hide placement preview
+            self.event_system.emit('building_placement_preview_stop', {})
+            
+            print(f"Exited building placement mode for {building_type}")
+    
+    def _handle_building_placement_confirmed(self, event_data):
+        """Handle confirmed building placement at specific location"""
+        if not self.building_placement_mode or not self.pending_building_type:
+            return
+            
+        x = event_data.get('x')
+        y = event_data.get('y')
+        building_type = self.pending_building_type
+        
+        if x is not None and y is not None:
+            # Try to purchase building at specified location
+            success = self.building_manager.purchase_building_at(building_type, x, y)
+            
+            if success:
+                # Exit placement mode on successful placement
+                self.event_system.emit('exit_building_placement_mode', {})
+                print(f"Successfully placed {building_type} at ({x}, {y})")
+            else:
+                print(f"Failed to place {building_type} at ({x}, {y})")

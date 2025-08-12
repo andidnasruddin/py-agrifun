@@ -177,9 +177,24 @@ class Employee:
             if "hard_worker" in self.traits:
                 rest_decay *= 0.95  # 5% less drain
                 
-            # Water cooler work duration bonus
-            if grid_manager and self._has_nearby_water_cooler(grid_manager):
-                rest_decay *= 0.80  # 20% less rest drain (work 20% longer)
+            # Apply building-based rest decay bonuses if building manager available
+            if grid_manager and hasattr(grid_manager, 'building_manager') and grid_manager.building_manager:
+                # Get current tile position for spatial benefits calculation
+                current_x = int(round(self.x))
+                current_y = int(round(self.y))
+                
+                # Get spatial benefits including rest decay modifiers
+                benefits = grid_manager.building_manager.get_spatial_benefits_at(current_x, current_y)
+                rest_decay *= benefits['rest_decay_multiplier']
+                
+                # Print debug info if rest decay is reduced
+                if benefits['rest_decay_multiplier'] < 1.0:
+                    reduction_percent = int((1.0 - benefits['rest_decay_multiplier']) * 100)
+                    print(f"Employee {self.name}: -{reduction_percent}% rest decay from nearby buildings")
+            else:
+                # Fallback to legacy water cooler check for compatibility
+                if grid_manager and self._has_nearby_water_cooler(grid_manager):
+                    rest_decay *= 0.80  # 20% less rest drain (work 20% longer)
                 
         elif self.state == EmployeeState.RESTING:
             rest_decay = -REST_DECAY_RATE * 2 * hours_passed  # Restore rest
@@ -290,13 +305,13 @@ class Employee:
         
         if self.state_timer >= work_time_needed:
             # Complete the work on this tile
-            if self._perform_work_on_tile(tile):
+            if self._perform_work_on_tile(tile, grid_manager):
                 self._complete_current_tile()
             else:
                 # Work failed, skip tile
                 self._complete_current_tile()
     
-    def _perform_work_on_tile(self, tile) -> bool:
+    def _perform_work_on_tile(self, tile, grid_manager) -> bool:
         """Perform the assigned work on a tile"""
         if not self.current_task:
             return False
@@ -580,13 +595,25 @@ class Employee:
             print(f"  Accessed storage silo")
     
     def _has_nearby_water_cooler(self, grid_manager) -> bool:
-        """Check if there's a water cooler within 3 tiles for work duration bonus"""
-        water_coolers = grid_manager.find_buildings_of_type('water_cooler')
-        for cooler_x, cooler_y in water_coolers:
-            distance = abs(self.x - cooler_x) + abs(self.y - cooler_y)
-            if distance <= 3.0:  # Within 3 tiles
-                return True
-        return False
+        """Check if there's a water cooler within range for work duration bonus"""
+        # Use unified spatial benefits system if available
+        if hasattr(grid_manager, 'building_manager') and grid_manager.building_manager:
+            # Get current tile position for spatial benefits calculation
+            current_x = int(round(self.x))
+            current_y = int(round(self.y))
+            
+            # Check if spatial benefits include rest decay reduction (indicates water cooler nearby)
+            benefits = grid_manager.building_manager.get_spatial_benefits_at(current_x, current_y)
+            return benefits['rest_decay_multiplier'] < 1.0
+        else:
+            # Fallback to legacy system
+            if hasattr(grid_manager, 'find_buildings_of_type'):
+                water_coolers = grid_manager.find_buildings_of_type('water_cooler')
+                for cooler_x, cooler_y in water_coolers:
+                    distance = abs(self.x - cooler_x) + abs(self.y - cooler_y)
+                    if distance <= 3.0:  # Within 3 tiles
+                        return True
+            return False
     
     def check_and_seek_building(self):
         """Check if employee should seek a building for their needs"""
@@ -603,22 +630,55 @@ class Employee:
     def _calculate_work_efficiency(self, grid_manager) -> float:
         """Calculate effective work efficiency including building bonuses"""
         # Start with base efficiency (includes traits)
-        efficiency = self.work_efficiency
+        base_efficiency = self.work_efficiency
         
-        # Housing usage bonus (+25% trait effectiveness for hard workers)
-        if self.housing_recently_used and "hard_worker" in self.traits:
-            # Hard worker base gives +10% (1.1x), housing makes it +12.5% (1.125x) total
-            trait_enhancement = 0.025  # Additional 2.5% on top of base 10%
-            efficiency *= (1.0 + trait_enhancement)
+        # Use unified spatial benefits system if building manager is available
+        if hasattr(grid_manager, 'building_manager') and grid_manager.building_manager:
+            # Get current tile position (rounded to integers for building calculations)
+            current_x = int(round(self.x))
+            current_y = int(round(self.y))
             
-        # Check for nearby tool sheds (within 3 tiles)
-        tool_sheds = grid_manager.find_buildings_of_type('tool_shed')
-        for shed_x, shed_y in tool_sheds:
-            # Calculate distance to tool shed
-            distance = abs(self.x - shed_x) + abs(self.y - shed_y)  # Manhattan distance
-            if distance <= 3.0:  # Within 3 tiles
-                efficiency *= 1.15  # +15% efficiency bonus
-                print(f"Employee {self.name}: +15% efficiency bonus from tool shed at ({shed_x}, {shed_y})")
-                break  # Only one tool shed bonus applies
-        
-        return efficiency
+            # Calculate efficiency using spatial benefits system
+            final_efficiency = grid_manager.building_manager.calculate_work_efficiency_at(
+                current_x, current_y, base_efficiency
+            )
+            
+            # Get spatial benefits for trait effectiveness calculation
+            benefits = grid_manager.building_manager.get_spatial_benefits_at(current_x, current_y)
+            
+            # Apply housing trait effectiveness bonus for hard workers
+            if self.housing_recently_used and "hard_worker" in self.traits:
+                trait_multiplier = benefits['trait_effectiveness_multiplier']
+                if trait_multiplier > 1.0:
+                    # Hard worker base gives +10% (1.1x), housing makes it stronger
+                    # Calculate additional trait bonus based on building effectiveness
+                    additional_trait_bonus = (trait_multiplier - 1.0) * 0.1  # Scale the 10% bonus
+                    final_efficiency *= (1.0 + additional_trait_bonus)
+                    print(f"Employee {self.name}: +{additional_trait_bonus*100:.1f}% trait effectiveness from housing")
+            
+            # Print debug info if bonuses are applied
+            if final_efficiency > base_efficiency:
+                total_bonus_percent = int(((final_efficiency / base_efficiency) - 1.0) * 100)
+                print(f"Employee {self.name}: +{total_bonus_percent}% total efficiency from buildings")
+            
+            return final_efficiency
+        else:
+            # Fallback to legacy system if building manager not available
+            efficiency = base_efficiency
+            
+            # Housing usage bonus (+25% trait effectiveness for hard workers) - legacy fallback
+            if self.housing_recently_used and "hard_worker" in self.traits:
+                trait_enhancement = 0.025  # Additional 2.5% on top of base 10%
+                efficiency *= (1.0 + trait_enhancement)
+                
+            # Legacy tool shed check - fallback for compatibility
+            if hasattr(grid_manager, 'find_buildings_of_type'):
+                tool_sheds = grid_manager.find_buildings_of_type('tool_shed')
+                for shed_x, shed_y in tool_sheds:
+                    distance = abs(self.x - shed_x) + abs(self.y - shed_y)  # Manhattan distance
+                    if distance <= 3.0:  # Within 3 tiles
+                        efficiency *= 1.15  # +15% efficiency bonus
+                        print(f"Employee {self.name}: +15% efficiency bonus from tool shed (legacy)")
+                        break  # Only one tool shed bonus applies
+            
+            return efficiency

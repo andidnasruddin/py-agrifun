@@ -52,18 +52,21 @@ class InventoryManager:
         
         # Crop storage - organized by crop type
         self.crops: Dict[str, List[CropEntry]] = {
-            'corn': []
+            'corn': [],
+            'tomatoes': [],
+            'wheat': []
         }
         
         # Storage capacity (can be upgraded with buildings)
-        self.storage_capacity = 100  # Total units across all crops
+        self.storage_capacity = 1000  # Total units across all crops (increased for testing)
         self.current_storage = 0
         
         # Register for events
         self.event_system.subscribe('crop_harvested', self._handle_crop_harvest)
         self.event_system.subscribe('sell_crops_requested', self._handle_sell_request)
+        self.event_system.subscribe('get_full_inventory_status', self._handle_full_inventory_request)
         
-        print("Inventory Manager initialized - Storage capacity: 100 units")
+        print("Inventory Manager initialized - Storage capacity: 1000 units")
     
     def add_crop(self, crop_type: str, quantity: int, quality: float = 1.0, harvest_day: int = 1) -> bool:
         """
@@ -290,6 +293,19 @@ class InventoryManager:
                     'quantity': quantity,
                     'revenue': revenue
                 })
+    
+    def _handle_full_inventory_request(self, event_data):
+        """Handle request for full inventory status from UI"""
+        # Get quantities for all crop types
+        inventory_status = {
+            'corn': self.get_crop_count('corn'),
+            'tomatoes': self.get_crop_count('tomatoes'), 
+            'wheat': self.get_crop_count('wheat'),
+            'storage_capacity': self.storage_capacity
+        }
+        
+        # Emit the inventory status
+        self.event_system.emit('full_inventory_status', inventory_status)
     
     def update(self, dt: float):
         """Update inventory (future: handle spoilage, etc.)"""

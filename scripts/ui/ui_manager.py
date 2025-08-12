@@ -40,6 +40,7 @@ class UIManager:
         self.event_system.subscribe('time_updated', self._handle_time_update)
         self.event_system.subscribe('money_changed', self._handle_money_update)
         self.event_system.subscribe('inventory_updated', self._handle_inventory_update)
+        self.event_system.subscribe('full_inventory_status', self._handle_full_inventory_update)
         self.event_system.subscribe('task_assigned_feedback', self._handle_task_feedback)
         self.event_system.subscribe('task_assignment_failed', self._handle_task_failure)
         self.event_system.subscribe('building_purchased', self._handle_building_purchase)
@@ -58,12 +59,27 @@ class UIManager:
         self.event_system.subscribe('employee_status_update', self._handle_employee_status_update)
         self.event_system.subscribe('day_passed', self._handle_day_passed)
         self.event_system.subscribe('get_current_crop_type_requested', self._handle_crop_type_request)
+        # Contract-related event subscriptions
+        self.event_system.subscribe('contract_data_for_ui', self._handle_contract_data_received)
+        self.event_system.subscribe('contract_accepted', self._handle_contract_accepted)
+        self.event_system.subscribe('contracts_updated', self._handle_contracts_updated)
+        self.event_system.subscribe('contract_completed', self._handle_contract_completed)
         
         # Track current day for expiration calculations
         self._current_day = 1
         
         # Panel state management
         self._applicant_panel_exists = False  # Track if applicant panel is created
+        self._contract_panel_exists = False  # Track if contract panel is created
+        
+        # Contract panel state
+        self.current_available_contracts = []
+        self.current_active_contracts = []
+        self.contract_table_rows = []
+        self.contract_buttons = []
+        
+        # Request initial inventory status
+        self.event_system.emit('get_full_inventory_status', {})
         
         print("UI Manager initialized with pygame-gui")
     
@@ -83,17 +99,17 @@ class UIManager:
             container=self.resource_panel
         )
         
-        # Inventory display
+        # Multi-crop inventory display
         self.inventory_label = pygame_gui.elements.UILabel(
-            relative_rect=pygame.Rect(165, 10, 150, 40),
-            text="Corn: 0/100",
+            relative_rect=pygame.Rect(165, 10, 200, 40),
+            text="C:0 T:0 W:0 / 1000",
             manager=self.gui_manager,
             container=self.resource_panel
         )
         
         # Time display
         self.time_label = pygame_gui.elements.UILabel(
-            relative_rect=pygame.Rect(320, 10, 150, 40),
+            relative_rect=pygame.Rect(375, 10, 150, 40),
             text="Day 1 - 5:00 AM",
             manager=self.gui_manager,
             container=self.resource_panel
@@ -262,10 +278,18 @@ class UIManager:
         )
         
         self.view_payroll_button = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect(10, employee_section_y + 55, 220, 25),
-            text="View Employee Roster & Payroll",
+            relative_rect=pygame.Rect(10, employee_section_y + 55, 110, 25),
+            text="View Roster",
             manager=self.gui_manager,
             container=self.control_panel
+        )
+        
+        self.view_contracts_button = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect(125, employee_section_y + 55, 105, 25),
+            text="View Contracts",
+            manager=self.gui_manager,
+            container=self.control_panel,
+            tool_tip_text="View available farming contracts and manage agreements"
         )
         
         # Real-time employee status display (adjusted)
@@ -482,24 +506,24 @@ class UIManager:
                     'price_per_unit': 5.0  # Use average price for testing
                 })
             elif event.ui_element == self.buy_silo_button:
-                # Purchase storage silo
-                self.event_system.emit('purchase_building_requested', {
-                    'building_id': 'storage_silo'
+                # Enter placement mode for storage silo
+                self.event_system.emit('enter_building_placement_mode', {
+                    'building_type': 'storage_silo'
                 })
             elif event.ui_element == self.buy_water_cooler_button:
-                # Purchase water cooler
-                self.event_system.emit('purchase_building_requested', {
-                    'building_id': 'water_cooler'
+                # Enter placement mode for water cooler
+                self.event_system.emit('enter_building_placement_mode', {
+                    'building_type': 'water_cooler'
                 })
             elif event.ui_element == self.buy_tool_shed_button:
-                # Purchase tool shed
-                self.event_system.emit('purchase_building_requested', {
-                    'building_id': 'tool_shed'
+                # Enter placement mode for tool shed
+                self.event_system.emit('enter_building_placement_mode', {
+                    'building_type': 'tool_shed'
                 })
             elif event.ui_element == self.buy_housing_button:
-                # Purchase employee housing
-                self.event_system.emit('purchase_building_requested', {
-                    'building_id': 'employee_housing'
+                # Enter placement mode for employee housing
+                self.event_system.emit('enter_building_placement_mode', {
+                    'building_type': 'employee_housing'
                 })
             elif event.ui_element == self.hire_employee_button:
                 # Request generation of new applicants for hiring
@@ -512,10 +536,17 @@ class UIManager:
             elif event.ui_element == self.view_payroll_button:
                 # Request employee roster and payroll info
                 self.event_system.emit('show_employee_roster_requested', {})
+            elif event.ui_element == self.view_contracts_button:
+                # Show contract board
+                self._show_contract_board()
             elif (hasattr(self, 'close_applicant_panel_button') and 
                   event.ui_element == self.close_applicant_panel_button):
                 print("DEBUG: Close applicant panel button clicked")  # Debug logging for panel close
                 self._destroy_applicant_panel()  # Destroy the applicant selection panel
+            elif (hasattr(self, 'close_contract_panel_button') and 
+                  event.ui_element == self.close_contract_panel_button):
+                print("Contract panel: Close button clicked")
+                self._destroy_contract_panel()  # Destroy the contract management panel
             elif event.ui_element == self.cancel_tasks_button:
                 # Cancel tasks on selected tiles
                 self.event_system.emit('cancel_tasks_requested', {})
@@ -545,6 +576,17 @@ class UIManager:
                     # Direct hire the selected applicant
                     self.event_system.emit('hire_applicant_requested', {'applicant_id': applicant_id})
                     self._destroy_applicant_panel()
+            # Handle contract accept buttons
+            elif hasattr(event.ui_element, 'contract_id') and hasattr(event.ui_element, 'action_type'):
+                contract_id = event.ui_element.contract_id
+                action_type = event.ui_element.action_type
+                
+                if action_type == 'accept_contract':
+                    # Accept the selected contract
+                    print(f"UI: Accepting contract {contract_id}")
+                    self.event_system.emit('accept_contract_requested', {'contract_id': contract_id})
+                    # Refresh the panel to show updated data
+                    self.event_system.emit('get_contract_data_for_ui', {})
             # Handle legacy applicant hire buttons (for backward compatibility)
             elif hasattr(event.ui_element, 'applicant_id'):
                 # Legacy direct hire
@@ -653,12 +695,18 @@ class UIManager:
     
     def _handle_inventory_update(self, event_data):
         """Handle inventory change events"""
-        crop_type = event_data.get('crop_type', 'corn')
-        total_quantity = event_data.get('total_quantity', 0)
+        # Request full inventory status to update all crop displays
+        self.event_system.emit('get_full_inventory_status', {})
+    
+    def _handle_full_inventory_update(self, event_data):
+        """Handle full inventory status update for all crops"""
+        corn_qty = event_data.get('corn', 0)
+        tomatoes_qty = event_data.get('tomatoes', 0)
+        wheat_qty = event_data.get('wheat', 0)
         storage_capacity = event_data.get('storage_capacity', 100)
         
-        if crop_type == 'corn':
-            self.inventory_label.set_text(f"Corn: {total_quantity}/{storage_capacity}")
+        # Update inventory display with compact format: C:corn T:tomatoes W:wheat / capacity
+        self.inventory_label.set_text(f"C:{corn_qty} T:{tomatoes_qty} W:{wheat_qty} / {storage_capacity}")
     
     def toggle_debug(self):
         """Toggle debug info display"""
@@ -908,12 +956,8 @@ class UIManager:
     
     def _handle_storage_upgrade(self, event_data):
         """Handle storage capacity upgrades"""
-        new_capacity = event_data.get('new_capacity', 100)
-        # Update display to show new capacity (with current corn count)
-        current_text = self.inventory_label.text
-        if ':' in current_text:
-            corn_part = current_text.split('/')[0]  # Get "Corn: X" part
-            self.inventory_label.set_text(f"{corn_part}/{new_capacity}")
+        # Request full inventory update to reflect new capacity
+        self.event_system.emit('get_full_inventory_status', {})
     
     def _handle_applicants_generated(self, event_data):
         """Handle when job applicants are generated"""
@@ -1276,3 +1320,322 @@ class UIManager:
     
     # All old startup protection and consistency checking methods removed
     # Panel management is now handled through dynamic creation/destruction
+    
+    def _show_contract_board(self):
+        """Display the contract management board"""
+        print("Contract Board: Requesting contract data from contract manager")
+        
+        # Request contract data and show panel
+        self.event_system.emit('get_contract_data_for_ui', {})
+        
+        # Create the panel if it doesn't exist
+        if not self._contract_panel_exists:
+            self._create_contract_panel()
+        
+        # Show the panel (it will be populated when contract data arrives)
+        if hasattr(self, 'contract_panel'):
+            self.contract_panel.show()
+    
+    def _create_contract_panel(self):
+        """Create the contract management panel"""
+        # Create main panel
+        panel_width = 800
+        panel_height = 600
+        panel_x = (WINDOW_WIDTH - panel_width) // 2
+        panel_y = (WINDOW_HEIGHT - panel_height) // 2
+        
+        self.contract_panel = pygame_gui.elements.UIPanel(
+            relative_rect=pygame.Rect(panel_x, panel_y, panel_width, panel_height),
+            manager=self.gui_manager
+        )
+        
+        # Create title
+        self.contract_panel_title = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect(10, 10, panel_width - 20, 30),
+            text="Contract Management Board",
+            manager=self.gui_manager,
+            container=self.contract_panel
+        )
+        
+        # Create close button
+        self.close_contract_panel_button = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect(panel_width - 80, 10, 70, 30),
+            text="Close",
+            manager=self.gui_manager,
+            container=self.contract_panel
+        )
+        
+        # Create sections for available and active contracts
+        section_height = (panel_height - 100) // 2
+        
+        # Available contracts section
+        self.available_contracts_label = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect(10, 50, 300, 25),
+            text="Available Contracts",
+            manager=self.gui_manager,
+            container=self.contract_panel
+        )
+        
+        self.available_contracts_container = pygame_gui.elements.UIScrollingContainer(
+            relative_rect=pygame.Rect(10, 80, panel_width - 20, section_height),
+            manager=self.gui_manager,
+            container=self.contract_panel
+        )
+        
+        # Active contracts section
+        active_y = 80 + section_height + 20
+        self.active_contracts_label = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect(10, active_y, 300, 25),
+            text="Active Contracts",
+            manager=self.gui_manager,
+            container=self.contract_panel
+        )
+        
+        self.active_contracts_container = pygame_gui.elements.UIScrollingContainer(
+            relative_rect=pygame.Rect(10, active_y + 30, panel_width - 20, section_height - 30),
+            manager=self.gui_manager,
+            container=self.contract_panel
+        )
+        
+        # Initialize empty lists for tracking UI elements
+        self.contract_table_rows = []
+        self.contract_buttons = []
+        
+        # Set state flag
+        self._contract_panel_exists = True
+        print("Contract panel created successfully")
+    
+    def _destroy_contract_panel(self):
+        """Destroy the contract management panel"""
+        if self._contract_panel_exists and hasattr(self, 'contract_panel'):
+            # Clear contract data
+            self._clear_contract_table()
+            
+            # Destroy child elements
+            if hasattr(self, 'contract_panel_title'):
+                self.contract_panel_title.kill()
+            if hasattr(self, 'close_contract_panel_button'):
+                self.close_contract_panel_button.kill()
+            if hasattr(self, 'available_contracts_label'):
+                self.available_contracts_label.kill()
+            if hasattr(self, 'active_contracts_label'):
+                self.active_contracts_label.kill()
+            if hasattr(self, 'available_contracts_container'):
+                self.available_contracts_container.kill()
+            if hasattr(self, 'active_contracts_container'):
+                self.active_contracts_container.kill()
+            
+            # Destroy main panel
+            self.contract_panel.kill()
+            self.contract_panel = None
+            
+            # Reset state flag
+            self._contract_panel_exists = False
+            print("Contract panel destroyed")
+    
+    def _populate_contract_panel(self):
+        """Populate the contract panel with current contract data"""
+        self._clear_contract_table()
+        
+        # Populate available contracts
+        if self.current_available_contracts:
+            for i, contract in enumerate(self.current_available_contracts):
+                self._create_available_contract_row(contract, i)
+        
+        # Populate active contracts
+        if self.current_active_contracts:
+            for i, contract in enumerate(self.current_active_contracts):
+                self._create_active_contract_row(contract, i)
+    
+    def _create_available_contract_row(self, contract, row_index):
+        """Create a row for an available contract"""
+        row_height = 80
+        y_pos = row_index * (row_height + 10)
+        
+        # Create row panel
+        row_panel = pygame_gui.elements.UIPanel(
+            relative_rect=pygame.Rect(0, y_pos, 760, row_height),
+            manager=self.gui_manager,
+            container=self.available_contracts_container
+        )
+        
+        # Contract details
+        crop_name = CROP_TYPES[contract.crop_type]['name']
+        total_value = contract.quantity_required * contract.price_per_unit + contract.bonus_payment
+        
+        # Title line
+        title_text = f"{contract.buyer_name} - {contract.contract_type.value.upper()}"
+        title_label = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect(10, 5, 400, 20),
+            text=title_text,
+            manager=self.gui_manager,
+            container=row_panel
+        )
+        
+        # Details line
+        details_text = f"{contract.quantity_required} {crop_name} @ ${contract.price_per_unit:.2f}/unit (Total: ${total_value:.2f})"
+        details_label = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect(10, 25, 500, 20),
+            text=details_text,
+            manager=self.gui_manager,
+            container=row_panel
+        )
+        
+        # Requirements line
+        quality_req = f"{contract.quality_requirement*100:.0f}%"
+        req_text = f"Quality: {quality_req}+ | Deadline: {contract.deadline_days} days"
+        if contract.bonus_payment > 0:
+            req_text += f" | Bonus: ${contract.bonus_payment:.2f}"
+        req_label = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect(10, 45, 500, 20),
+            text=req_text,
+            manager=self.gui_manager,
+            container=row_panel
+        )
+        
+        # Accept button
+        accept_button = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect(620, 20, 120, 35),
+            text="Accept Contract",
+            manager=self.gui_manager,
+            container=row_panel
+        )
+        accept_button.contract_id = contract.id
+        accept_button.action_type = 'accept_contract'
+        
+        # Store elements for cleanup
+        self.contract_table_rows.append(row_panel)
+        self.contract_buttons.append(accept_button)
+    
+    def _create_active_contract_row(self, contract, row_index):
+        """Create a row for an active contract"""
+        row_height = 80
+        y_pos = row_index * (row_height + 10)
+        
+        # Create row panel
+        row_panel = pygame_gui.elements.UIPanel(
+            relative_rect=pygame.Rect(0, y_pos, 760, row_height),
+            manager=self.gui_manager,
+            container=self.active_contracts_container
+        )
+        
+        # Contract details
+        crop_name = CROP_TYPES[contract.crop_type]['name']
+        total_value = contract.quantity_required * contract.price_per_unit + contract.bonus_payment
+        
+        # Calculate days remaining
+        current_day = getattr(self, '_current_day', 1)
+        days_left = (contract.accepted_day + contract.deadline_days) - current_day
+        
+        # Title line
+        title_text = f"{contract.buyer_name} - {contract.contract_type.value.upper()}"
+        if days_left <= 5:
+            title_text += " ⚠️ URGENT"
+        title_label = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect(10, 5, 400, 20),
+            text=title_text,
+            manager=self.gui_manager,
+            container=row_panel
+        )
+        
+        # Details line
+        details_text = f"Need: {contract.quantity_required} {crop_name} (Value: ${total_value:.2f})"
+        details_label = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect(10, 25, 500, 20),
+            text=details_text,
+            manager=self.gui_manager,
+            container=row_panel
+        )
+        
+        # Status line
+        status_text = f"Days Left: {max(0, days_left)} | Quality: {contract.quality_requirement*100:.0f}%+"
+        if days_left <= 0:
+            status_text = "⚠️ OVERDUE - Penalty incoming!"
+        status_label = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect(10, 45, 500, 20),
+            text=status_text,
+            manager=self.gui_manager,
+            container=row_panel
+        )
+        
+        # Status indicator
+        status_button = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect(620, 20, 120, 35),
+            text="In Progress",
+            manager=self.gui_manager,
+            container=row_panel
+        )
+        status_button.disable()  # Make it non-interactive
+        
+        # Store elements for cleanup
+        self.contract_table_rows.append(row_panel)
+    
+    def _clear_contract_table(self):
+        """Clear all contract table rows and buttons"""
+        for row in self.contract_table_rows:
+            row.kill()
+        self.contract_table_rows.clear()
+        
+        for button in self.contract_buttons:
+            button.kill()
+        self.contract_buttons.clear()
+    
+    def _handle_contract_data_received(self, event_data):
+        """Handle contract data received from contract manager"""
+        self.current_available_contracts = event_data.get('available_contracts', [])
+        self.current_active_contracts = event_data.get('active_contracts', [])
+        
+        print(f"UI: Received {len(self.current_available_contracts)} available and {len(self.current_active_contracts)} active contracts")
+        
+        # Populate the panel if it exists
+        if self._contract_panel_exists and hasattr(self, 'contract_panel'):
+            self._populate_contract_panel()
+    
+    def _handle_contract_accepted(self, event_data):
+        """Handle contract acceptance notification"""
+        contract_id = event_data.get('contract_id', 'Unknown')
+        buyer_name = event_data.get('buyer_name', 'Unknown Buyer')
+        crop_type = event_data.get('crop_type', 'unknown')
+        quantity = event_data.get('quantity', 0)
+        total_value = event_data.get('total_value', 0)
+        
+        crop_name = CROP_TYPES.get(crop_type, {}).get('name', crop_type)
+        if not crop_name:  # Fallback if name is missing
+            crop_name = crop_type
+        message = f"[CONTRACT] Accepted {quantity} {crop_name} for {buyer_name} (${total_value:.2f})"
+        self._add_notification(message, "success")
+        
+        # Refresh contract data
+        self.event_system.emit('get_contract_data_for_ui', {})
+    
+    def _handle_contracts_updated(self, event_data):
+        """Handle contract updates (new contracts generated, etc.)"""
+        available_count = event_data.get('available_count', 0)
+        active_count = event_data.get('active_count', 0)
+        
+        message = f"[CONTRACTS] {available_count} available, {active_count} active contracts"
+        self._add_notification(message, "info")
+        
+        # Refresh contract data if panel is open
+        if self._contract_panel_exists:
+            self.event_system.emit('get_contract_data_for_ui', {})
+    
+    def _handle_contract_completed(self, event_data):
+        """Handle contract completion notification"""
+        contract_id = event_data.get('contract_id', 'Unknown')
+        buyer_name = event_data.get('buyer_name', 'Unknown Buyer')
+        crop_type = event_data.get('crop_type', 'unknown')
+        quantity = event_data.get('quantity', 0)
+        payment = event_data.get('payment', 0)
+        reputation_gained = event_data.get('reputation_gained', 0)
+        new_reputation = event_data.get('new_reputation', 50)
+        
+        crop_name = CROP_TYPES.get(crop_type, {}).get('name', crop_type)
+        if not crop_name:
+            crop_name = crop_type
+            
+        message = f"[CONTRACT COMPLETED] {buyer_name}: ${payment:.2f} for {quantity} {crop_name} (+{reputation_gained} rep)"
+        self._add_notification(message, "success")
+        
+        # Refresh contract data to show updated active contracts
+        self.event_system.emit('get_contract_data_for_ui', {})

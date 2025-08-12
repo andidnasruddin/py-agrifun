@@ -1,0 +1,1 @@
+"""Contracts module for farming simulation game"""
