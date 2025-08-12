@@ -35,6 +35,7 @@ class EmployeeManager:
         self.event_system.subscribe('day_passed', self._handle_day_passed)
         self.event_system.subscribe('get_employee_roster', self._handle_roster_request)
         self.event_system.subscribe('get_employee_count_for_ui', self._handle_ui_count_request)
+        self.event_system.subscribe('get_employee_count', self._handle_employee_count_request)
         self.event_system.subscribe('cancel_tasks_requested', self._handle_cancel_tasks_request)
         self.event_system.subscribe('crop_type_provided', self._handle_crop_type_for_planting)
         
@@ -589,6 +590,12 @@ class EmployeeManager:
     def _handle_ui_count_request(self, event_data):
         """Handle UI request for current employee count"""
         self.event_system.emit('employee_count_update', {
+            'count': len(self.employees)
+        })
+    
+    def _handle_employee_count_request(self, event_data):
+        """Handle generic employee count request for enhanced HUD"""
+        self.event_system.emit('employee_count_changed', {
             'count': len(self.employees)
         })
     

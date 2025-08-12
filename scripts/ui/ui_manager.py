@@ -6,6 +6,7 @@ Uses pygame-gui for advanced UI components with fallback to custom implementatio
 import pygame
 import pygame_gui
 from scripts.core.config import *
+from scripts.ui.enhanced_ui_components import EnhancedTopHUD, DynamicRightPanel
 
 
 class UIManager:
@@ -35,7 +36,24 @@ class UIManager:
         self.notifications = []
         self.notification_timer = 0.0
         
-        # Initialize UI elements
+        # Initialize enhanced UI components
+        self.enhanced_hud = EnhancedTopHUD(self.gui_manager, self.event_system)
+        
+        # Calculate dynamic right panel position (accounting for enhanced HUD height)
+        hud_height = self.enhanced_hud.get_hud_height()
+        panel_y = hud_height + 10  # Add small margin below HUD
+        panel_height = WINDOW_HEIGHT - panel_y - 10  # Leave margin at bottom
+        
+        self.dynamic_right_panel = DynamicRightPanel(
+            self.gui_manager, 
+            self.event_system,
+            x_pos=WINDOW_WIDTH - 290,  # 290px from right edge for 280px wide panel + margin
+            y_pos=panel_y,
+            width=280,
+            height=panel_height
+        )
+        
+        # Initialize traditional UI elements (for gradual transition)
         self._create_ui_elements()  # Create basic UI components like buttons and panels
         # Note: Applicant panel will be created dynamically when needed
         
@@ -102,7 +120,10 @@ class UIManager:
         # Request initial inventory status
         self.event_system.emit('get_full_inventory_status', {})
         
-        print("UI Manager initialized with pygame-gui and improved contrast theme")
+        # Request initial employee count for enhanced HUD
+        self.event_system.emit('get_employee_count', {})
+        
+        print("UI Manager initialized with pygame-gui, enhanced HUD, and improved contrast theme")
     
     def _setup_improved_theme(self):
         """Set up improved theme with better text contrast"""
@@ -811,6 +832,9 @@ class UIManager:
     def update(self, dt):
         """Update UI elements"""
         self.gui_manager.update(dt)  # Update pygame-gui elements
+        
+        # Update enhanced UI components
+        self.enhanced_hud.update(dt)  # Update the enhanced top HUD
         
         # No complex startup protection needed - panels are created dynamically
         
