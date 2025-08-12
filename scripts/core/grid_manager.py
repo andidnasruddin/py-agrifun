@@ -30,6 +30,11 @@ class Tile:
         self.task_assignment = None  # 'till', 'plant', 'harvest', or None
         self.task_assigned_to = None  # Employee ID
         
+        # Building information
+        self.building = None  # Building object if this tile has a building
+        self.building_type = None  # Building type ID for rendering
+        self.is_occupied = False  # True if tile has building or is unusable
+        
         # Visual properties
         self.highlight = False  # For UI selection
         self.rect = pygame.Rect(
@@ -41,7 +46,40 @@ class Tile:
     
     def can_till(self) -> bool:
         """Check if tile can be tilled"""
-        return self.terrain_type == 'soil' and self.current_crop is None
+        return (self.terrain_type == 'soil' and 
+                self.current_crop is None and 
+                not self.is_occupied)
+    
+    def can_place_building(self) -> bool:
+        """Check if a building can be placed on this tile"""
+        return (self.terrain_type == 'soil' and 
+                self.current_crop is None and 
+                not self.is_occupied and 
+                self.building is None)
+    
+    def place_building(self, building_type_id: str, building_object=None):
+        """Place a building on this tile"""
+        if self.can_place_building():
+            self.building_type = building_type_id
+            self.building = building_object
+            self.is_occupied = True
+            self.terrain_type = 'building'
+            return True
+        return False
+    
+    def remove_building(self):
+        """Remove building from this tile"""
+        if self.building:
+            self.building_type = None
+            self.building = None
+            self.is_occupied = False
+            self.terrain_type = 'soil'
+            return True
+        return False
+    
+    def can_interact_with_building(self) -> bool:
+        """Check if this tile's building can be interacted with"""
+        return self.building is not None and self.building_type is not None
     
     def can_plant(self, crop_type: str = 'corn') -> bool:
         """Check if tile can be planted with a crop"""
@@ -72,7 +110,7 @@ class Tile:
             return True
         return False
     
-    def harvest(self) -> Tuple[str, int]:
+    def harvest(self, grid_manager=None) -> Tuple[str, int]:
         """Harvest the crop and return (crop_type, yield)"""
         if self.can_harvest():
             crop_type = self.current_crop
@@ -83,7 +121,15 @@ class Tile:
             quality_modifier = self.soil_quality / 10.0
             water_modifier = self.water_level / 100.0
             
-            yield_amount = int(base_yield * quality_modifier * water_modifier)
+            # Calculate base yield
+            yield_amount = base_yield * quality_modifier * water_modifier
+            
+            # Apply storage silo yield bonuses if grid manager available
+            if grid_manager:
+                silo_bonus = self._calculate_storage_silo_bonus(grid_manager)
+                yield_amount *= (1.0 + silo_bonus)
+                if silo_bonus > 0:
+                    print(f"  Storage silo bonus: +{silo_bonus*100:.0f}% yield at ({self.x}, {self.y})")
             
             # Reset tile after harvest
             self.current_crop = None
@@ -91,9 +137,22 @@ class Tile:
             self.growth_stage = 0
             self.days_growing = 0
             
-            return crop_type, max(1, yield_amount)  # Return crop type and amount
+            return crop_type, max(1, int(yield_amount))  # Return crop type and amount
         
         return None, 0
+    
+    def _calculate_storage_silo_bonus(self, grid_manager) -> float:
+        """Calculate yield bonus from nearby storage silos"""
+        # Check for storage silos within 4 tiles (Manhattan distance)
+        storage_silos = grid_manager.find_buildings_of_type('storage_silo')
+        
+        for silo_x, silo_y in storage_silos:
+            # Calculate Manhattan distance to storage silo
+            distance = abs(self.x - silo_x) + abs(self.y - silo_y)
+            if distance <= 4:  # Within 4 tiles
+                return 0.10  # +10% yield bonus
+        
+        return 0.0  # No bonus
     
     def update_growth(self, days_passed: float):
         """Update crop growth for any crop type"""
@@ -126,8 +185,21 @@ class Tile:
         return self._get_base_color()
     
     def _get_base_color(self) -> Tuple[int, int, int]:
-        """Get base color based on tile state and crop type"""
-        if self.current_crop:
+        """Get base color based on tile state, crop type, and buildings"""
+        # Buildings take priority over everything else
+        if self.building_type:
+            # Different colors for different building types
+            if self.building_type == 'storage_silo':
+                return (128, 128, 128)  # Gray for storage silos
+            elif self.building_type == 'water_cooler':
+                return (100, 150, 255)  # Light blue for water cooler
+            elif self.building_type == 'tool_shed':
+                return (139, 69, 19)    # Brown for tool shed
+            elif self.building_type == 'employee_housing':
+                return (255, 200, 100)  # Light orange for housing
+            else:
+                return (80, 80, 80)     # Dark gray for unknown buildings
+        elif self.current_crop:
             # Different colors for different crop types
             if self.current_crop == 'corn':
                 # Green shades for corn growth stages
@@ -391,3 +463,87 @@ class GridManager:
         task_type = event_data.get('task_type')
         tile_count = event_data.get('tile_count')
         print(f"Assigned {task_type} task to {tile_count} tiles")
+    
+    def place_building_at(self, x: int, y: int, building_type_id: str, building_object=None) -> bool:
+        """Place a building at the specified grid coordinates"""
+        tile = self.get_tile(x, y)
+        if tile and tile.can_place_building():
+            success = tile.place_building(building_type_id, building_object)
+            if success:
+                # Emit building placed event
+                self.event_system.emit('building_placed', {
+                    'x': x,
+                    'y': y,
+                    'building_type': building_type_id,
+                    'building': building_object
+                })
+                print(f"Placed {building_type_id} at ({x}, {y})")
+            return success
+        return False
+    
+    def remove_building_at(self, x: int, y: int) -> bool:
+        """Remove building at the specified grid coordinates"""
+        tile = self.get_tile(x, y)
+        if tile and tile.building:
+            building_type = tile.building_type
+            success = tile.remove_building()
+            if success:
+                # Emit building removed event
+                self.event_system.emit('building_removed', {
+                    'x': x,
+                    'y': y,
+                    'building_type': building_type
+                })
+                print(f"Removed {building_type} from ({x}, {y})")
+            return success
+        return False
+    
+    def get_building_at(self, x: int, y: int):
+        """Get building object at the specified coordinates"""
+        tile = self.get_tile(x, y)
+        return tile.building if tile else None
+    
+    def find_buildings_of_type(self, building_type_id: str) -> List[Tuple[int, int]]:
+        """Find all buildings of a specific type and return their coordinates"""
+        buildings = []
+        for y in range(GRID_HEIGHT):
+            for x in range(GRID_WIDTH):
+                tile = self.grid[y][x]
+                if tile.building_type == building_type_id:
+                    buildings.append((x, y))
+        return buildings
+    
+    def find_nearest_building(self, from_x: int, from_y: int, building_type_id: str) -> Optional[Tuple[int, int]]:
+        """Find the nearest building of a specific type"""
+        buildings = self.find_buildings_of_type(building_type_id)
+        if not buildings:
+            return None
+        
+        min_distance = float('inf')
+        nearest = None
+        
+        for bx, by in buildings:
+            distance = abs(from_x - bx) + abs(from_y - by)  # Manhattan distance
+            if distance < min_distance:
+                min_distance = distance
+                nearest = (bx, by)
+        
+        return nearest
+    
+    def get_building_interaction_tiles(self, building_x: int, building_y: int) -> List[Tuple[int, int]]:
+        """Get adjacent tiles where employees can interact with a building"""
+        interaction_tiles = []
+        # Check all 8 adjacent tiles (including diagonals)
+        for dx in [-1, 0, 1]:
+            for dy in [-1, 0, 1]:
+                if dx == 0 and dy == 0:  # Skip the building tile itself
+                    continue
+                
+                x, y = building_x + dx, building_y + dy
+                if 0 <= x < GRID_WIDTH and 0 <= y < GRID_HEIGHT:
+                    tile = self.get_tile(x, y)
+                    # Employee can interact if tile is not occupied
+                    if tile and not tile.is_occupied:
+                        interaction_tiles.append((x, y))
+        
+        return interaction_tiles

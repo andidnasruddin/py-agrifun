@@ -221,3 +221,5 @@ This is a Python/Pygame project with specific technical considerations:
 - Save/load system implementation (architecture ready)
 - Automated testing infrastructure for regression prevention
 - Trying save and load system
+- Grid-Based Building ver. 1
+- Updated buildings ver. 1

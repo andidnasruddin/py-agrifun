@@ -41,6 +41,8 @@ class BuildingType:
 class Building:
     """Individual building instance"""
     building_type: BuildingType
+    x: int = 0  # Grid X coordinate
+    y: int = 0  # Grid Y coordinate
     level: int = 1
     purchase_day: int = 1
 
@@ -48,11 +50,12 @@ class Building:
 class BuildingManager:
     """Manages farm buildings and upgrades"""
     
-    def __init__(self, event_system, economy_manager, inventory_manager):
+    def __init__(self, event_system, economy_manager, inventory_manager, grid_manager=None):
         """Initialize building manager"""
         self.event_system = event_system
         self.economy_manager = economy_manager
         self.inventory_manager = inventory_manager
+        self.grid_manager = grid_manager
         
         # Building definitions
         self.building_types = {
@@ -63,6 +66,30 @@ class BuildingManager:
                 base_cost=500,  # $500 for first silo
                 benefit_description='+50 storage capacity',
                 max_quantity=5  # Can build up to 5 silos
+            ),
+            'water_cooler': BuildingType(
+                id='water_cooler',
+                name='Water Cooler',
+                description='Employees can restore thirst here',
+                base_cost=200,  # $200 for water cooler
+                benefit_description='Employees can restore thirst',
+                max_quantity=10  # Can build multiple water coolers
+            ),
+            'tool_shed': BuildingType(
+                id='tool_shed',
+                name='Tool Shed',
+                description='Boosts work efficiency in surrounding area',
+                base_cost=300,  # $300 for tool shed
+                benefit_description='+15% work efficiency nearby',
+                max_quantity=8  # Can build multiple tool sheds
+            ),
+            'employee_housing': BuildingType(
+                id='employee_housing',
+                name='Employee Housing',
+                description='Employees can rest and restore energy',
+                base_cost=800,  # $800 for housing
+                benefit_description='Employees can rest here',
+                max_quantity=5  # Can build multiple housing units
             )
         }
         
@@ -72,7 +99,8 @@ class BuildingManager:
         # Register for events
         self.event_system.subscribe('purchase_building_requested', self._handle_purchase_request)
         
-        print("Building Manager initialized - Storage Silo available for $500")
+        print("Building Manager initialized - 4 building types available:")
+        print("  Storage Silo ($500), Water Cooler ($200), Tool Shed ($300), Employee Housing ($800)")
     
     def can_purchase_building(self, building_id: str) -> bool:
         """Check if a building can be purchased"""
@@ -99,9 +127,19 @@ class BuildingManager:
         multiplier = 1.3 ** current_count  # Reduced multiplier makes expansion more viable
         return int(building_type.base_cost * multiplier)
     
-    def purchase_building(self, building_id: str) -> bool:
-        """Purchase a building if possible"""
+    def purchase_building_at(self, building_id: str, x: int, y: int) -> bool:
+        """Purchase a building at specific grid coordinates"""
         if not self.can_purchase_building(building_id):
+            return False
+        
+        # Check if grid manager is available and location is valid
+        if not self.grid_manager:
+            print("Error: Grid manager not available for building placement")
+            return False
+        
+        tile = self.grid_manager.get_tile(x, y)
+        if not tile or not tile.can_place_building():
+            print(f"Cannot place building at ({x}, {y}) - tile not available")
             return False
         
         building_type = self.building_types[building_id]
@@ -111,29 +149,46 @@ class BuildingManager:
         
         # Try to spend money
         if self.economy_manager.spend_money(cost, f"Purchase {building_type.name}", "building"):
-            # Create building
+            # Create building with grid coordinates
             building = Building(
                 building_type=building_type,
+                x=x,
+                y=y,
                 level=1,
                 purchase_day=1  # TODO: Get actual day from time manager
             )
             self.owned_buildings.append(building)
             
-            # Apply building benefits
-            self._apply_building_benefits(building)
-            
-            # Emit purchase event
-            self.event_system.emit('building_purchased', {
-                'building_id': building_id,
-                'building_name': building_type.name,
-                'cost': cost,
-                'total_owned': current_count + 1,
-                'remaining_balance': self.economy_manager.get_current_balance()
-            })
-            
-            print(f"Purchased {building_type.name} for ${cost}")
-            return True
+            # Place building on grid
+            if self.grid_manager.place_building_at(x, y, building_id, building):
+                # Apply building benefits
+                self._apply_building_benefits(building)
+                
+                # Emit purchase event
+                self.event_system.emit('building_purchased', {
+                    'building_id': building_id,
+                    'building_name': building_type.name,
+                    'cost': cost,
+                    'x': x,
+                    'y': y,
+                    'total_owned': current_count + 1,
+                    'remaining_balance': self.economy_manager.get_current_balance()
+                })
+                
+                print(f"Purchased {building_type.name} for ${cost} at ({x}, {y})")
+                return True
+            else:
+                # Failed to place on grid, refund money
+                self.owned_buildings.remove(building)
+                self.economy_manager.add_money(cost, f"Refund {building_type.name}", "refund")
+                print(f"Failed to place {building_type.name} on grid, refunded ${cost}")
+                return False
         
+        return False
+    
+    def purchase_building(self, building_id: str) -> bool:
+        """Legacy method - purchase building without specific location (deprecated)"""
+        print("Warning: purchase_building() without location is deprecated. Use purchase_building_at()")
         return False
     
     def _apply_building_benefits(self, building: Building):
@@ -190,12 +245,30 @@ class BuildingManager:
         
         return summary
     
+    def _find_suitable_location(self) -> tuple:
+        """Find a suitable location for placing a building"""
+        if not self.grid_manager:
+            return (0, 0)  # Default location if no grid manager
+        
+        # Try to find an empty tile, starting from corners and working inward
+        for y in range(GRID_HEIGHT):
+            for x in range(GRID_WIDTH):
+                tile = self.grid_manager.get_tile(x, y)
+                if tile and tile.can_place_building():
+                    return (x, y)
+        
+        # If no suitable location found, return default
+        return (0, 0)
+    
     def _handle_purchase_request(self, event_data):
         """Handle building purchase requests from UI"""
         building_id = event_data.get('building_id')
         
         if building_id:
-            success = self.purchase_building(building_id)
+            # Try to find a suitable location for the building
+            x = event_data.get('x', self._find_suitable_location()[0])
+            y = event_data.get('y', self._find_suitable_location()[1])
+            success = self.purchase_building_at(building_id, x, y)
             
             if success:
                 self.event_system.emit('purchase_successful', {

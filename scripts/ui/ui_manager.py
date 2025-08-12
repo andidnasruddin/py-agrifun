@@ -140,9 +140,9 @@ class UIManager:
             tool_tip_text="Fast speed (5 min = 1 game day)"
         )
         
-        # Main control panel on right side (taller to accommodate save/load buttons)
+        # Main control panel on right side (extra tall for building buttons)
         self.control_panel = pygame_gui.elements.UIPanel(
-            relative_rect=pygame.Rect(WINDOW_WIDTH-250, 70, 240, 450),
+            relative_rect=pygame.Rect(WINDOW_WIDTH-250, 70, 240, 480),
             manager=self.gui_manager
         )
         
@@ -178,8 +178,33 @@ class UIManager:
             tool_tip_text="Purchase storage silo (+50 capacity). Cost increases with each purchase."
         )
         
-        # Save/Load section
-        save_section_y = 100
+        # Interactive building buttons (second row)
+        self.buy_water_cooler_button = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect(10, economy_section_y + 55, 70, 25),
+            text="Water ($200)",
+            manager=self.gui_manager,
+            container=self.control_panel,
+            tool_tip_text="Purchase water cooler ($200). Employees can restore thirst."
+        )
+        
+        self.buy_tool_shed_button = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect(85, economy_section_y + 55, 70, 25),
+            text="Tools ($300)",
+            manager=self.gui_manager,
+            container=self.control_panel,
+            tool_tip_text="Purchase tool shed ($300). +15% work efficiency nearby."
+        )
+        
+        self.buy_housing_button = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect(160, economy_section_y + 55, 70, 25),
+            text="House ($800)",
+            manager=self.gui_manager,
+            container=self.control_panel,
+            tool_tip_text="Purchase employee housing ($800). Employees can rest here."
+        )
+        
+        # Save/Load section (moved down to accommodate building buttons)
+        save_section_y = 130
         self.save_label = pygame_gui.elements.UILabel(
             relative_rect=pygame.Rect(10, save_section_y, 220, 20),
             text="Game State",
@@ -211,8 +236,8 @@ class UIManager:
             tool_tip_text="Open save/load menu with multiple slots"
         )
         
-        # Employee section
-        employee_section_y = 190
+        # Employee section (adjusted for moved save section)
+        employee_section_y = 220
         self.employee_label = pygame_gui.elements.UILabel(
             relative_rect=pygame.Rect(10, employee_section_y, 220, 20),
             text="Employees",
@@ -243,8 +268,8 @@ class UIManager:
             container=self.control_panel
         )
         
-        # Real-time employee status display
-        status_section_y = 280
+        # Real-time employee status display (adjusted)
+        status_section_y = 310
         self.status_label = pygame_gui.elements.UILabel(
             relative_rect=pygame.Rect(10, status_section_y, 220, 15),
             text="Live Status",
@@ -259,8 +284,8 @@ class UIManager:
             container=self.control_panel
         )
         
-        # Keyboard shortcuts section (within main panel)
-        shortcuts_section_y = 395
+        # Keyboard shortcuts section (within main panel, adjusted)
+        shortcuts_section_y = 425
         self.shortcuts_label = pygame_gui.elements.UILabel(
             relative_rect=pygame.Rect(10, shortcuts_section_y, 220, 20),
             text="Keyboard Shortcuts",
@@ -269,7 +294,7 @@ class UIManager:
         )
         
         
-        # Crop selection section
+        # Crop selection section (adjusted)
         crop_section_y = shortcuts_section_y - 85
         self.crop_selection_label = pygame_gui.elements.UILabel(
             relative_rect=pygame.Rect(10, crop_section_y, 220, 15),
@@ -298,7 +323,7 @@ class UIManager:
             tool_tip_text="View detailed crop information and growth times"
         )
 
-        # Task control buttons
+        # Task control buttons (adjusted)
         task_controls_y = shortcuts_section_y - 35
         self.task_controls_label = pygame_gui.elements.UILabel(
             relative_rect=pygame.Rect(10, task_controls_y, 220, 15),
@@ -460,6 +485,21 @@ class UIManager:
                 # Purchase storage silo
                 self.event_system.emit('purchase_building_requested', {
                     'building_id': 'storage_silo'
+                })
+            elif event.ui_element == self.buy_water_cooler_button:
+                # Purchase water cooler
+                self.event_system.emit('purchase_building_requested', {
+                    'building_id': 'water_cooler'
+                })
+            elif event.ui_element == self.buy_tool_shed_button:
+                # Purchase tool shed
+                self.event_system.emit('purchase_building_requested', {
+                    'building_id': 'tool_shed'
+                })
+            elif event.ui_element == self.buy_housing_button:
+                # Purchase employee housing
+                self.event_system.emit('purchase_building_requested', {
+                    'building_id': 'employee_housing'
                 })
             elif event.ui_element == self.hire_employee_button:
                 # Request generation of new applicants for hiring

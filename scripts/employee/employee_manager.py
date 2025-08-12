@@ -353,6 +353,9 @@ class EmployeeManager:
         for employee in self.employees.values():
             employee.update(effective_dt, self.grid_manager)
             
+            # Check if employee should seek buildings for their needs
+            employee.check_and_seek_building()
+            
             # Process harvest events synchronously to avoid race conditions
             if hasattr(employee, '_pending_harvest') and employee._pending_harvest:
                 harvest_data = employee._pending_harvest

@@ -62,6 +62,10 @@ class Employee:
         # Employment details
         self.daily_wage = BASE_EMPLOYEE_WAGE  # Can be modified for different employees
         
+        # Building usage tracking
+        self.housing_recently_used = False  # +25% trait effectiveness if used housing recently
+        self.housing_usage_timer = 0.0  # Timer since last housing use
+        
         # Visual
         self.color = COLORS['employee']
         self.radius = 8
@@ -75,12 +79,12 @@ class Employee:
             self._apply_trait_effects(trait_name)
     
     def _apply_trait_effects(self, trait_name: str):
-        """Apply trait effects to employee stats"""
+        """Apply base trait effects to employee stats"""
         if trait_name == "hard_worker":
-            self.work_efficiency *= 1.1  # +10% efficiency
+            self.work_efficiency *= 1.1  # +10% efficiency base
             # Note: -5% stamina drain implemented in update_needs
         elif trait_name == "runner":
-            self.walking_speed *= 1.1  # +10% speed
+            self.walking_speed *= 1.1  # +10% speed base
             self.speed = self.walking_speed
     
     def assign_task(self, task_type: str, target_tiles: List, **kwargs):
@@ -146,8 +150,8 @@ class Employee:
         # Clean up completed tasks first
         self._cleanup_completed_tasks()
         
-        # Update needs
-        self.update_needs(dt)
+        # Update needs (pass grid_manager for building bonuses)
+        self.update_needs(dt, grid_manager)
         
         # Check for critical needs
         if self._has_critical_needs():
@@ -157,7 +161,7 @@ class Employee:
         # Update AI state
         self.update_ai(dt, grid_manager)
     
-    def update_needs(self, dt: float):
+    def update_needs(self, dt: float, grid_manager=None):
         """Update employee needs over time"""
         hours_passed = dt / 3600.0  # Convert seconds to hours
         
@@ -168,9 +172,15 @@ class Employee:
         # Rest decay depends on activity
         if self.state == EmployeeState.WORKING:
             rest_decay = REST_DECAY_RATE * hours_passed
+            
             # Hard worker trait effect
             if "hard_worker" in self.traits:
                 rest_decay *= 0.95  # 5% less drain
+                
+            # Water cooler work duration bonus
+            if grid_manager and self._has_nearby_water_cooler(grid_manager):
+                rest_decay *= 0.80  # 20% less rest drain (work 20% longer)
+                
         elif self.state == EmployeeState.RESTING:
             rest_decay = -REST_DECAY_RATE * 2 * hours_passed  # Restore rest
         else:
@@ -180,6 +190,13 @@ class Employee:
         self.hunger = max(0, self.hunger - hunger_decay)
         self.thirst = max(0, self.thirst - thirst_decay)
         self.rest = max(0, min(MAX_REST, self.rest - rest_decay))
+        
+        # Update housing usage timer
+        if self.housing_recently_used:
+            self.housing_usage_timer += dt
+            if self.housing_usage_timer >= 3600.0:  # 1 hour has passed
+                self.housing_recently_used = False
+                print(f"Employee {self.name}: Housing bonus expired")
     
     def _has_critical_needs(self) -> bool:
         """Check if employee has critical needs requiring attention"""
@@ -222,9 +239,7 @@ class Employee:
                 self.state_timer = 0.0
         
         elif self.state == EmployeeState.SEEKING_AMENITY:
-            # For now, just rest in place (amenities not implemented)
-            self.state = EmployeeState.RESTING
-            self.state_timer = 0.0
+            self._update_seeking_amenity(dt, grid_manager)
     
     def _update_movement(self, dt: float):
         """Update movement toward target using efficient direct movement"""
@@ -267,8 +282,11 @@ class Employee:
             self._complete_current_tile()
             return
         
+        # Calculate work efficiency including building bonuses
+        effective_efficiency = self._calculate_work_efficiency(grid_manager)
+        
         # Work takes time based on efficiency
-        work_time_needed = 3.0 / self.work_efficiency  # Base 3 seconds per task
+        work_time_needed = 3.0 / effective_efficiency  # Base 3 seconds per task
         
         if self.state_timer >= work_time_needed:
             # Complete the work on this tile
@@ -292,7 +310,7 @@ class Employee:
             crop_type = self.current_task.get('crop_type', DEFAULT_CROP_TYPE)
             return tile.plant(crop_type)
         elif task_type == 'harvest' and tile.can_harvest():
-            crop_type, yield_amount = tile.harvest()  # Updated to handle new tuple return
+            crop_type, yield_amount = tile.harvest(grid_manager)  # Pass grid_manager for building bonuses
             if yield_amount > 0:
                 # Direct synchronous harvest processing to avoid race conditions
                 quality = (tile.soil_quality / 10.0) * (tile.water_level / 100.0)
@@ -462,3 +480,145 @@ class Employee:
             'current_task': self.current_task['type'] if self.current_task else None,
             'traits': self.traits
         }
+    
+    def needs_building_interaction(self) -> Optional[str]:
+        """Check if employee needs to use a building for their needs"""
+        # Check thirst first (most urgent)
+        if self.thirst < 30:
+            return 'water_cooler'
+        
+        # Check rest (second priority)  
+        if self.rest < 25:
+            return 'employee_housing'
+        
+        # Check hunger (can be satisfied through other means later)
+        if self.hunger < 20:
+            return 'employee_housing'  # For now, housing also satisfies hunger
+            
+        return None
+    
+    def _update_seeking_amenity(self, dt: float, grid_manager):
+        """Update seeking amenity state - pathfind to and use buildings"""
+        # Check what building we need
+        needed_building = self.needs_building_interaction()
+        
+        if not needed_building:
+            # No longer need building, return to idle
+            self.state = EmployeeState.IDLE
+            self.state_timer = 0.0
+            return
+        
+        # Find nearest building of the needed type
+        nearest_building = grid_manager.find_nearest_building(
+            int(self.x), int(self.y), needed_building
+        )
+        
+        if not nearest_building:
+            # No building available, just rest in place
+            print(f"Employee {self.name}: No {needed_building} available, resting in place")
+            self.state = EmployeeState.RESTING  
+            self.state_timer = 0.0
+            return
+        
+        # Get interaction tiles around the building
+        building_x, building_y = nearest_building
+        interaction_tiles = grid_manager.get_building_interaction_tiles(building_x, building_y)
+        
+        if not interaction_tiles:
+            # No accessible interaction tiles
+            self.state = EmployeeState.RESTING
+            self.state_timer = 0.0
+            return
+        
+        # Find closest interaction tile
+        closest_tile = min(interaction_tiles, 
+                          key=lambda pos: abs(self.x - pos[0]) + abs(self.y - pos[1]))
+        
+        # Move to interaction tile
+        target_x, target_y = closest_tile
+        distance = abs(self.x - target_x) + abs(self.y - target_y)
+        
+        if distance > 0.5:
+            # Still moving to building
+            self.target_x = target_x
+            self.target_y = target_y
+            self.state = EmployeeState.MOVING
+            print(f"Employee {self.name}: Moving to {needed_building} at ({building_x}, {building_y})")
+        else:
+            # At building, use it
+            self._interact_with_building(needed_building, building_x, building_y)
+            self.state = EmployeeState.IDLE
+            self.state_timer = 0.0
+    
+    def _interact_with_building(self, building_type: str, building_x: int, building_y: int):
+        """Interact with a specific building to satisfy needs"""
+        print(f"Employee {self.name}: Using {building_type} at ({building_x}, {building_y})")
+        
+        if building_type == 'water_cooler':
+            # Restore thirst
+            old_thirst = self.thirst
+            self.thirst = min(100, self.thirst + 50)
+            print(f"  Thirst restored: {old_thirst:.1f} → {self.thirst:.1f}")
+            
+        elif building_type == 'employee_housing':
+            # Restore rest and hunger
+            old_rest = self.rest
+            old_hunger = self.hunger  
+            self.rest = min(100, self.rest + 40)
+            self.hunger = min(100, self.hunger + 30)
+            
+            # Set housing usage bonus (lasts for 1 hour of real time)
+            self.housing_recently_used = True
+            self.housing_usage_timer = 0.0
+            
+            print(f"  Rest restored: {old_rest:.1f} → {self.rest:.1f}")
+            print(f"  Hunger restored: {old_hunger:.1f} → {self.hunger:.1f}")
+            print(f"  Housing bonus activated: +25% trait effectiveness for 1 hour")
+            
+        elif building_type == 'storage_silo':
+            # For future: deposit/retrieve crops
+            print(f"  Accessed storage silo")
+    
+    def _has_nearby_water_cooler(self, grid_manager) -> bool:
+        """Check if there's a water cooler within 3 tiles for work duration bonus"""
+        water_coolers = grid_manager.find_buildings_of_type('water_cooler')
+        for cooler_x, cooler_y in water_coolers:
+            distance = abs(self.x - cooler_x) + abs(self.y - cooler_y)
+            if distance <= 3.0:  # Within 3 tiles
+                return True
+        return False
+    
+    def check_and_seek_building(self):
+        """Check if employee should seek a building for their needs"""
+        if self.state in [EmployeeState.WORKING, EmployeeState.MOVING]:
+            # Don't interrupt important activities
+            return
+        
+        needed_building = self.needs_building_interaction()
+        if needed_building and self.state != EmployeeState.SEEKING_AMENITY:
+            print(f"Employee {self.name}: Seeking {needed_building} for needs")
+            self.state = EmployeeState.SEEKING_AMENITY
+            self.state_timer = 0.0
+    
+    def _calculate_work_efficiency(self, grid_manager) -> float:
+        """Calculate effective work efficiency including building bonuses"""
+        # Start with base efficiency (includes traits)
+        efficiency = self.work_efficiency
+        
+        # Housing usage bonus (+25% trait effectiveness for hard workers)
+        if self.housing_recently_used and "hard_worker" in self.traits:
+            # Hard worker base gives +10% (1.1x), housing makes it +12.5% (1.125x) total
+            trait_enhancement = 0.025  # Additional 2.5% on top of base 10%
+            efficiency *= (1.0 + trait_enhancement)
+            
+        # Check for nearby tool sheds (within 3 tiles)
+        tool_sheds = grid_manager.find_buildings_of_type('tool_shed')
+        for shed_x, shed_y in tool_sheds:
+            # Calculate distance to tool shed
+            distance = abs(self.x - shed_x) + abs(self.y - shed_y)  # Manhattan distance
+            if distance <= 3.0:  # Within 3 tiles
+                efficiency *= 1.15  # +15% efficiency bonus
+                print(f"Employee {self.name}: +15% efficiency bonus from tool shed at ({shed_x}, {shed_y})")
+                break  # Only one tool shed bonus applies
+        
+        return efficiency
