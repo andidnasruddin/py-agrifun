@@ -158,3 +158,119 @@ COLORS = {
     'money_positive': (100, 255, 100),
     'money_negative': (255, 100, 100),
 }
+
+# Farm Specialization System
+FARM_SPECIALIZATIONS = {
+    'none': {
+        'name': 'Unspecialized Farm',
+        'description': 'Basic farming operations without specialization bonuses',
+        'cost': 0,  # Starting specialization
+        'bonuses': {}
+    },
+    'grain': {
+        'name': 'Grain Farm',
+        'description': 'Specialized in bulk grain production and storage efficiency',
+        'cost': 2500,  # Cost to specialize
+        'requirements': {
+            'wheat_harvested': 100,  # Must have harvested 100+ wheat
+            'storage_capacity': 200   # Must have expanded storage
+        },
+        'bonuses': {
+            'wheat_yield_multiplier': 1.25,  # +25% wheat yield
+            'bulk_storage_efficiency': 1.15,  # +15% storage efficiency
+            'grain_growth_speed': 1.20,       # +20% faster grain growth
+            'grain_price_bonus': 1.10         # +10% grain sale prices
+        },
+        'description_long': 'Focus on large-scale grain production with enhanced wheat yields and storage systems.'
+    },
+    'market_garden': {
+        'name': 'Market Garden',
+        'description': 'Specialized in high-value premium crops and quality production',
+        'cost': 3000,  # Higher cost for premium specialization
+        'requirements': {
+            'tomatoes_harvested': 75,   # Must have grown premium crops
+            'average_crop_quality': 1.2  # Must maintain quality standards
+        },
+        'bonuses': {
+            'tomato_yield_multiplier': 1.30,   # +30% tomato yield
+            'premium_crop_quality': 1.20,      # +20% crop quality
+            'harvest_speed_bonus': 1.15,       # +15% faster harvest
+            'premium_price_bonus': 1.25,       # +25% premium crop prices
+            'soil_nutrient_efficiency': 1.25   # +25% better nutrient use
+        },
+        'description_long': 'Maximize profits through high-quality premium crops and efficient market timing.'
+    },
+    'diversified': {
+        'name': 'Diversified Farm',
+        'description': 'Specialized in sustainable crop rotation and soil health management',
+        'cost': 2000,  # Educational/sustainable focus
+        'requirements': {
+            'rotation_cycles_completed': 3,  # Must complete rotation cycles
+            'soil_health_average': 80        # Must maintain good soil health
+        },
+        'bonuses': {
+            'rotation_bonus_multiplier': 1.35,  # +35% rotation bonus multiplier
+            'soil_rest_recovery_speed': 1.20,   # +20% faster soil recovery
+            'overall_crop_quality': 1.15,       # +15% overall quality bonus
+            'advanced_rotation_unlocked': True, # Access to advanced rotations
+            'sustainability_bonus': 1.10        # +10% long-term yield sustainability
+        },
+        'description_long': 'Master sustainable agriculture through advanced rotation and soil management techniques.'
+    }
+}
+
+# Specialization unlock conditions and progression
+SPECIALIZATION_PROGRESSION = {
+    'tracking_stats': [
+        'wheat_harvested', 'tomatoes_harvested', 'corn_harvested',
+        'rotation_cycles_completed', 'total_crops_sold',
+        'storage_capacity_purchased', 'soil_health_average'
+    ],
+    'notification_thresholds': {
+        'grain_available': {'wheat_harvested': 80, 'storage_capacity': 150},
+        'market_garden_available': {'tomatoes_harvested': 60, 'average_crop_quality': 1.1},
+        'diversified_available': {'rotation_cycles_completed': 2, 'soil_health_average': 70}
+    }
+}
+
+# Weather & Seasons System Configuration
+SEASON_LENGTH_DAYS = 30  # Days per season (30 days = ~10 hour seasons at 20min/day)
+WEATHER_EVENT_PROBABILITY = 0.15  # 15% chance per day for weather events
+
+# Weather Effects Configuration
+WEATHER_GROWTH_EFFECTS = {
+    'rain': {'growth_rate': 1.2, 'yield_modifier': 1.1},      # +20% growth, +10% yield
+    'drought': {'growth_rate': 0.7, 'yield_modifier': 0.8},   # -30% growth, -20% yield  
+    'frost': {'growth_rate': 0.3, 'yield_modifier': 0.6},     # -70% growth, -40% yield
+    'heat_wave': {'growth_rate': 0.8, 'yield_modifier': 0.9}, # -20% growth, -10% yield
+    'storm': {'growth_rate': 0.9, 'yield_modifier': 0.85}     # -10% growth, -15% yield
+}
+
+# Seasonal Crop Planting Windows (educational realism)
+SEASONAL_CROP_WINDOWS = {
+    'corn': ['spring', 'summer'],           # Warm-season crop
+    'tomatoes': ['spring', 'summer'],       # Heat-loving crop
+    'wheat': ['fall', 'winter', 'spring']   # Cool-season crop
+}
+
+# Off-season planting penalties for educational gameplay
+OFF_SEASON_PLANTING_PENALTY = 0.7  # 30% reduction in growth/yield
+
+# Irrigation System Configuration
+IRRIGATION_WATER_COST_PER_TILE = 5   # Daily cost per irrigated tile during drought
+IRRIGATION_DROUGHT_MITIGATION = 0.3  # How much irrigation helps during drought
+IRRIGATION_SYSTEM_COST = 150         # Cost to install irrigation per tile
+
+# Weather UI Colors
+WEATHER_COLORS = {
+    'spring': (100, 200, 100),    # Light green for spring
+    'summer': (255, 200, 50),     # Golden yellow for summer  
+    'fall': (200, 150, 50),       # Orange-brown for fall
+    'winter': (150, 200, 255),    # Light blue for winter
+    'clear': (255, 255, 255),     # White for clear weather
+    'rain': (100, 150, 255),      # Blue for rain
+    'drought': (255, 150, 100),   # Orange-red for drought
+    'frost': (200, 200, 255),     # Light purple for frost
+    'heat_wave': (255, 100, 100), # Red for heat wave
+    'storm': (150, 150, 150)      # Gray for storms
+}

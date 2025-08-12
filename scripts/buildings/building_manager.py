@@ -90,6 +90,14 @@ class BuildingManager:
                 base_cost=800,  # $800 for housing
                 benefit_description='Employees can rest here',
                 max_quantity=5  # Can build multiple housing units
+            ),
+            'irrigation_system': BuildingType(
+                id='irrigation_system',
+                name='Irrigation System',
+                description='Provides water during drought to maintain crop growth',
+                base_cost=150,  # $150 per tile (affordable for strategic use)
+                benefit_description='Mitigates drought effects (+30% growth during drought)',
+                max_quantity=256  # Can irrigate most/all tiles (16x16 = 256 max)
             )
         }
         
@@ -99,8 +107,8 @@ class BuildingManager:
         # Register for events
         self.event_system.subscribe('purchase_building_requested', self._handle_purchase_request)
         
-        print("Building Manager initialized - 4 building types available:")
-        print("  Storage Silo ($500), Water Cooler ($200), Tool Shed ($300), Employee Housing ($800)")
+        print("Building Manager initialized - 5 building types available:")
+        print("  Storage Silo ($500), Water Cooler ($200), Tool Shed ($300), Employee Housing ($800), Irrigation System ($150)")
     
     def can_purchase_building(self, building_id: str) -> bool:
         """Check if a building can be purchased"""
@@ -138,9 +146,21 @@ class BuildingManager:
             return False
         
         tile = self.grid_manager.get_tile(x, y)
-        if not tile or not tile.can_place_building():
-            print(f"Cannot place building at ({x}, {y}) - tile not available")
-            return False
+        
+        # Special validation for irrigation systems - can only be placed on tilled soil
+        if building_id == 'irrigation_system':
+            if not tile or not tile.is_tilled:
+                print(f"Cannot place irrigation system at ({x}, {y}) - requires tilled soil")
+                return False
+            # Check if tile already has irrigation
+            if hasattr(tile, 'has_irrigation') and tile.has_irrigation:
+                print(f"Cannot place irrigation system at ({x}, {y}) - already has irrigation")
+                return False
+        else:
+            # Standard building placement validation for other buildings
+            if not tile or not tile.can_place_building():
+                print(f"Cannot place building at ({x}, {y}) - tile not available")
+                return False
         
         building_type = self.building_types[building_id]
         current_count = sum(1 for b in self.owned_buildings 
@@ -198,6 +218,19 @@ class BuildingManager:
             # Increase storage capacity by 50 units
             self.inventory_manager.upgrade_storage(50)
             print(f"Storage capacity increased by 50 units")
+        elif building.building_type.id == 'irrigation_system':
+            # Mark tile as irrigated and notify weather system
+            tile = self.grid_manager.get_tile(building.x, building.y)
+            if tile:
+                tile.has_irrigation = True
+                print(f"Irrigation system installed at ({building.x}, {building.y})")
+                
+                # Notify weather manager about new irrigation
+                self.event_system.emit('irrigation_system_purchased', {
+                    'x': building.x,
+                    'y': building.y,
+                    'building_id': building.building_type.id
+                })
         
         # Spatial benefits are handled dynamically in get_spatial_benefits_at()
         # This ensures real-time calculation of effects based on building proximity

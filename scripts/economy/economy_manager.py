@@ -107,6 +107,7 @@ class EconomyManager:
         self.event_system.subscribe('day_passed', self._handle_day_passed)
         self.event_system.subscribe('payroll_due', self._handle_payroll)
         self.event_system.subscribe('inventory_sale_completed', self._handle_inventory_sale)
+        self.event_system.subscribe('irrigation_daily_bill', self._handle_irrigation_bill)
         
         # Emit initial money update
         self.event_system.emit('money_changed', {'amount': self.cash})
@@ -372,3 +373,22 @@ class EconomyManager:
         if revenue > 0:
             self.add_money(revenue, f"Sold {quantity} {crop_type} from storage", "income")
             print(f"Inventory sale completed: {quantity} {crop_type} for ${revenue:.2f}")
+    
+    def _handle_irrigation_bill(self, event_data):
+        """Handle daily irrigation costs during drought"""
+        cost = event_data.get('cost', 0)
+        irrigated_tiles = event_data.get('irrigated_tiles', 0)
+        cost_per_tile = event_data.get('cost_per_tile', 5)
+        weather_event = event_data.get('weather_event', 'drought')
+        
+        if cost > 0:
+            # Charge irrigation costs
+            self.spend_money(cost, f"Irrigation water cost ({irrigated_tiles} tiles @ ${cost_per_tile}/day)", "irrigation")
+            print(f"Irrigation bill: ${cost:.2f} for {irrigated_tiles} tiles during {weather_event}")
+            
+            # Emit irrigation cost notification for UI
+            self.event_system.emit('irrigation_cost_incurred', {
+                'cost': cost,
+                'irrigated_tiles': irrigated_tiles,
+                'weather_event': weather_event
+            })

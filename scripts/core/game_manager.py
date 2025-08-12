@@ -47,6 +47,7 @@ Error Handling:
 
 import pygame
 import sys
+from typing import Dict, Any
 from scripts.core.config import *
 from scripts.core.event_system import EventSystem
 from scripts.core.grid_manager import GridManager
@@ -60,6 +61,7 @@ from scripts.buildings.building_manager import BuildingManager
 from scripts.ui.ui_manager import UIManager
 from scripts.core.save_manager import SaveManager
 from scripts.contracts.contract_manager import ContractManager
+from scripts.core.weather_manager import WeatherManager
 
 
 class GameManager:
@@ -103,11 +105,24 @@ class GameManager:
         # Initialize contract system (after economy, time, and inventory systems)
         self.contract_manager = ContractManager(self.event_system, self.economy_manager, self.time_manager, self.inventory_manager)
         
+        # Initialize specialization system (after inventory and economy for stat tracking)
+        from scripts.core.specialization_manager import SpecializationManager
+        self.specialization_manager = SpecializationManager(self.event_system)
+        
+        # Initialize weather system (after time manager for seasonal cycles)
+        self.weather_manager = WeatherManager(self.event_system, self.time_manager)
+        
+        # Connect grid manager to game manager for specialization access
+        self.grid_manager.game_manager = self
+        
         # Initialize save/load system (after all other systems)
         self.save_manager = SaveManager(self.event_system, self)
         
         # Register for quit events
         self.event_system.subscribe('game_quit', self._handle_quit)
+        
+        # Register for specialization events
+        self.event_system.subscribe('process_specialization_choice', self._handle_specialization_choice)
         
         # Register for hiring events (connect interview system to employee manager)
         self.event_system.subscribe('hire_applicant_confirmed', self._handle_hire_confirmed)
@@ -173,6 +188,7 @@ class GameManager:
         """Update all game systems"""
         # Update systems in dependency order
         self.time_manager.update(dt)
+        self.weather_manager.update()  # Weather affects crop growth, so update before grid
         self.grid_manager.update(dt)
         self.inventory_manager.update(dt)
         self.building_manager.update(dt)
@@ -255,3 +271,41 @@ class GameManager:
                 print(f"Successfully placed {building_type} at ({x}, {y})")
             else:
                 print(f"Failed to place {building_type} at ({x}, {y})")
+    
+    def _handle_specialization_choice(self, event_data: Dict[str, Any]):
+        """Handle specialization selection with economy integration"""
+        specialization_id = event_data.get('specialization_id', '')
+        manager = event_data.get('manager')
+        
+        if not manager:
+            print("Error: No specialization manager provided")
+            return
+        
+        # Get current cash from economy manager
+        current_cash = self.economy_manager.get_current_balance()
+        
+        # Attempt to choose specialization
+        result = manager.choose_specialization(specialization_id, current_cash)
+        
+        if result['success']:
+            # Deduct cost from economy
+            cost = result['cost']
+            if cost > 0:
+                self.economy_manager.spend_money(cost, f"Farm specialization: {result['specialization']['name']}", "specialization")
+            
+            # Notify UI of successful specialization
+            self.event_system.emit('specialization_chosen_successfully', {
+                'specialization': result['specialization'],
+                'cost': cost
+            })
+            
+            print(f"Successfully specialized as {result['specialization']['name']} for ${cost}")
+        else:
+            # Notify UI of failure
+            reason = result.get('reason', 'Unknown error')
+            self.event_system.emit('specialization_choice_failed', {
+                'reason': reason,
+                'cost': result.get('cost', 0)
+            })
+            
+            print(f"Failed to specialize: {reason}")

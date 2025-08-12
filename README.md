@@ -15,69 +15,95 @@ A sophisticated top-down grid-based farming simulation built in Python with Pyga
    python main.py
    ```
 
-## Current Features (Phase 2 - Advanced Implementation)
+## Current Features (Phases 1-6+ - Near-Complete Implementation)
 
-### ✅ **Fully Completed Systems:**
-- **Multi-Employee System**: Full hiring system with interview process (not limited to Sam)
-- **Advanced AI**: A* pathfinding with visual debugging and employee needs management  
-- **Economic Simulation**: Loans, subsidies, dynamic market pricing with transaction history
-- **Building System**: Storage silos with capacity upgrades and strategic placement
-- **Professional UI**: pygame-gui interface with real-time displays and comprehensive feedback
+### ✅ **Comprehensive Agricultural Systems:**
+- **Multi-Crop System**: Corn, tomatoes, wheat with strategic planting seasons and yield variations
+- **Soil Science**: N-P-K nutrient tracking, crop rotation bonuses, soil health management
+- **Weather & Seasons**: Dynamic 4-season cycle with weather events (rain, drought, frost, storms)
+- **Irrigation System**: Strategic drought mitigation with $150/tile installation and operational costs
+
+### ✅ **Advanced Employee Management:**
+- **Multi-Employee System**: Unlimited hiring with trait-based candidates and strategic hiring decisions
+- **AI Pathfinding**: A* algorithm with visual debugging and intelligent navigation
+- **Employee Needs**: Hunger/thirst/rest systems with visual status indicators
+- **Advanced Buildings**: Water coolers, tool sheds, employee housing for workforce optimization
+
+### ✅ **Strategic Economic Systems:**
+- **Contract System**: Seasonal contracts with guaranteed pricing and bulk delivery requirements
+- **Market Complexity**: Dynamic pricing with 30-day history and strategic selling opportunities
+- **Farm Specialization**: Multiple specialization tracks for focused agricultural strategies
+- **Building Infrastructure**: Storage silos, irrigation systems, and employee amenities
+
+### ✅ **Complete Game Systems:**
+- **Save/Load System**: Multiple save slots with auto-save and complete state persistence
+- **Professional UI**: pygame-gui interface with comprehensive feedback and information panels
+- **Event-Driven Architecture**: Modular pub/sub system enabling complex system interactions
 
 ### Controls:
-- **Mouse**: Click and drag to select tiles, interact with UI elements
+- **Mouse**: Click and drag to select tiles, click tilled plots for soil information
 - **Keyboard Shortcuts**:
   - `T` - Assign Till task to selected tiles
-  - `P` - Assign Plant task to selected tiles  
+  - `P` - Plant crop task (with crop selection UI)
   - `H` - Assign Harvest task to selected tiles
   - `C` - Clear tile selection
   - `F1` - Toggle debug information (pathfinding visualization)
-- **UI Elements**: Speed controls (Pause, 1x, 2x, 4x), hiring button, building purchases
+- **UI Elements**: Speed controls (Pause, 1x, 2x, 4x), hiring system, building placement, irrigation controls
 
 ### Game Flow:
 1. Start with $0 cash and a mandatory $10,000 farmer loan
 2. Receive $100/day government subsidy for first 30 days
-3. **Hire employees** through the interview system - each with unique traits
-4. Assign tasks and watch employees pathfind autonomously to work sites
-5. **Build storage silos** to increase crop capacity strategically  
-6. Sell corn at market timing of your choice with FIFO inventory management
-7. Monitor real-time employee needs, financial status, and market trends
+3. **Hire employees** through the strategic hiring system - each with unique traits and specializations
+4. **Choose your crops** based on seasons, soil conditions, and contract opportunities
+5. **Install irrigation systems** for drought protection and consistent yields
+6. **Build infrastructure** (storage silos, water coolers, tool sheds, employee housing)
+7. **Accept contracts** for guaranteed pricing or sell at optimal market timing
+8. **Manage soil health** through crop rotation and scientific farming practices
+9. **Adapt to weather** events and seasonal changes affecting your crops
 
 ## Advanced Game Systems
 
-### Multi-Employee Management:
-- **Hiring System**: Interview candidates with different traits and stats
-- **Employee Needs**: Visual hunger/thirst/rest bars above each worker
-- **Trait System**: "Hard Worker" trait affects efficiency and stamina drain
-- **AI States**: Idle → Moving → Working → Resting with smooth visual transitions
+### Agricultural Science & Education:
+- **Soil Chemistry**: N-P-K nutrient levels affect crop yields and require strategic management
+- **Crop Rotation**: Educational agricultural principles with yield bonuses for proper rotation
+- **Weather Integration**: Seasonal patterns affecting planting windows and growth rates
+- **Irrigation Strategy**: Investment vs. operational cost decisions for drought mitigation
 
-### Economic Complexity:
-- **Strategic Storage**: Base 100-unit capacity + silos (+50 each, max 5, progressive pricing)  
-- **Market Timing**: 30-day price history tracking for strategic selling decisions
-- **Financial Categories**: Detailed transaction logging with expense categorization
-- **Dynamic Pricing**: Market fluctuations affecting daily crop values
+### Strategic Business Management:
+- **Contract System**: Accept guaranteed-price contracts vs. market speculation
+- **Farm Specialization**: Choose focus areas that optimize your operation for specific goals
+- **Multi-Crop Planning**: Balance fast-growth tomatoes, stable wheat, and profitable corn
+- **Infrastructure Investment**: Tool sheds boost efficiency, employee housing reduces commute times
 
-### Technical Excellence:
-- **A* Pathfinding**: Optimized pathfinding with visual green path lines
-- **Event-Driven Architecture**: Pub/sub system for modular communication
-- **Real-Time Performance**: Maintains 60 FPS with multiple employees and systems
-- **Professional UI**: Comprehensive status panels and real-time feedback
+### Sophisticated Employee Systems:
+- **Trait-Based Hiring**: "Hard Worker", "Green Thumb", "Runner" traits affect performance
+- **Needs Management**: Advanced AI with hunger/thirst/rest affecting productivity
+- **Workplace Amenities**: Water coolers, tool sheds, and housing improve employee effectiveness
+- **Multi-Employee Coordination**: Teams of workers with A* pathfinding and task distribution
+
+### Economic Depth:
+- **Market Dynamics**: 30-day price history, seasonal variations, and strategic timing
+- **Financial Planning**: Loans, subsidies, daily expenses, and cash flow management
+- **Building Economics**: Progressive pricing and capacity expansion decisions
+- **Contract Risk/Reward**: Balance guaranteed income vs. potential market gains
 
 ## Development Status
 
-✅ **Phase 1 Complete**: Core foundation  
-✅ **Phase 2 Complete**: Advanced multi-employee systems, buildings, economic depth  
-🚧 **Current Focus**: Balance testing, additional crop types, UI polish  
-📋 **Phase 3 Planned**: Save/load system, tutorial, extended content
+✅ **Phase 1-4 Complete**: Core foundation, multi-employee systems, save/load, economic depth  
+✅ **Phase 5 Complete**: Agricultural science systems (soil health, crop rotation, weather)  
+✅ **Phase 6 Complete**: Irrigation & water management, contract system, farm specialization  
+✅ **Advanced Features Complete**: Multi-crop system, advanced buildings, employee amenities  
+🎯 **Current Focus**: Tutorial system, additional employee traits, market complexity features
 
 ## Technical Architecture
 
-Sophisticated modular design:
-- **Core Systems**: Game manager, event system, time/grid managers, inventory system
-- **Employee Systems**: Multi-employee manager, interview system, A* pathfinding  
-- **Economic Systems**: Transaction tracking, market dynamics, loan management
-- **Building Systems**: Strategic placement and capacity management
-- **UI Systems**: Professional pygame-gui implementation with real-time updates
+Sophisticated modular design with event-driven architecture:
+- **Core Systems**: Game manager, event system, time/grid managers, save/load persistence
+- **Agricultural Systems**: Weather manager, soil chemistry, crop rotation, irrigation systems
+- **Employee Systems**: Multi-employee coordination, trait systems, A* pathfinding, needs management  
+- **Economic Systems**: Contract manager, market dynamics, specialization tracking, transaction logging
+- **Building Systems**: Infrastructure placement, employee amenities, strategic capacity management
+- **UI Systems**: Professional pygame-gui with real-time updates, soil information panels, hiring interfaces
 
 ## Development
 

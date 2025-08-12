@@ -46,6 +46,9 @@ class Tile:
         self.building_type = None  # Building type ID for rendering
         self.is_occupied = False  # True if tile has building or is unusable
         
+        # Irrigation system
+        self.has_irrigation = False  # True if tile has irrigation infrastructure
+        
         # Visual properties
         self.highlight = False  # For UI selection
         self.rect = pygame.Rect(
@@ -173,6 +176,47 @@ class Tile:
             if soil_health_multiplier != 1.0:
                 effect = "bonus" if soil_health_multiplier > 1.0 else "penalty"
                 print(f"  Soil health ({soil_health_level}): {soil_health_multiplier*100:.0f}% {effect}")
+            
+            # Apply specialization bonuses if grid manager and specialization manager available
+            specialization_bonus_applied = False
+            if (grid_manager and hasattr(grid_manager, 'game_manager') and 
+                hasattr(grid_manager.game_manager, 'specialization_manager')):
+                spec_manager = grid_manager.game_manager.specialization_manager
+                
+                # Apply crop-specific yield bonuses
+                if crop_type == 'wheat':
+                    wheat_bonus = spec_manager.get_bonus_multiplier('wheat_yield_multiplier', 1.0)
+                    if wheat_bonus > 1.0:
+                        yield_amount *= wheat_bonus
+                        bonus_percent = int((wheat_bonus - 1.0) * 100)
+                        print(f"  Grain specialization: +{bonus_percent}% wheat yield")
+                        specialization_bonus_applied = True
+                        
+                elif crop_type == 'tomatoes':
+                    tomato_bonus = spec_manager.get_bonus_multiplier('tomato_yield_multiplier', 1.0)
+                    if tomato_bonus > 1.0:
+                        yield_amount *= tomato_bonus
+                        bonus_percent = int((tomato_bonus - 1.0) * 100)
+                        print(f"  Market garden specialization: +{bonus_percent}% tomato yield")
+                        specialization_bonus_applied = True
+                
+                # Apply overall crop quality bonus from diversified specialization
+                overall_bonus = spec_manager.get_bonus_multiplier('overall_crop_quality', 1.0)
+                if overall_bonus > 1.0:
+                    yield_amount *= overall_bonus
+                    bonus_percent = int((overall_bonus - 1.0) * 100)
+                    print(f"  Diversified specialization: +{bonus_percent}% overall quality")
+                    specialization_bonus_applied = True
+                
+                # Apply rotation bonus multiplier from diversified specialization
+                if rotation_yield_bonus > 0:
+                    rotation_multiplier = spec_manager.get_bonus_multiplier('rotation_bonus_multiplier', 1.0)
+                    if rotation_multiplier > 1.0:
+                        additional_rotation_bonus = (rotation_multiplier - 1.0) * rotation_yield_bonus
+                        yield_amount *= (1.0 + additional_rotation_bonus)
+                        bonus_percent = int(additional_rotation_bonus * 100)
+                        print(f"  Enhanced rotation bonus: +{bonus_percent}% from diversified specialization")
+                        specialization_bonus_applied = True
             
             # Apply building-based yield bonuses if grid manager available
             if grid_manager and hasattr(grid_manager, 'building_manager') and grid_manager.building_manager:
@@ -304,10 +348,13 @@ class Tile:
         
         self.seasons_rested += 1
     
-    def update_growth(self, days_passed: float):
-        """Update crop growth for any crop type"""
+    def update_growth(self, days_passed: float, weather_growth_modifier: float = 1.0):
+        """Update crop growth for any crop type with weather effects"""
         if self.current_crop and self.current_crop in CROP_TYPES:
-            self.days_growing += days_passed
+            # Apply weather modifier to growth rate
+            effective_days_passed = days_passed * weather_growth_modifier
+            self.days_growing += effective_days_passed
+            
             crop_data = CROP_TYPES[self.current_crop]
             
             # Calculate growth stage based on days
@@ -320,7 +367,8 @@ class Tile:
             if new_stage > self.growth_stage:
                 old_stage = self.growth_stage
                 self.growth_stage = new_stage
-                print(f"{crop_data['name']} at ({self.x}, {self.y}) grew from stage {old_stage} to {new_stage} ({GROWTH_STAGES[new_stage]}) - days: {self.days_growing:.2f}")
+                weather_info = f" (weather: {weather_growth_modifier:.2f}x)" if weather_growth_modifier != 1.0 else ""
+                print(f"{crop_data['name']} at ({self.x}, {self.y}) grew from stage {old_stage} to {new_stage} ({GROWTH_STAGES[new_stage]}) - days: {self.days_growing:.2f}{weather_info}")
                 return True  # Growth stage changed
         
         return False
@@ -347,6 +395,8 @@ class Tile:
                 return (139, 69, 19)    # Brown for tool shed
             elif self.building_type == 'employee_housing':
                 return (255, 200, 100)  # Light orange for housing
+            elif self.building_type == 'irrigation_system':
+                return (64, 164, 223)   # Water blue for irrigation system
             else:
                 return (80, 80, 80)     # Dark gray for unknown buildings
         elif self.current_crop:
@@ -396,6 +446,7 @@ class GridManager:
         
         # Register for events
         self.event_system.subscribe('day_passed', self._handle_day_passed)
+        self.event_system.subscribe('day_passed_with_weather', self._handle_day_passed)  # Weather-enhanced day events
         self.event_system.subscribe('task_assigned', self._handle_task_assignment)
         self.event_system.subscribe('building_placement_preview_start', self._handle_preview_start)
         self.event_system.subscribe('building_placement_preview_stop', self._handle_preview_stop)
@@ -606,6 +657,10 @@ class GridManager:
                 # Draw task assignment indicator
                 if tile.task_assignment:
                     self._render_task_indicator(screen, tile)
+                
+                # Draw irrigation indicator for tilled tiles with irrigation
+                if tile.has_irrigation and tile.is_tilled and not tile.building_type:
+                    self._render_irrigation_indicator(screen, tile)
         
         # Render selection rectangle if dragging
         if self.drag_start_pos and self.drag_current_pos:
@@ -629,6 +684,26 @@ class GridManager:
         color = color_map.get(tile.task_assignment, (255, 255, 255))
         pygame.draw.circle(screen, color, (center_x, center_y), 4)
     
+    def _render_irrigation_indicator(self, screen: pygame.Surface, tile: Tile):
+        """Render irrigation system indicator on irrigated tiles"""
+        # Draw small water droplet indicators in corners
+        tile_x = tile.rect.x
+        tile_y = tile.rect.y
+        tile_size = tile.rect.width
+        
+        # Water blue color for irrigation indicators
+        water_color = (64, 164, 223)
+        
+        # Draw small circles in the corners to indicate irrigation coverage
+        indicator_size = 3
+        margin = 4
+        
+        # Top-left and bottom-right corners
+        pygame.draw.circle(screen, water_color, 
+                         (tile_x + margin, tile_y + margin), indicator_size)
+        pygame.draw.circle(screen, water_color, 
+                         (tile_x + tile_size - margin, tile_y + tile_size - margin), indicator_size)
+    
     def _render_selection_rectangle(self, screen: pygame.Surface):
         """Render drag selection rectangle"""
         start_x, start_y = self.drag_start_pos
@@ -644,18 +719,33 @@ class GridManager:
         pygame.draw.rect(screen, (255, 255, 255), selection_rect, 2)
     
     def _handle_day_passed(self, event_data):
-        """Handle day passing for crop growth"""
+        """Handle day passing for crop growth with weather effects"""
         days_passed = event_data.get('days', 1)
-        print(f"Grid Manager: Day passed, updating crop growth by {days_passed} days")
+        
+        # Get weather growth modifier from event data (provided by weather manager)
+        weather_growth_modifier = event_data.get('weather_growth_modifier', 1.0)
+        weather_event = event_data.get('weather_event', 'clear')
+        
+        print(f"Grid Manager: Day passed, updating crop growth by {days_passed} days (weather: {weather_event}, modifier: {weather_growth_modifier:.2f}x)")
         
         crops_updated = 0
         for row in self.grid:
             for tile in row:
-                if tile.update_growth(days_passed):
+                # Calculate tile-specific growth modifier considering irrigation
+                tile_growth_modifier = weather_growth_modifier
+                
+                # Apply irrigation bonus during drought if tile has irrigation
+                if (weather_event == 'drought' and tile.has_irrigation and 
+                    weather_growth_modifier < 1.0):
+                    # Irrigation provides 30% boost during drought (from config)
+                    irrigation_boost = IRRIGATION_DROUGHT_MITIGATION
+                    tile_growth_modifier = min(1.0, weather_growth_modifier + irrigation_boost)
+                    
+                if tile.update_growth(days_passed, tile_growth_modifier):
                     crops_updated += 1
         
         if crops_updated > 0:
-            print(f"Updated growth for {crops_updated} crops")
+            print(f"Updated growth for {crops_updated} crops with weather effects")
     
     def _handle_task_assignment(self, event_data):
         """Handle task assignment events"""

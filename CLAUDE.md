@@ -52,6 +52,14 @@ This is a 2D top-down grid-based farming simulation game built in **Python with 
 - Interactive soil information panel with click-to-view functionality
 - Crop history tracking and soil rest mechanics for long-term planning
 
+**🌊 Irrigation & Water Management System (100% Complete):**
+- **Strategic Irrigation Infrastructure** with $150/tile installation and drought mitigation
+- **Economic Integration** with $5/day operational costs during drought events only
+- **Player Controls** for irrigation toggle and cost management during weather events
+- **Weather Integration** providing +30% growth boost during drought on irrigated tiles
+- **Educational Value** teaching real agricultural irrigation principles and water conservation
+- **Visual Feedback** with water-blue irrigation buildings and tile coverage indicators
+
 ### 🎮 **CURRENT GAME STATE - HIGHLY SOPHISTICATED:**
 - **Fully playable multi-employee farming simulation**
 - Complete economic simulation with realistic loan/subsidy mechanics  
@@ -153,10 +161,10 @@ This applies to:
 Exception: Simple variable assignments in config files or obvious operations may use shorter comments.
 
 ### Development Phases
-1. **MVP (Phase 1):** Core foundation - grid, single employee, corn crop, basic economy
-2. **Phase 2:** Enhanced systems - interview system, workstations, advanced AI
-3. **Phase 3:** Polish - save/load system (using `pickle` or `json`), tutorial, balance testing
-4. **Phase 4+:** Agricultural complexity, business expansion, world system
+1. **✅ MVP (Phase 1) - COMPLETED:** Core foundation - grid, multi-employee, crop management, economy
+2. **✅ Phase 2 - COMPLETED:** Enhanced systems - hiring system, buildings, advanced AI pathfinding
+3. **✅ Phase 3+ - COMPLETED:** Agricultural complexity - crop rotation, soil health, weather systems, irrigation
+4. **🔄 Phase 4 (Current):** Additional features - employee traits, technology research, tutorial system
 
 ## Implementation Notes
 
@@ -179,6 +187,8 @@ This is a Python/Pygame project with specific technical considerations:
 - T: Assign Till task, P: Plant task, H: Harvest task, C: Clear selection
 - F1: Toggle debug information
 - UI Buttons: Pause, 1x, 2x, 4x speed controls
+- Building Placement: Click building buttons to enter placement mode, click tiles to place
+- Irrigation Controls: "Irrigation ($150)" to install, "Toggle Irrigation" to manage costs
 
 **Future Commands (Planned):**
 - `python -m pytest` - Run unit tests (Phase 2)
@@ -246,3 +256,9 @@ This is a Python/Pygame project with specific technical considerations:
 - Soil Nutrient System
 - Added soil information panel system
 - added soil information
+- tried to fix HUD, but not fixed yet
+- Fixed right HUD for a bit
+- added weather
+- going to begin the irrigation infrastructure system
+- Phases 1, 2, 3+, and 4 are done!
+- Updated the Roadmap with tons of completed tasks

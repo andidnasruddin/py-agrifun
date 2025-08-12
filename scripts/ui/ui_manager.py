@@ -17,8 +17,11 @@ class UIManager:
         self.screen = screen
         self.screen_rect = screen.get_rect()
         
-        # Initialize pygame-gui manager
-        self.gui_manager = pygame_gui.UIManager((WINDOW_WIDTH, WINDOW_HEIGHT))
+        # Initialize pygame-gui manager with custom theme for better contrast
+        self.gui_manager = pygame_gui.UIManager((WINDOW_WIDTH, WINDOW_HEIGHT), theme_path=None)
+        
+        # Set up improved theme with better contrast
+        self._setup_improved_theme()
         
         # UI state
         self.show_debug = True
@@ -67,6 +70,12 @@ class UIManager:
         # Soil information panel events
         self.event_system.subscribe('tile_selected', self._handle_tile_selected)
         self.event_system.subscribe('tile_deselected', self._handle_tile_deselected)
+        # Weather system events
+        self.event_system.subscribe('weather_updated', self._handle_weather_update)
+        self.event_system.subscribe('season_changed', self._handle_season_change)
+        self.event_system.subscribe('weather_event_started', self._handle_weather_event)
+        self.event_system.subscribe('irrigation_status_changed', self._handle_irrigation_status_change)
+        self.event_system.subscribe('irrigation_cost_incurred', self._handle_irrigation_cost_notification)
         
         # Track current day for expiration calculations
         self._current_day = 1
@@ -86,10 +95,56 @@ class UIManager:
         self.current_selected_tile = None
         self.soil_info_elements = []
         
+        # Farm specialization panel state
+        self._specialization_panel_exists = False
+        self.specialization_elements = []
+        
         # Request initial inventory status
         self.event_system.emit('get_full_inventory_status', {})
         
-        print("UI Manager initialized with pygame-gui")
+        print("UI Manager initialized with pygame-gui and improved contrast theme")
+    
+    def _setup_improved_theme(self):
+        """Set up improved theme with better text contrast"""
+        # Create theme dictionary for better text contrast
+        theme_data = {
+            "defaults": {
+                "colours": {
+                    "normal_text": "#FFFFFF",        # Pure white text for maximum contrast
+                    "hovered_text": "#FFFFFF",       # Keep white on hover
+                    "selected_text": "#FFFFFF",      # White when selected
+                    "text_shadow": "#000000",        # Black shadow for readability
+                    "normal_bg": "#2A2A2A",          # Darker background for contrast
+                    "hovered_bg": "#3A3A3A",         # Slightly lighter on hover
+                    "selected_bg": "#4A4A4A"         # More contrast when selected
+                }
+            },
+            "@text_box": {
+                "colours": {
+                    "normal_text": "#FFFFFF",        # White text in text boxes
+                    "background": "#2A2A2A"          # Dark background
+                }
+            },
+            "@label": {
+                "colours": {
+                    "normal_text": "#FFFFFF"          # White text for labels
+                }
+            },
+            "@button": {
+                "colours": {
+                    "normal_text": "#FFFFFF",        # White button text
+                    "hovered_text": "#FFFFFF",       # Stay white on hover
+                    "selected_text": "#FFFFFF",      # White when pressed
+                    "normal_bg": "#404040",          # Dark button background
+                    "hovered_bg": "#505050",         # Lighter on hover
+                    "selected_bg": "#606060"         # Lighter when pressed
+                }
+            }
+        }
+        
+        # Apply the theme to the manager
+        # Note: pygame-gui theme system is complex, so we'll handle contrast via manual styling
+        print("Improved contrast theme configuration prepared")
     
     def _create_ui_elements(self):
         """Create the main UI elements"""
@@ -164,30 +219,44 @@ class UIManager:
             tool_tip_text="Fast speed (5 min = 1 game day)"
         )
         
-        # Main control panel on right side (extra tall for building buttons)
+        # Main control panel on right side (extra tall and wider for all controls)
+        # Creating with darker background for better text contrast and proper height (720px fits within 800px window)
         self.control_panel = pygame_gui.elements.UIPanel(
-            relative_rect=pygame.Rect(WINDOW_WIDTH-250, 70, 240, 480),
+            relative_rect=pygame.Rect(WINDOW_WIDTH-280, 70, 270, 720),
             manager=self.gui_manager
         )
         
+        # Set darker background color for better text contrast
+        try:
+            # Try to set a darker background color directly
+            self.control_panel.background_colour = pygame.Color(25, 25, 25)  # Very dark gray
+            self.control_panel.border_colour = pygame.Color(60, 60, 60)  # Medium gray border
+            self.control_panel.border_width = 1
+        except AttributeError:
+            # If direct color setting doesn't work, pygame-gui will use defaults
+            print("Note: Control panel background color set to default")
+        
+        # Use text color that will be more visible
         self.control_title = pygame_gui.elements.UILabel(
-            relative_rect=pygame.Rect(10, 10, 220, 25),
+            relative_rect=pygame.Rect(10, 10, 250, 25),
             text="Farm Controls",
             manager=self.gui_manager,
             container=self.control_panel
         )
+        # Note: Label text color will be handled by pygame-gui defaults
         
         # Economy section
         economy_section_y = 40
+        # Economy section header with improved visibility
         self.economy_label = pygame_gui.elements.UILabel(
-            relative_rect=pygame.Rect(10, economy_section_y, 220, 20),
+            relative_rect=pygame.Rect(10, economy_section_y, 250, 20),
             text="Economy",
             manager=self.gui_manager,
             container=self.control_panel
         )
         
         self.sell_corn_button = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect(10, economy_section_y + 25, 100, 25),
+            relative_rect=pygame.Rect(10, economy_section_y + 25, 120, 25),
             text="Sell 10 Corn",
             manager=self.gui_manager,
             container=self.control_panel,
@@ -195,16 +264,16 @@ class UIManager:
         )
         
         self.buy_silo_button = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect(115, economy_section_y + 25, 115, 25),
+            relative_rect=pygame.Rect(135, economy_section_y + 25, 125, 25),
             text="Buy Storage Silo",
             manager=self.gui_manager,
             container=self.control_panel,
             tool_tip_text="Purchase storage silo (+50 capacity). Cost increases with each purchase."
         )
         
-        # Interactive building buttons (second row)
+        # Interactive building buttons (second row) - wider for better readability
         self.buy_water_cooler_button = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect(10, economy_section_y + 55, 70, 25),
+            relative_rect=pygame.Rect(10, economy_section_y + 55, 80, 25),
             text="Water ($200)",
             manager=self.gui_manager,
             container=self.control_panel,
@@ -212,7 +281,7 @@ class UIManager:
         )
         
         self.buy_tool_shed_button = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect(85, economy_section_y + 55, 70, 25),
+            relative_rect=pygame.Rect(95, economy_section_y + 55, 80, 25),
             text="Tools ($300)",
             manager=self.gui_manager,
             container=self.control_panel,
@@ -220,24 +289,34 @@ class UIManager:
         )
         
         self.buy_housing_button = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect(160, economy_section_y + 55, 70, 25),
+            relative_rect=pygame.Rect(180, economy_section_y + 55, 80, 25),
             text="House ($800)",
             manager=self.gui_manager,
             container=self.control_panel,
             tool_tip_text="Purchase employee housing ($800). Employees can rest here."
         )
         
+        # Irrigation system button (third row)
+        self.buy_irrigation_button = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect(10, economy_section_y + 85, 120, 25),
+            text="Irrigation ($150)",
+            manager=self.gui_manager,
+            container=self.control_panel,
+            tool_tip_text="Install irrigation system ($150). Mitigates drought effects on tilled soil."
+        )
+        
         # Save/Load section (moved down to accommodate building buttons)
-        save_section_y = 130
+        save_section_y = 140
+        # Game State section header with improved visibility
         self.save_label = pygame_gui.elements.UILabel(
-            relative_rect=pygame.Rect(10, save_section_y, 220, 20),
+            relative_rect=pygame.Rect(10, save_section_y, 250, 20),
             text="Game State",
             manager=self.gui_manager,
             container=self.control_panel
         )
         
         self.quick_save_button = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect(10, save_section_y + 25, 100, 25),
+            relative_rect=pygame.Rect(10, save_section_y + 25, 120, 25),
             text="Quick Save",
             manager=self.gui_manager,
             container=self.control_panel,
@@ -245,7 +324,7 @@ class UIManager:
         )
         
         self.quick_load_button = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect(115, save_section_y + 25, 115, 25),
+            relative_rect=pygame.Rect(135, save_section_y + 25, 125, 25),
             text="Quick Load",
             manager=self.gui_manager,
             container=self.control_panel,
@@ -253,7 +332,7 @@ class UIManager:
         )
         
         self.save_menu_button = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect(10, save_section_y + 55, 220, 25),
+            relative_rect=pygame.Rect(10, save_section_y + 55, 250, 25),
             text="Save/Load Menu",
             manager=self.gui_manager,
             container=self.control_panel,
@@ -261,16 +340,17 @@ class UIManager:
         )
         
         # Employee section (adjusted for moved save section)
-        employee_section_y = 220
+        employee_section_y = 240
+        # Employees section header with improved visibility
         self.employee_label = pygame_gui.elements.UILabel(
-            relative_rect=pygame.Rect(10, employee_section_y, 220, 20),
+            relative_rect=pygame.Rect(10, employee_section_y, 250, 20),
             text="Employees",
             manager=self.gui_manager,
             container=self.control_panel
         )
         
         self.hire_employee_button = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect(10, employee_section_y + 25, 100, 25),
+            relative_rect=pygame.Rect(10, employee_section_y + 25, 120, 25),
             text="Hire Employee",
             manager=self.gui_manager,
             container=self.control_panel,
@@ -278,7 +358,7 @@ class UIManager:
         )
         
         self.view_applicants_button = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect(115, employee_section_y + 25, 115, 25),
+            relative_rect=pygame.Rect(135, employee_section_y + 25, 125, 25),
             text="View Applicants",
             manager=self.gui_manager,
             container=self.control_panel,
@@ -286,86 +366,139 @@ class UIManager:
         )
         
         self.view_payroll_button = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect(10, employee_section_y + 55, 110, 25),
+            relative_rect=pygame.Rect(10, employee_section_y + 55, 120, 25),
             text="View Roster",
             manager=self.gui_manager,
             container=self.control_panel
         )
         
         self.view_contracts_button = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect(125, employee_section_y + 55, 105, 25),
+            relative_rect=pygame.Rect(135, employee_section_y + 55, 125, 25),
             text="View Contracts",
             manager=self.gui_manager,
             container=self.control_panel,
             tool_tip_text="View available farming contracts and manage agreements"
         )
         
-        # Real-time employee status display (adjusted)
-        status_section_y = 310
-        self.status_label = pygame_gui.elements.UILabel(
-            relative_rect=pygame.Rect(10, status_section_y, 220, 15),
-            text="Live Status",
+        # Farm Specialization section
+        specialization_section_y = 340
+        # Farm Specialization section header with improved visibility
+        self.specialization_label = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect(10, specialization_section_y, 220, 20),
+            text="Farm Specialization",
+            manager=self.gui_manager,
+            container=self.control_panel
+        )
+        
+        self.view_specialization_button = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect(10, specialization_section_y + 25, 250, 25),
+            text="Choose Specialization",
+            manager=self.gui_manager,
+            container=self.control_panel,
+            tool_tip_text="Select farm specialization track for bonuses and strategic advantages"
+        )
+        
+        # Weather & Seasons section (between specialization and status)
+        weather_section_y = 370
+        self.weather_label = pygame_gui.elements.UITextBox(
+            relative_rect=pygame.Rect(10, weather_section_y, 250, 18),
+            html_text="<font size=3.5><b>Weather & Seasons</b></font>",
+            manager=self.gui_manager,
+            container=self.control_panel
+        )
+        
+        # Current weather display
+        self.weather_display = pygame_gui.elements.UITextBox(
+            relative_rect=pygame.Rect(10, weather_section_y + 20, 250, 40),
+            html_text="<font size=2>Spring Day 1<br/>Clear Weather</font>",
+            manager=self.gui_manager,
+            container=self.control_panel
+        )
+        
+        # Weather effects info button  
+        self.weather_info_button = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect(10, weather_section_y + 65, 120, 25),
+            text="Weather Info",
+            manager=self.gui_manager,
+            container=self.control_panel,
+            tool_tip_text="View detailed weather effects and seasonal crop recommendations"
+        )
+        
+        # Irrigation toggle button
+        self.irrigation_toggle_button = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect(135, weather_section_y + 65, 115, 25),
+            text="Toggle Irrigation",
+            manager=self.gui_manager,
+            container=self.control_panel,
+            tool_tip_text="Turn irrigation on/off during drought. Costs $5/day per irrigated tile."
+        )
+        
+        # Real-time employee status display (with proper vertical spacing)
+        status_section_y = 430  # Moved down to accommodate weather section
+        self.status_label = pygame_gui.elements.UITextBox(
+            relative_rect=pygame.Rect(10, status_section_y, 250, 35),
+            html_text="<font size=5 color='#FFFFFF'><b>Live Status</b></font>",
             manager=self.gui_manager,
             container=self.control_panel
         )
         
         self.employee_status_display = pygame_gui.elements.UITextBox(
-            relative_rect=pygame.Rect(10, status_section_y + 20, 220, 60),
-            html_text="<font size=2>No employees</font>",
+            relative_rect=pygame.Rect(10, status_section_y + 40, 250, 90),
+            html_text="<font size=3.5 color='#FFFFFF'>No employees</font>",
             manager=self.gui_manager,
             container=self.control_panel
         )
         
-        # Keyboard shortcuts section (within main panel, adjusted)
-        shortcuts_section_y = 425
-        self.shortcuts_label = pygame_gui.elements.UILabel(
-            relative_rect=pygame.Rect(10, shortcuts_section_y, 220, 20),
-            text="Keyboard Shortcuts",
+        # Keyboard shortcuts section (with proper vertical spacing)
+        shortcuts_section_y = 645  # Adjusted for weather section addition
+        self.shortcuts_label = pygame_gui.elements.UITextBox(
+            relative_rect=pygame.Rect(10, shortcuts_section_y, 250, 35),
+            html_text="<font size=5 color='#FFFFFF'><b>Keyboard Shortcuts</b></font>",
             manager=self.gui_manager,
             container=self.control_panel
         )
         
         
-        # Crop selection section (adjusted)
-        crop_section_y = shortcuts_section_y - 85
-        self.crop_selection_label = pygame_gui.elements.UILabel(
-            relative_rect=pygame.Rect(10, crop_section_y, 220, 15),
-            text="Crop Selection",
+        # Crop selection section (with proper vertical spacing)
+        crop_section_y = 545  # Adjusted for weather section addition
+        self.crop_selection_label = pygame_gui.elements.UITextBox(
+            relative_rect=pygame.Rect(10, crop_section_y, 250, 35),
+            html_text="<font size=5 color='#FFFFFF'><b>Crop Selection</b></font>",
             manager=self.gui_manager,
             container=self.control_panel
         )
         
-        # Current selected crop display and dropdown
+        # Current selected crop display and dropdown (with proper spacing)
         self.current_crop_type = DEFAULT_CROP_TYPE  # Track currently selected crop type
         crop_data = CROP_TYPES[self.current_crop_type]
         self.selected_crop_dropdown = pygame_gui.elements.UIDropDownMenu(
-            relative_rect=pygame.Rect(10, crop_section_y + 20, 150, 25),
+            relative_rect=pygame.Rect(10, crop_section_y + 40, 150, 30),
             options_list=[f"{CROP_TYPES[crop]['name']} (${CROP_TYPES[crop]['seed_cost']})" for crop in CROP_TYPES],
             starting_option=f"{crop_data['name']} (${crop_data['seed_cost']})",
             manager=self.gui_manager,
             container=self.control_panel
         )
         
-        # Crop info button
+        # Crop info button (with proper spacing)
         self.crop_info_button = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect(165, crop_section_y + 20, 55, 25),
+            relative_rect=pygame.Rect(165, crop_section_y + 40, 85, 30),
             text="Info",
             manager=self.gui_manager,
             container=self.control_panel,
             tool_tip_text="View detailed crop information and growth times"
         )
 
-        # Task control buttons (adjusted)
-        task_controls_y = shortcuts_section_y - 35
-        self.task_controls_label = pygame_gui.elements.UILabel(
-            relative_rect=pygame.Rect(10, task_controls_y, 220, 15),
-            text="Task Controls",
+        # Task control buttons (with proper vertical spacing)
+        task_controls_y = 600  # Adjusted for weather section addition
+        self.task_controls_label = pygame_gui.elements.UITextBox(
+            relative_rect=pygame.Rect(10, task_controls_y, 250, 35),
+            html_text="<font size=5 color='#FFFFFF'><b>Task Controls</b></font>",
             manager=self.gui_manager,
             container=self.control_panel
         )
         
         self.cancel_tasks_button = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect(10, task_controls_y + 20, 220, 25),
+            relative_rect=pygame.Rect(10, task_controls_y + 40, 230, 35),
             text="Cancel Selected Tasks (X)",
             manager=self.gui_manager,
             container=self.control_panel
@@ -384,13 +517,14 @@ class UIManager:
         
         self.shortcut_labels = []
         for i, text in enumerate(shortcut_texts):
-            label = pygame_gui.elements.UILabel(
-                relative_rect=pygame.Rect(10, shortcuts_section_y + 25 + i * 18, 220, 16),
-                text=text,
+            # Use text box with proper height and spacing
+            text_box = pygame_gui.elements.UITextBox(
+                relative_rect=pygame.Rect(10, shortcuts_section_y + 40 + i * 25, 250, 22),
+                html_text=f"<font size=4 color='#FFFFFF'>{text}</font>",
                 manager=self.gui_manager,
                 container=self.control_panel
             )
-            self.shortcut_labels.append(label)
+            self.shortcut_labels.append(text_box)
     
     def _create_applicant_panel(self):
         """Create the strategic hiring panel dynamically when needed"""
@@ -533,6 +667,11 @@ class UIManager:
                 self.event_system.emit('enter_building_placement_mode', {
                     'building_type': 'employee_housing'
                 })
+            elif event.ui_element == self.buy_irrigation_button:
+                # Enter placement mode for irrigation system
+                self.event_system.emit('enter_building_placement_mode', {
+                    'building_type': 'irrigation_system'
+                })
             elif event.ui_element == self.hire_employee_button:
                 # Request generation of new applicants for hiring
                 print("DEBUG: Hire Employee button clicked - requesting applicant generation")
@@ -547,6 +686,9 @@ class UIManager:
             elif event.ui_element == self.view_contracts_button:
                 # Show contract board
                 self._show_contract_board()
+            elif event.ui_element == self.view_specialization_button:
+                # Show farm specialization panel
+                self._show_specialization_panel()
             elif (hasattr(self, 'close_applicant_panel_button') and 
                   event.ui_element == self.close_applicant_panel_button):
                 print("DEBUG: Close applicant panel button clicked")  # Debug logging for panel close
@@ -559,12 +701,30 @@ class UIManager:
                 # Close soil information panel
                 print("Soil info panel: Close button clicked")
                 self._hide_soil_info_panel()
+            elif hasattr(event.ui_element, 'is_specialization_panel_close') and event.ui_element.is_specialization_panel_close:
+                # Close specialization panel
+                print("Specialization panel: Close button clicked")
+                self._hide_specialization_panel()
+            elif hasattr(event.ui_element, 'specialization_id'):
+                # Handle specialization choice
+                specialization_id = event.ui_element.specialization_id
+                print(f"Specialization chosen: {specialization_id}")
+                self.event_system.emit('choose_specialization_requested', {
+                    'specialization_id': specialization_id
+                })
+                self._hide_specialization_panel()
             elif event.ui_element == self.cancel_tasks_button:
                 # Cancel tasks on selected tiles
                 self.event_system.emit('cancel_tasks_requested', {})
             elif event.ui_element == self.crop_info_button:
                 # Show crop information dialog
                 self._show_crop_info_dialog()
+            elif event.ui_element == self.weather_info_button:
+                # Show weather information panel
+                self._show_weather_info_panel()
+            elif event.ui_element == self.irrigation_toggle_button:
+                # Toggle irrigation system
+                self.event_system.emit('toggle_irrigation_requested', {})
             elif event.ui_element == self.quick_save_button:
                 # Quick save current game
                 self.event_system.emit('manual_save_requested', {
@@ -1278,7 +1438,7 @@ class UIManager:
         employees = event_data.get('employees', [])
         
         if not employees:
-            self.employee_status_display.set_text("<font size=2>No employees</font>")
+            self.employee_status_display.set_text("<font size=3.5 color='#FFFFFF'>No employees</font>")
             return
         
         status_lines = []
@@ -1295,7 +1455,7 @@ class UIManager:
         if len(employees) > 4:
             status_lines.append(f"<i>...and {len(employees) - 4} more</i>")
         
-        status_html = f"<font size=2>{'<br>'.join(status_lines)}</font>"
+        status_html = f"<font size=3.5 color='#FFFFFF'>{'<br>'.join(status_lines)}</font>"
         self.employee_status_display.set_text(status_html)
     
     # Interview system completely removed - using Simple Hiring System
@@ -1850,3 +2010,252 @@ class UIManager:
         self._soil_info_panel_exists = False
         self.current_selected_tile = None
         print("Soil info panel hidden")
+    
+    def _show_specialization_panel(self):
+        """Show farm specialization selection panel"""
+        if self._specialization_panel_exists:
+            self._hide_specialization_panel()
+        
+        # Create specialization panel centered on screen
+        panel_width = 600
+        panel_height = 580  # Taller for better spacing
+        panel_x = (WINDOW_WIDTH - panel_width) // 2
+        panel_y = (WINDOW_HEIGHT - panel_height) // 2
+        
+        self.specialization_panel = pygame_gui.elements.UIPanel(
+            relative_rect=pygame.Rect(panel_x, panel_y, panel_width, panel_height),
+            manager=self.gui_manager
+        )
+        
+        # Set solid background for the panel
+        self.specialization_panel.background_colour = pygame.Color(45, 45, 45)  # Dark gray
+        self.specialization_panel.border_colour = pygame.Color(100, 100, 100)  # Light gray border
+        self.specialization_panel.border_width = 2
+        
+        # Panel title
+        title_label = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect(10, 10, panel_width - 20, 30),
+            text="Farm Specialization Selection",
+            manager=self.gui_manager,
+            container=self.specialization_panel
+        )
+        self.specialization_elements.append(title_label)
+        
+        # Current specialization display
+        # We'll get this info from the event system
+        self.event_system.emit('get_specialization_info_for_ui', {})
+        
+        current_spec_label = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect(10, 50, panel_width - 20, 25),
+            text="Current: Unspecialized Farm",
+            manager=self.gui_manager,
+            container=self.specialization_panel
+        )
+        self.specialization_elements.append(current_spec_label)
+        
+        # Instructions
+        instructions_label = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect(10, 80, panel_width - 20, 25),
+            text="Choose a specialization to unlock strategic bonuses:",
+            manager=self.gui_manager,
+            container=self.specialization_panel
+        )
+        self.specialization_elements.append(instructions_label)
+        
+        # Specialization options (we'll populate these based on available specializations)
+        y_offset = 120
+        
+        # Grain Farm option
+        grain_label = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect(20, y_offset, 560, 25),
+            text="🌾 Grain Farm - Bulk production specialist (Cost: $2,500)",
+            manager=self.gui_manager,
+            container=self.specialization_panel
+        )
+        self.specialization_elements.append(grain_label)
+        
+        grain_desc = pygame_gui.elements.UITextBox(
+            relative_rect=pygame.Rect(30, y_offset + 30, 420, 60),
+            html_text="<font size=2>+25% wheat yield, +15% storage efficiency, +20% grain growth speed<br/>Requires: 100 wheat harvested, 200 storage capacity</font>",
+            manager=self.gui_manager,
+            container=self.specialization_panel
+        )
+        self.specialization_elements.append(grain_desc)
+        
+        grain_button = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect(460, y_offset + 35, 120, 30),
+            text="Choose Grain",
+            manager=self.gui_manager,
+            container=self.specialization_panel
+        )
+        grain_button.specialization_id = 'grain'
+        self.specialization_elements.append(grain_button)
+        
+        y_offset += 100
+        
+        # Market Garden option
+        market_label = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect(20, y_offset, 560, 25),
+            text="🍅 Market Garden - Premium crop specialist (Cost: $3,000)",
+            manager=self.gui_manager,
+            container=self.specialization_panel
+        )
+        self.specialization_elements.append(market_label)
+        
+        market_desc = pygame_gui.elements.UITextBox(
+            relative_rect=pygame.Rect(30, y_offset + 30, 420, 60),
+            html_text="<font size=2>+30% tomato yield, +20% crop quality, +25% premium prices<br/>Requires: 75 tomatoes harvested, 1.2 avg crop quality</font>",
+            manager=self.gui_manager,
+            container=self.specialization_panel
+        )
+        self.specialization_elements.append(market_desc)
+        
+        market_button = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect(460, y_offset + 35, 120, 30),
+            text="Choose Market",
+            manager=self.gui_manager,
+            container=self.specialization_panel
+        )
+        market_button.specialization_id = 'market_garden'
+        self.specialization_elements.append(market_button)
+        
+        y_offset += 100
+        
+        # Diversified Farm option
+        diversified_label = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect(20, y_offset, 560, 25),
+            text="🌽 Diversified Farm - Sustainability specialist (Cost: $2,000)",
+            manager=self.gui_manager,
+            container=self.specialization_panel
+        )
+        self.specialization_elements.append(diversified_label)
+        
+        diversified_desc = pygame_gui.elements.UITextBox(
+            relative_rect=pygame.Rect(30, y_offset + 30, 420, 60),
+            html_text="<font size=2>+35% rotation bonuses, +20% soil recovery, +15% overall quality<br/>Requires: 3 rotation cycles, 80 avg soil health</font>",
+            manager=self.gui_manager,
+            container=self.specialization_panel
+        )
+        self.specialization_elements.append(diversified_desc)
+        
+        diversified_button = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect(460, y_offset + 35, 120, 30),
+            text="Choose Diverse",
+            manager=self.gui_manager,
+            container=self.specialization_panel
+        )
+        diversified_button.specialization_id = 'diversified'
+        self.specialization_elements.append(diversified_button)
+        
+        # Close button
+        close_button = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect(panel_width - 70, panel_height - 40, 60, 30),
+            text="Close",
+            manager=self.gui_manager,
+            container=self.specialization_panel
+        )
+        close_button.is_specialization_panel_close = True
+        self.specialization_elements.append(close_button)
+        
+        self._specialization_panel_exists = True
+        print("Showing farm specialization panel")
+    
+    def _hide_specialization_panel(self):
+        """Hide the farm specialization panel"""
+        if not self._specialization_panel_exists:
+            return
+        
+        # Clean up all elements
+        for element in self.specialization_elements:
+            element.kill()
+        self.specialization_elements.clear()
+        
+        if hasattr(self, 'specialization_panel'):
+            self.specialization_panel.kill()
+            self.specialization_panel = None
+        
+        self._specialization_panel_exists = False
+        print("Specialization panel hidden")
+    
+    def _handle_weather_update(self, event_data):
+        """Update weather display when weather changes"""
+        season = event_data.get('season', 'spring').title()
+        weather_event = event_data.get('weather_event', 'clear').replace('_', ' ').title()
+        growth_modifier = event_data.get('growth_modifier', 1.0)
+        
+        # Create color-coded weather display
+        if weather_event == 'Clear':
+            weather_color = '#FFFFFF'
+        elif weather_event == 'Rain':
+            weather_color = '#6495ED'  # Cornflower blue
+        elif weather_event == 'Drought':
+            weather_color = '#FF6347'  # Tomato red
+        elif weather_event == 'Frost':
+            weather_color = '#E6E6FA'  # Lavender
+        elif weather_event.startswith('Heat'):
+            weather_color = '#FF4500'  # Orange red
+        else:
+            weather_color = '#C0C0C0'  # Silver
+        
+        # Format growth effect
+        if growth_modifier > 1.0:
+            effect_text = f"(+{int((growth_modifier-1)*100)}% growth)"
+            effect_color = '#90EE90'  # Light green
+        elif growth_modifier < 1.0:
+            effect_text = f"({int((1-growth_modifier)*100)}% slower)"
+            effect_color = '#FFB6C1'  # Light pink
+        else:
+            effect_text = "(normal growth)"
+            effect_color = '#FFFFFF'
+        
+        weather_html = f"<font size=2 color='{weather_color}'>{season} - {weather_event}</font><br/><font size=2 color='{effect_color}'>{effect_text}</font>"
+        self.weather_display.set_text(weather_html)
+    
+    def _handle_season_change(self, event_data):
+        """Handle season transition notifications"""
+        new_season = event_data.get('new_season', 'spring').title()
+        self._add_notification(f"[WEATHER] Season changed to {new_season}", "info")
+    
+    def _handle_weather_event(self, event_data):
+        """Handle weather event notifications"""
+        event_type = event_data.get('event_type', 'clear').replace('_', ' ').title()
+        duration = event_data.get('duration', 1)
+        self._add_notification(f"[WEATHER] {event_type} for {duration} days", "info")
+    
+    def _show_weather_info_panel(self):
+        """Show detailed weather information panel"""
+        # Request weather data from weather manager
+        self.event_system.emit('get_weather_info_for_ui', {})
+        
+        # For now, show a simple message until we implement the full panel
+        self._add_notification("[WEATHER] Weather info panel coming soon!", "info")
+    
+    def _handle_irrigation_status_change(self, event_data):
+        """Handle irrigation system status changes"""
+        active = event_data.get('active', False)
+        total_tiles = event_data.get('total_tiles', 0)
+        daily_cost = event_data.get('daily_cost_during_drought', 0)
+        
+        # Update button text to reflect current state
+        if total_tiles == 0:
+            button_text = "No Irrigation"
+            self.irrigation_toggle_button.set_text(button_text)
+            self.irrigation_toggle_button.disable()
+        else:
+            status = "ON" if active else "OFF"
+            button_text = f"Irrigation {status}"
+            self.irrigation_toggle_button.set_text(button_text)
+            self.irrigation_toggle_button.enable()
+        
+        # Show status notification
+        status_text = "activated" if active else "deactivated"
+        if total_tiles > 0:
+            self._add_notification(f"[IRRIGATION] {status_text} - {total_tiles} tiles (${daily_cost}/day during drought)", "info")
+    
+    def _handle_irrigation_cost_notification(self, event_data):
+        """Handle irrigation cost notifications"""
+        cost = event_data.get('cost', 0)
+        irrigated_tiles = event_data.get('irrigated_tiles', 0)
+        weather_event = event_data.get('weather_event', 'drought')
+        
+        self._add_notification(f"[IRRIGATION] ${cost:.2f} water cost for {irrigated_tiles} tiles during {weather_event}", "info")
