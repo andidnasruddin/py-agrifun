@@ -140,9 +140,9 @@ class UIManager:
             tool_tip_text="Fast speed (5 min = 1 game day)"
         )
         
-        # Main control panel on right side (taller to accommodate more buttons)
+        # Main control panel on right side (taller to accommodate save/load buttons)
         self.control_panel = pygame_gui.elements.UIPanel(
-            relative_rect=pygame.Rect(WINDOW_WIDTH-250, 70, 240, 400),
+            relative_rect=pygame.Rect(WINDOW_WIDTH-250, 70, 240, 450),
             manager=self.gui_manager
         )
         
@@ -178,8 +178,41 @@ class UIManager:
             tool_tip_text="Purchase storage silo (+50 capacity). Cost increases with each purchase."
         )
         
+        # Save/Load section
+        save_section_y = 100
+        self.save_label = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect(10, save_section_y, 220, 20),
+            text="Game State",
+            manager=self.gui_manager,
+            container=self.control_panel
+        )
+        
+        self.quick_save_button = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect(10, save_section_y + 25, 100, 25),
+            text="Quick Save",
+            manager=self.gui_manager,
+            container=self.control_panel,
+            tool_tip_text="Save current game to quicksave slot"
+        )
+        
+        self.quick_load_button = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect(115, save_section_y + 25, 115, 25),
+            text="Quick Load",
+            manager=self.gui_manager,
+            container=self.control_panel,
+            tool_tip_text="Load from quicksave slot"
+        )
+        
+        self.save_menu_button = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect(10, save_section_y + 55, 220, 25),
+            text="Save/Load Menu",
+            manager=self.gui_manager,
+            container=self.control_panel,
+            tool_tip_text="Open save/load menu with multiple slots"
+        )
+        
         # Employee section
-        employee_section_y = 100
+        employee_section_y = 190
         self.employee_label = pygame_gui.elements.UILabel(
             relative_rect=pygame.Rect(10, employee_section_y, 220, 20),
             text="Employees",
@@ -211,7 +244,7 @@ class UIManager:
         )
         
         # Real-time employee status display
-        status_section_y = 190
+        status_section_y = 280
         self.status_label = pygame_gui.elements.UILabel(
             relative_rect=pygame.Rect(10, status_section_y, 220, 15),
             text="Live Status",
@@ -227,7 +260,7 @@ class UIManager:
         )
         
         # Keyboard shortcuts section (within main panel)
-        shortcuts_section_y = 305
+        shortcuts_section_y = 395
         self.shortcuts_label = pygame_gui.elements.UILabel(
             relative_rect=pygame.Rect(10, shortcuts_section_y, 220, 20),
             text="Keyboard Shortcuts",
@@ -449,6 +482,20 @@ class UIManager:
             elif event.ui_element == self.crop_info_button:
                 # Show crop information dialog
                 self._show_crop_info_dialog()
+            elif event.ui_element == self.quick_save_button:
+                # Quick save current game
+                self.event_system.emit('manual_save_requested', {
+                    'save_name': f"Quick Save - Day {self._current_day}",
+                    'slot': 0
+                })
+            elif event.ui_element == self.quick_load_button:
+                # Quick load game
+                self.event_system.emit('load_game_requested', {
+                    'slot': 0
+                })
+            elif event.ui_element == self.save_menu_button:
+                # Open save/load menu
+                self._show_save_load_menu()
             # Handle applicant hire buttons (direct hire only)
             elif hasattr(event.ui_element, 'applicant_id') and hasattr(event.ui_element, 'action_type'):
                 applicant_id = event.ui_element.applicant_id
@@ -464,6 +511,26 @@ class UIManager:
                 applicant_id = event.ui_element.applicant_id
                 self.event_system.emit('hire_applicant_requested', {'applicant_id': applicant_id})
                 self._destroy_applicant_panel()
+            # Handle save/load slot buttons
+            elif hasattr(event.ui_element, 'slot_id') and hasattr(event.ui_element, 'action_type'):
+                slot_id = event.ui_element.slot_id
+                action_type = event.ui_element.action_type
+                
+                if action_type == 'save':
+                    self.event_system.emit('manual_save_requested', {
+                        'save_name': f"Save Slot {slot_id} - Day {self._current_day}",
+                        'slot': slot_id
+                    })
+                    self._destroy_save_load_menu()
+                elif action_type == 'load':
+                    self.event_system.emit('load_game_requested', {
+                        'slot': slot_id
+                    })
+                    self._destroy_save_load_menu()
+            # Handle save/load menu close button
+            elif (hasattr(self, 'save_load_close_button') and 
+                  event.ui_element == self.save_load_close_button):
+                self._destroy_save_load_menu()
         
         # Handle dropdown selection changes
         elif event.type == pygame_gui.UI_DROP_DOWN_MENU_CHANGED:
@@ -595,6 +662,90 @@ class UIManager:
                 manager=self.gui_manager,
                 container=self.crop_info_window
             )
+    
+    def _show_save_load_menu(self):
+        """Show save/load menu with multiple slots"""
+        if hasattr(self, 'save_load_window'):
+            return  # Already open
+        
+        self.save_load_window = pygame_gui.elements.UIWindow(
+            rect=pygame.Rect(WINDOW_WIDTH//2 - 300, WINDOW_HEIGHT//2 - 200, 600, 400),
+            window_display_title="Save/Load Game",
+            manager=self.gui_manager
+        )
+        
+        # Create save slots
+        self.save_slots = []
+        for i in range(5):  # 5 save slots
+            slot_y = 50 + i * 60
+            
+            # Slot label
+            slot_label = pygame_gui.elements.UILabel(
+                relative_rect=pygame.Rect(10, slot_y, 80, 25),
+                text=f"Slot {i+1}:",
+                manager=self.gui_manager,
+                container=self.save_load_window
+            )
+            
+            # Save button
+            save_button = pygame_gui.elements.UIButton(
+                relative_rect=pygame.Rect(100, slot_y, 80, 25),
+                text="Save",
+                manager=self.gui_manager,
+                container=self.save_load_window
+            )
+            save_button.slot_id = i + 1
+            save_button.action_type = 'save'
+            
+            # Load button  
+            load_button = pygame_gui.elements.UIButton(
+                relative_rect=pygame.Rect(185, slot_y, 80, 25),
+                text="Load",
+                manager=self.gui_manager,
+                container=self.save_load_window
+            )
+            load_button.slot_id = i + 1
+            load_button.action_type = 'load'
+            
+            # Save info label
+            info_label = pygame_gui.elements.UILabel(
+                relative_rect=pygame.Rect(275, slot_y, 250, 25),
+                text="Empty Slot",
+                manager=self.gui_manager,
+                container=self.save_load_window
+            )
+            
+            self.save_slots.append({
+                'save_button': save_button,
+                'load_button': load_button,
+                'info_label': info_label
+            })
+        
+        # Close button
+        self.save_load_close_button = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect(520, 350, 60, 30),
+            text="Close",
+            manager=self.gui_manager,
+            container=self.save_load_window
+        )
+        
+        # Load save information
+        self._update_save_slot_info()
+    
+    def _update_save_slot_info(self):
+        """Update save slot information display"""
+        # This would get save info from the save manager
+        # For now, just show placeholder text
+        for i, slot in enumerate(self.save_slots):
+            slot['info_label'].set_text("Empty Slot")
+    
+    def _destroy_save_load_menu(self):
+        """Close and destroy save/load menu"""
+        if hasattr(self, 'save_load_window'):
+            self.save_load_window.kill()
+            delattr(self, 'save_load_window')
+            delattr(self, 'save_slots')
+            delattr(self, 'save_load_close_button')
     
     def _handle_crop_type_request(self, event_data):
         """Handle request for current crop type selection"""

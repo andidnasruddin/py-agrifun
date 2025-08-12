@@ -58,6 +58,7 @@ from scripts.employee.simple_hiring_system import SimpleHiringSystem
 from scripts.economy.economy_manager import EconomyManager
 from scripts.buildings.building_manager import BuildingManager
 from scripts.ui.ui_manager import UIManager
+from scripts.core.save_manager import SaveManager
 
 
 class GameManager:
@@ -95,6 +96,9 @@ class GameManager:
         self.employee_manager.set_inventory_manager(self.inventory_manager)
         
         self.ui_manager = UIManager(self.event_system, self.screen)
+        
+        # Initialize save/load system (after all other systems)
+        self.save_manager = SaveManager(self.event_system, self)
         
         # Register for quit events
         self.event_system.subscribe('game_quit', self._handle_quit)
@@ -154,6 +158,7 @@ class GameManager:
         self.employee_manager.update(dt)
         self.economy_manager.update(dt)
         self.ui_manager.update(dt)
+        self.save_manager.update(dt)
         
         # Process any pending events
         self.event_system.process_events()

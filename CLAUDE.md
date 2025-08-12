@@ -220,3 +220,4 @@ This is a Python/Pygame project with specific technical considerations:
 - Additional employee traits and specializations
 - Save/load system implementation (architecture ready)
 - Automated testing infrastructure for regression prevention
+- Trying save and load system
