@@ -8,6 +8,10 @@ import math
 from typing import List, Tuple, Optional, Dict
 from enum import Enum
 from scripts.core.config import *
+
+# Import enhanced task system components when specializations are enabled
+if ENABLE_EMPLOYEE_SPECIALIZATIONS:
+    from scripts.tasks.task_models import EmployeeSpecialization, EmployeeRole, TaskType, SkillLevel
 # Pathfinding removed - using direct movement for performance
 
 
@@ -66,11 +70,19 @@ class Employee:
         self.housing_recently_used = False  # +25% trait effectiveness if used housing recently
         self.housing_usage_timer = 0.0  # Timer since last housing use
         
+        # Enhanced Task System - Employee Specializations (Phase 2A)
+        if ENABLE_EMPLOYEE_SPECIALIZATIONS:
+            self.specialization = self._initialize_employee_specialization()  # EmployeeSpecialization object
+        else:
+            self.specialization = None  # Legacy system - no specializations
+        
         # Visual
         self.color = COLORS['employee']
         self.radius = 8
         
         print(f"Employee {self.name} ({self.id}) created at ({x}, {y})")
+        if ENABLE_EMPLOYEE_SPECIALIZATIONS and self.specialization:
+            print(f"  -> Specialization: {self.specialization.primary_role.value}")
     
     def add_trait(self, trait_name: str):
         """Add a trait to the employee"""
@@ -297,8 +309,8 @@ class Employee:
             self._complete_current_tile()
             return
         
-        # Calculate work efficiency including building bonuses
-        effective_efficiency = self._calculate_work_efficiency(grid_manager)
+        # Calculate work efficiency including building bonuses and task specialization
+        effective_efficiency = self._calculate_work_efficiency(grid_manager, self.current_task)
         
         # Work takes time based on efficiency
         work_time_needed = 3.0 / effective_efficiency  # Base 3 seconds per task
@@ -657,10 +669,22 @@ class Employee:
             self.state = EmployeeState.SEEKING_AMENITY
             self.state_timer = 0.0
     
-    def _calculate_work_efficiency(self, grid_manager) -> float:
-        """Calculate effective work efficiency including building bonuses"""
-        # Start with base efficiency (includes traits)
-        base_efficiency = self.work_efficiency
+    def _calculate_work_efficiency(self, grid_manager, current_task=None) -> float:
+        """Calculate effective work efficiency including building bonuses and task specialization"""
+        # Start with task-specific efficiency if available (Phase 2A Enhancement)
+        if ENABLE_EMPLOYEE_SPECIALIZATIONS and current_task and 'type' in current_task:
+            # Use task-specific efficiency that includes specialization
+            base_efficiency = self.get_task_efficiency(current_task['type'])
+            
+            # Debug output for specialization efficiency
+            if hasattr(self, 'specialization') and self.specialization:
+                task_efficiency = self.get_task_efficiency(current_task['type'])
+                base_work_efficiency = self.work_efficiency
+                if abs(task_efficiency - base_work_efficiency) > 0.01:  # Show only if different
+                    print(f"Employee {self.name}: {current_task['type']} specialization efficiency: {task_efficiency:.2f}x (base: {base_work_efficiency:.2f}x)")
+        else:
+            # Legacy: Start with base efficiency (includes traits)
+            base_efficiency = self.work_efficiency
         
         # Use unified spatial benefits system if building manager is available
         if hasattr(grid_manager, 'building_manager') and grid_manager.building_manager:
@@ -712,3 +736,98 @@ class Employee:
                         break  # Only one tool shed bonus applies
             
             return efficiency
+    
+    def _initialize_employee_specialization(self):
+        """Initialize employee specialization for enhanced task system"""
+        if not ENABLE_EMPLOYEE_SPECIALIZATIONS:
+            return None
+        
+        # Import here to avoid circular imports
+        from scripts.tasks.task_models import EmployeeSpecialization, EmployeeRole
+        
+        # Assign employee roles based on name or random assignment
+        # This creates variety while being deterministic for testing
+        name_lower = self.name.lower()
+        
+        if 'sam' in name_lower:
+            # Sam starts as a Field Operator - good at basic tasks
+            primary_role = EmployeeRole.FIELD_OPERATOR
+        elif 'barry' in name_lower or 'more' in name_lower:
+            # Barry More becomes a Harvest Specialist - focused on harvesting
+            primary_role = EmployeeRole.HARVEST_SPECIALIST
+        elif 'maria' in name_lower or 'expert' in name_lower:
+            # Maria or expert workers become Crop Managers
+            primary_role = EmployeeRole.CROP_MANAGER
+        elif 'tech' in name_lower or 'maintenance' in name_lower:
+            # Technical workers become Maintenance Technicians
+            primary_role = EmployeeRole.MAINTENANCE_TECH
+        else:
+            # Default new employees start as General Laborers
+            primary_role = EmployeeRole.GENERAL_LABORER
+        
+        # Create specialization with automatically generated skills
+        specialization = EmployeeSpecialization(primary_role=primary_role)
+        
+        print(f"  -> Initialized as {primary_role.value} with skills:")
+        for task_type, skill_level in specialization.skill_levels.items():
+            print(f"     * {task_type.value}: {skill_level.name} ({skill_level.value} stars)")
+        
+        return specialization
+    
+    def get_task_efficiency(self, task_type_str: str) -> float:
+        """Get efficiency for a specific task type (legacy compatibility + enhanced)"""
+        base_efficiency = self.work_efficiency
+        
+        # Enhanced system - use specialization if available
+        if ENABLE_EMPLOYEE_SPECIALIZATIONS and self.specialization:
+            # Convert legacy task string to TaskType enum
+            from scripts.tasks.task_models import convert_legacy_task, TaskType
+            
+            # Handle both string and TaskType inputs
+            if isinstance(task_type_str, str):
+                task_type = convert_legacy_task(task_type_str)
+            else:
+                task_type = task_type_str
+            
+            # Get specialization efficiency
+            specialization_efficiency = self.specialization.get_efficiency_for_task(task_type)
+            
+            # Combine base efficiency with specialization
+            total_efficiency = base_efficiency * specialization_efficiency
+            
+            return total_efficiency
+        else:
+            # Legacy system - return base efficiency
+            return base_efficiency
+    
+    def get_specialization_summary(self) -> Dict:
+        """Get summary of employee specialization for UI display"""
+        if not ENABLE_EMPLOYEE_SPECIALIZATIONS or not self.specialization:
+            return {
+                'role': 'General Worker',
+                'skills': {},
+                'top_skills': []
+            }
+        
+        # Create UI-friendly summary
+        skills_summary = {}
+        for task_type, skill_level in self.specialization.skill_levels.items():
+            skills_summary[task_type.value] = {
+                'level': skill_level.value,
+                'name': skill_level.name,
+                'efficiency': self.specialization.get_efficiency_for_task(task_type)
+            }
+        
+        # Find top 3 skills
+        sorted_skills = sorted(
+            skills_summary.items(), 
+            key=lambda x: x[1]['level'], 
+            reverse=True
+        )
+        top_skills = sorted_skills[:3]
+        
+        return {
+            'role': self.specialization.primary_role.value.replace('_', ' ').title(),
+            'skills': skills_summary,
+            'top_skills': [{'task': skill[0], 'level': skill[1]['level']} for skill in top_skills]
+        }

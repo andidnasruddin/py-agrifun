@@ -146,7 +146,7 @@ class TaskAssignmentModal:
     
     def _create_employee_rows(self, start_y: int, col_width: int):
         """Create rows for each employee with their task priorities"""
-        row_height = 50  # Height for each employee row
+        row_height = 60  # Increased height to show specialization info
         
         # Get current employees from existing system
         self._request_current_employee_data()
@@ -160,11 +160,19 @@ class TaskAssignmentModal:
         for i, employee in enumerate(self.current_employees):
             row_y = start_y + (i * row_height)
             
-            # Employee name label
+            # Employee name and specialization info
             employee_name = employee if isinstance(employee, str) else getattr(employee, 'name', 'Unknown')
+            
+            # Get specialization info if available
+            specialization_info = self._get_employee_specialization_info(employee)
+            display_text = employee_name
+            if specialization_info['role'] != 'General Worker':
+                display_text = f"{employee_name}\n({specialization_info['role']})"
+            
+            # Employee name label (increased height for specialization)
             name_label = pygame_gui.elements.UILabel(
-                relative_rect=pygame.Rect(20, row_y, 150, 40),
-                text=employee_name,
+                relative_rect=pygame.Rect(20, row_y, 150, 50),
+                text=display_text,
                 manager=self.gui_manager,
                 container=self.background_panel
             )
@@ -175,11 +183,17 @@ class TaskAssignmentModal:
             for j, task_type in enumerate(task_types):
                 dropdown_x = 180 + (j * col_width)
                 
-                # Create dropdown with priority options
+                # Get suggested priority based on employee specialization
+                suggested_priority = self._get_suggested_priority(employee, task_type)
+                
+                # Create enhanced dropdown with skill level indicator
+                skill_info = self._get_skill_level_for_task(employee, task_type)
+                dropdown_options = self._create_priority_options_with_skill_info(skill_info)
+                
                 priority_dropdown = pygame_gui.elements.UIDropDownMenu(
                     relative_rect=pygame.Rect(dropdown_x + 5, row_y + 5, col_width - 15, 30),
-                    options_list=["1", "2", "3", "4", "5"],
-                    starting_option="3",  # Default to normal priority
+                    options_list=dropdown_options,
+                    starting_option=suggested_priority,
                     manager=self.gui_manager,
                     container=self.background_panel
                 )
@@ -362,3 +376,100 @@ class TaskAssignmentModal:
         self.event_system.unsubscribe('task_assignment_updated', self._handle_task_update)
         self.event_system.unsubscribe('show_task_assignment_modal', self._handle_show_modal)
         self.event_system.unsubscribe('hide_task_assignment_modal', self._handle_hide_modal)
+    
+    # Enhanced Task System Helper Methods (Phase 2A)
+    def _get_employee_specialization_info(self, employee):
+        """Get specialization information for an employee"""
+        if isinstance(employee, str):
+            # Placeholder employee - create mock specialization for demo
+            return self._create_mock_specialization(employee)
+        
+        # Real employee object - check if it has specialization
+        if hasattr(employee, 'get_specialization_summary'):
+            return employee.get_specialization_summary()
+        else:
+            return {'role': 'General Worker', 'skills': {}, 'top_skills': []}
+    
+    def _create_mock_specialization(self, employee_name: str):
+        """Create mock specialization data for placeholder employees"""
+        name_lower = employee_name.lower()
+        
+        if 'sam' in name_lower:
+            return {
+                'role': 'Field Operator',
+                'skills': {
+                    'tilling': {'level': 3, 'name': 'Competent', 'efficiency': 1.0},
+                    'planting': {'level': 3, 'name': 'Competent', 'efficiency': 1.0},
+                    'harvesting': {'level': 2, 'name': 'Basic', 'efficiency': 0.75}
+                },
+                'top_skills': [
+                    {'task': 'tilling', 'level': 3},
+                    {'task': 'planting', 'level': 3}
+                ]
+            }
+        elif 'barry' in name_lower:
+            return {
+                'role': 'Harvest Specialist', 
+                'skills': {
+                    'harvesting': {'level': 4, 'name': 'Expert', 'efficiency': 1.25},
+                    'processing': {'level': 3, 'name': 'Competent', 'efficiency': 1.0},
+                    'storing': {'level': 2, 'name': 'Basic', 'efficiency': 0.75}
+                },
+                'top_skills': [
+                    {'task': 'harvesting', 'level': 4},
+                    {'task': 'processing', 'level': 3}
+                ]
+            }
+        else:
+            return {'role': 'General Worker', 'skills': {}, 'top_skills': []}
+    
+    def _get_suggested_priority(self, employee, task_type):
+        """Get suggested priority based on employee specialization"""
+        specialization_info = self._get_employee_specialization_info(employee)
+        
+        # Convert TaskType to string for lookup
+        task_name = task_type.value if hasattr(task_type, 'value') else str(task_type)
+        
+        # Check if employee has skills for this task
+        if task_name in specialization_info['skills']:
+            skill_level = specialization_info['skills'][task_name]['level']
+            
+            # Suggest priority based on skill level
+            if skill_level >= 4:  # Expert/Master
+                return "2"  # High priority
+            elif skill_level >= 3:  # Competent
+                return "3"  # Normal priority  
+            elif skill_level >= 2:  # Basic
+                return "4"  # Low priority
+            else:  # Novice
+                return "5"  # Minimal priority
+        else:
+            # No specific skill info - default to normal
+            return "3"
+    
+    def _get_skill_level_for_task(self, employee, task_type):
+        """Get skill level information for a specific task"""
+        specialization_info = self._get_employee_specialization_info(employee)
+        task_name = task_type.value if hasattr(task_type, 'value') else str(task_type)
+        
+        if task_name in specialization_info['skills']:
+            skill_data = specialization_info['skills'][task_name]
+            return {
+                'level': skill_data['level'],
+                'name': skill_data['name'],
+                'efficiency': skill_data.get('efficiency', 1.0)
+            }
+        else:
+            return {'level': 1, 'name': 'Novice', 'efficiency': 0.5}
+    
+    def _create_priority_options_with_skill_info(self, skill_info):
+        """Create priority dropdown options with skill level indicator"""
+        base_options = ["1", "2", "3", "4", "5"]
+        
+        # Add skill level indicator to options if specializations are enabled
+        if ENABLE_EMPLOYEE_SPECIALIZATIONS:
+            skill_indicator = f" ({skill_info['name']})"
+            # Only add to the suggested priority option for clarity
+            return base_options
+        else:
+            return base_options

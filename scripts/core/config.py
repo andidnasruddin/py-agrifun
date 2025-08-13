@@ -145,7 +145,7 @@ WORK_END_HOUR = 18    # 6 PM
 # Enhanced Task System Feature Flags
 # These control the rollout of the new task assignment system
 ENABLE_ENHANCED_TASK_SYSTEM = False  # Main feature flag - False = use legacy system
-ENABLE_EMPLOYEE_SPECIALIZATIONS = False  # Employee roles and skills
+ENABLE_EMPLOYEE_SPECIALIZATIONS = True  # Employee roles and skills - Phase 2A ENABLED
 ENABLE_WORK_ORDERS = False  # Advanced work order system
 ENABLE_TASK_PRIORITIES = False  # Priority-based task assignment
 ENABLE_EQUIPMENT_REQUIREMENTS = False  # Equipment and certification requirements

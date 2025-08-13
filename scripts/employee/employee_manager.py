@@ -156,21 +156,66 @@ class EmployeeManager:
         if not tiles or not employees:
             return False
         
+        # Enhanced Task System - Sort employees by skill for this task (Phase 2A)
+        if ENABLE_EMPLOYEE_SPECIALIZATIONS:
+            # Sort employees by task efficiency (best skilled first)
+            employees_with_skill = []
+            for employee in employees:
+                efficiency = employee.get_task_efficiency(task_type)
+                employees_with_skill.append((employee, efficiency))
+            
+            # Sort by efficiency (highest first)
+            employees_with_skill.sort(key=lambda x: x[1], reverse=True)
+            employees = [emp[0] for emp in employees_with_skill]
+            
+            print(f"Task assignment for {task_type}:")
+            for emp, eff in employees_with_skill:
+                print(f"  {emp.name}: {eff:.2f}x efficiency")
+        
         # Sort tiles by position for logical distribution (top-left to bottom-right)
         tiles.sort(key=lambda t: (t.y, t.x))
         
-        # Calculate tiles per employee
-        tiles_per_employee = len(tiles) // len(employees)
-        remainder = len(tiles) % len(employees)
+        # Enhanced distribution - give more tiles to more skilled employees
+        if ENABLE_EMPLOYEE_SPECIALIZATIONS and len(employees) > 1:
+            # Calculate weighted distribution based on skill levels
+            total_efficiency = sum(emp.get_task_efficiency(task_type) for emp in employees)
+            tile_assignments = []
+            
+            remaining_tiles = len(tiles)
+            for i, employee in enumerate(employees):
+                if i == len(employees) - 1:  # Last employee gets remaining tiles
+                    tiles_for_employee = remaining_tiles
+                else:
+                    # Proportional assignment based on efficiency
+                    efficiency_ratio = employee.get_task_efficiency(task_type) / total_efficiency
+                    tiles_for_employee = max(1, int(len(tiles) * efficiency_ratio))
+                    tiles_for_employee = min(tiles_for_employee, remaining_tiles)
+                
+                tile_assignments.append(tiles_for_employee)
+                remaining_tiles -= tiles_for_employee
+                
+                if remaining_tiles <= 0:
+                    break
+        else:
+            # Legacy distribution - equal distribution
+            tiles_per_employee = len(tiles) // len(employees)
+            remainder = len(tiles) % len(employees)
+            tile_assignments = []
+            
+            for i in range(len(employees)):
+                tiles_for_employee = tiles_per_employee + (1 if i < remainder else 0)
+                tile_assignments.append(tiles_for_employee)
         
         total_assigned = 0
         employee_assignments = []
         
-        # Distribute tiles
+        # Distribute tiles using calculated assignments
         start_idx = 0
         for i, employee in enumerate(employees):
-            # Give some employees one extra tile if there's a remainder
-            tiles_for_this_employee = tiles_per_employee + (1 if i < remainder else 0)
+            if i >= len(tile_assignments):
+                break
+                
+            tiles_for_this_employee = tile_assignments[i]
             
             if tiles_for_this_employee == 0:
                 break  # No more tiles to assign
@@ -203,7 +248,12 @@ class EmployeeManager:
                         'tiles': assigned_count
                     })
                     
-                    print(f"Assigned {task_type} task to {assigned_count} tiles for employee {employee.name}")
+                    # Enhanced logging with efficiency information
+                    if ENABLE_EMPLOYEE_SPECIALIZATIONS:
+                        efficiency = employee.get_task_efficiency(task_type)
+                        print(f"Assigned {task_type} task to {assigned_count} tiles for employee {employee.name} (efficiency: {efficiency:.2f}x)")
+                    else:
+                        print(f"Assigned {task_type} task to {assigned_count} tiles for employee {employee.name}")
         
         # Emit collective feedback
         if total_assigned > 0:
