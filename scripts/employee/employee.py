@@ -391,38 +391,56 @@ class Employee:
         if removed_count > 0:
             print(f"Employee {self.name}: Cleaned up {removed_count} completed tasks ({len(self.assigned_tasks)} remaining)")
     
-    def get_pixel_position(self) -> Tuple[int, int]:
-        """Get employee position in screen pixels"""
-        pixel_x = int(self.x * TILE_SIZE + TILE_SIZE // 2)
-        pixel_y = int(self.y * TILE_SIZE + TILE_SIZE // 2 + 70)  # UI offset
+    def get_pixel_position(self, zoom_factor: float = 1.0, pan_offset_x: float = 0.0, 
+                          pan_offset_y: float = 0.0, hud_height: int = 70) -> Tuple[int, int]:
+        """Get employee position in screen pixels with grid transformations"""
+        # Apply the same transformations as the enhanced grid renderer
+        scaled_tile_size = TILE_SIZE * zoom_factor
+        
+        # Calculate position with grid center offset and transformations
+        world_x = self.x * scaled_tile_size + scaled_tile_size // 2
+        world_y = self.y * scaled_tile_size + scaled_tile_size // 2
+        
+        # Apply pan offset and HUD offset
+        pixel_x = int(world_x + pan_offset_x)
+        pixel_y = int(world_y + pan_offset_y + hud_height)
+        
         return (pixel_x, pixel_y)
     
-    def render(self, screen: pygame.Surface):
-        """Render the employee with enhanced visual indicators"""
-        pixel_x, pixel_y = self.get_pixel_position()
+    def render(self, screen: pygame.Surface, zoom_factor: float = 1.0, pan_offset_x: float = 0.0, 
+               pan_offset_y: float = 0.0, hud_height: int = 70):
+        """Render the employee with enhanced visual indicators and grid transformations"""
+        pixel_x, pixel_y = self.get_pixel_position(zoom_factor, pan_offset_x, pan_offset_y, hud_height)
+        
+        # Scale employee size based on zoom factor
+        scaled_radius = max(3, int(self.radius * zoom_factor))
         
         # Draw movement direction line when moving
         if self.state == EmployeeState.MOVING:
-            self._render_movement_line(screen, pixel_x, pixel_y)
+            self._render_movement_line(screen, pixel_x, pixel_y, zoom_factor, pan_offset_x, pan_offset_y, hud_height)
         
         # Draw employee background circle (larger for better visibility)
-        pygame.draw.circle(screen, (255, 255, 255), (pixel_x, pixel_y), self.radius + 2)  # White outline
-        pygame.draw.circle(screen, self.color, (pixel_x, pixel_y), self.radius)
+        pygame.draw.circle(screen, (255, 255, 255), (pixel_x, pixel_y), scaled_radius + 2)  # White outline
+        pygame.draw.circle(screen, self.color, (pixel_x, pixel_y), scaled_radius)
         
         # Draw state indicator
-        self._render_state_indicator(screen, pixel_x, pixel_y)
+        self._render_state_indicator(screen, pixel_x, pixel_y, zoom_factor)
         
-        # Draw employee name
-        self._render_employee_name(screen, pixel_x, pixel_y)
+        # Draw employee name (only show if zoomed in enough)
+        if zoom_factor >= 0.8:
+            self._render_employee_name(screen, pixel_x, pixel_y, zoom_factor)
         
-        # Draw needs bars above employee
-        self._render_needs_bars(screen, pixel_x, pixel_y - self.radius - 35)
+        # Draw needs bars above employee (only show if zoomed in enough)
+        if zoom_factor >= 1.0:
+            self._render_needs_bars(screen, pixel_x, pixel_y - scaled_radius - 35, zoom_factor)
     
-    def _render_employee_name(self, screen: pygame.Surface, x: int, y: int):
-        """Render employee name below the sprite"""
-        font = pygame.font.Font(None, 20)
+    def _render_employee_name(self, screen: pygame.Surface, x: int, y: int, zoom_factor: float = 1.0):
+        """Render employee name below the sprite with zoom scaling"""
+        scaled_radius = max(3, int(self.radius * zoom_factor))
+        font_size = max(16, int(20 * zoom_factor))
+        font = pygame.font.Font(None, font_size)
         name_surface = font.render(self.name, True, (255, 255, 255))
-        name_rect = name_surface.get_rect(center=(x, y + self.radius + 12))
+        name_rect = name_surface.get_rect(center=(x, y + scaled_radius + int(12 * zoom_factor)))
         
         # Draw background rectangle for better readability
         bg_rect = name_rect.inflate(4, 2)
@@ -430,8 +448,8 @@ class Employee:
         
         screen.blit(name_surface, name_rect)
     
-    def _render_state_indicator(self, screen: pygame.Surface, x: int, y: int):
-        """Render current state indicator with better visibility"""
+    def _render_state_indicator(self, screen: pygame.Surface, x: int, y: int, zoom_factor: float = 1.0):
+        """Render current state indicator with better visibility and zoom scaling"""
         indicator_colors = {
             EmployeeState.IDLE: (128, 128, 128),
             EmployeeState.MOVING: (0, 150, 255),
@@ -441,15 +459,19 @@ class Employee:
         }
         
         color = indicator_colors.get(self.state, (255, 255, 255))
+        # Scale indicator size with zoom
+        indicator_size = max(2, int(4 * zoom_factor))
+        indicator_offset = max(4, int(8 * zoom_factor))
+        
         # Draw larger, more visible state indicator
-        pygame.draw.circle(screen, (0, 0, 0), (x + 8, y - 8), 5)  # Black outline
-        pygame.draw.circle(screen, color, (x + 8, y - 8), 4)
+        pygame.draw.circle(screen, (0, 0, 0), (x + indicator_offset, y - indicator_offset), indicator_size + 1)  # Black outline
+        pygame.draw.circle(screen, color, (x + indicator_offset, y - indicator_offset), indicator_size)
     
-    def _render_needs_bars(self, screen: pygame.Surface, x: int, y: int):
-        """Render needs bars above employee"""
-        bar_width = 30
-        bar_height = 4
-        bar_spacing = 2
+    def _render_needs_bars(self, screen: pygame.Surface, x: int, y: int, zoom_factor: float = 1.0):
+        """Render needs bars above employee with zoom scaling"""
+        bar_width = max(20, int(30 * zoom_factor))
+        bar_height = max(2, int(4 * zoom_factor))
+        bar_spacing = max(1, int(2 * zoom_factor))
         
         needs = [
             ('H', self.hunger, MAX_HUNGER, (255, 200, 100)),
@@ -470,10 +492,18 @@ class Employee:
                 pygame.draw.rect(screen, color,
                                (x - bar_width//2, bar_y, fill_width, bar_height))
     
-    def _render_movement_line(self, screen: pygame.Surface, current_x: int, current_y: int):
-        """Render movement direction line for direct movement"""
-        target_pixel_x = int(self.target_x * TILE_SIZE + TILE_SIZE // 2)
-        target_pixel_y = int(self.target_y * TILE_SIZE + TILE_SIZE // 2 + 70)
+    def _render_movement_line(self, screen: pygame.Surface, current_x: int, current_y: int, 
+                             zoom_factor: float = 1.0, pan_offset_x: float = 0.0, 
+                             pan_offset_y: float = 0.0, hud_height: int = 70):
+        """Render movement direction line for direct movement with proper transformations"""
+        # Calculate target position using the same transformation logic as employee position
+        scaled_tile_size = TILE_SIZE * zoom_factor
+        target_world_x = self.target_x * scaled_tile_size + scaled_tile_size // 2
+        target_world_y = self.target_y * scaled_tile_size + scaled_tile_size // 2
+        
+        # Apply pan offset and HUD offset
+        target_pixel_x = int(target_world_x + pan_offset_x)
+        target_pixel_y = int(target_world_y + pan_offset_y + hud_height)
         
         # Draw simple line to target
         pygame.draw.line(screen, (100, 255, 100), (current_x, current_y), 

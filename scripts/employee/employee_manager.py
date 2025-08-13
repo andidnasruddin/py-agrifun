@@ -407,9 +407,24 @@ class EmployeeManager:
             self.ui_status_timer = 0.0
     
     def render(self, screen: pygame.Surface):
-        """Render all employees"""
+        """Render all employees with grid transformations"""
+        # Get grid transformation parameters from enhanced grid renderer
+        if hasattr(self.grid_manager, 'enhanced_renderer'):
+            renderer = self.grid_manager.enhanced_renderer
+            zoom_factor = renderer.zoom_factor
+            pan_offset_x = renderer.pan_offset_x
+            pan_offset_y = renderer.pan_offset_y
+            hud_height = renderer.hud_height
+        else:
+            # Fallback to default values if enhanced renderer not available
+            zoom_factor = 1.0
+            pan_offset_x = 0.0
+            pan_offset_y = 0.0
+            hud_height = 70
+        
+        # Render all employees with transformation parameters
         for employee in self.employees.values():
-            employee.render(screen)
+            employee.render(screen, zoom_factor, pan_offset_x, pan_offset_y, hud_height)
     
     def handle_mouse_click(self, pos: tuple, button: int):
         """Handle mouse clicks for employee interaction"""
