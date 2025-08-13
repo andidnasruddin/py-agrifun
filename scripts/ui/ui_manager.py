@@ -9,6 +9,7 @@ from typing import Dict, Tuple
 from scripts.core.config import *
 from scripts.ui.enhanced_ui_components import EnhancedTopHUD, DynamicRightPanel
 from scripts.ui.smart_action_system import SmartActionSystem
+from scripts.ui.main_bottom_bar import MainBottomBar
 from scripts.ui.animation_system import AnimationSystem  # Legacy system
 from scripts.ui.enhanced_animation_system import AnimationManager, EasingType, AnimationPresets
 from scripts.ui.tooltip_system import TooltipManager, TooltipFactory, TooltipData
@@ -59,15 +60,22 @@ class UIManager:
             height=panel_height
         )
         
-        # Initialize smart action system
-        action_bar_y = WINDOW_HEIGHT - 60  # Position at bottom of screen
+        # Initialize main bottom bar (replaces smart action system)
+        self.main_bottom_bar = MainBottomBar(
+            self.gui_manager,
+            self.event_system,
+            WINDOW_WIDTH,
+            WINDOW_HEIGHT
+        )
+        
+        # Keep smart action system for advanced farming actions (can coexist)
         self.smart_action_system = SmartActionSystem(
             self.gui_manager,
             self.event_system,
             x_pos=10,
-            y_pos=action_bar_y,
-            button_width=120,
-            button_height=45
+            y_pos=WINDOW_HEIGHT - 120,  # Position above main bottom bar
+            button_width=100,
+            button_height=35
         )
         
         # Initialize animation system (legacy)
@@ -728,7 +736,61 @@ class UIManager:
             )
     
     def _create_ui_elements(self):
-        """Create the main UI elements"""
+        """Create the main UI elements - DISABLED to prevent UI overlap"""
+        # =====================================================================
+        # LEGACY UI CREATION DISABLED - Enhanced UI components handle everything
+        # =====================================================================
+        # Early return prevents creation of 113 overlapping UI elements
+        # Set all attributes to None so event handlers won't crash
+        
+        # Legacy top panel elements (replaced by EnhancedTopHUD)
+        self.resource_panel = None
+        self.money_label = None
+        self.inventory_label = None
+        self.time_label = None
+        self.employee_count_label = None
+        self.pause_button = None
+        self.speed_1x_button = None
+        self.speed_2x_button = None
+        self.speed_4x_button = None
+        
+        # Legacy right panel elements (replaced by DynamicRightPanel)
+        self.control_panel = None
+        self.control_title = None
+        self.economy_label = None
+        self.sell_corn_button = None
+        self.buy_silo_button = None
+        self.buy_water_cooler_button = None
+        self.buy_tool_shed_button = None
+        self.buy_housing_button = None
+        self.buy_irrigation_button = None
+        self.save_label = None
+        self.quick_save_button = None
+        self.quick_load_button = None
+        self.save_menu_button = None
+        self.employee_label = None
+        self.hire_employee_button = None
+        self.view_applicants_button = None
+        self.view_payroll_button = None
+        self.view_contracts_button = None
+        self.specialization_label = None
+        self.view_specialization_button = None
+        self.weather_label = None
+        self.weather_display = None
+        self.weather_info_button = None
+        self.irrigation_toggle_button = None
+        self.status_label = None
+        self.selected_tiles_info = None
+        self.employee_status_display = None
+        self.crop_type_dropdown = None
+        self.debug_toggle = None
+        self.sort_dropdown = None
+        self.shortcut_labels = []
+        
+        print("Legacy UI elements disabled - Enhanced UI system active")
+        return  # Prevent creation of overlapping legacy UI elements
+        
+        # === DISABLED LEGACY CODE BELOW (kept for reference) ===
         # Resource bar at top
         self.resource_panel = pygame_gui.elements.UIPanel(
             relative_rect=pygame.Rect(0, 0, WINDOW_WIDTH, 60),
@@ -1223,6 +1285,13 @@ class UIManager:
                 })()
                 AnimationPresets.button_press(button_mock, self.enhanced_animation_manager)
             
+            # Handle main bottom bar button clicks
+            if hasattr(self, 'main_bottom_bar'):
+                clicked_action = self.main_bottom_bar.handle_button_click(button_element)
+                if clicked_action:
+                    print(f"Main bottom bar action triggered: {clicked_action}")
+                    return  # Early return to prevent processing other button handlers
+            
             if event.ui_element == self.pause_button:
                 self.event_system.emit('time_speed_change', {'speed': 0})
                 # Show feedback notification
@@ -1492,13 +1561,17 @@ class UIManager:
         
         # Format time display
         time_str = f"Day {day} - {hour:02d}:{minute:02d}"
-        self.time_label.set_text(time_str)
+        # Legacy UI disabled - time is now handled by EnhancedTopHUD
+        if self.time_label:
+            self.time_label.set_text(time_str)
     
     def _handle_money_update(self, event_data):
         """Handle money change events"""
         amount = event_data.get('amount', 0)
         color = 'money_positive' if amount >= 0 else 'money_negative'
-        self.money_label.set_text(f"Cash: ${amount:,}")
+        # Legacy UI disabled - money is now handled by EnhancedTopHUD  
+        if self.money_label:
+            self.money_label.set_text(f"Cash: ${amount:,}")
     
     def _handle_inventory_update(self, event_data):
         """Handle inventory change events"""
@@ -1512,8 +1585,10 @@ class UIManager:
         wheat_qty = event_data.get('wheat', 0)
         storage_capacity = event_data.get('storage_capacity', 100)
         
-        # Update inventory display with compact format: C:corn T:tomatoes W:wheat / capacity
-        self.inventory_label.set_text(f"C:{corn_qty} T:{tomatoes_qty} W:{wheat_qty} / {storage_capacity}")
+        # Legacy UI disabled - inventory is now handled by EnhancedTopHUD
+        if self.inventory_label:
+            # Update inventory display with compact format: C:corn T:tomatoes W:wheat / capacity
+            self.inventory_label.set_text(f"C:{corn_qty} T:{tomatoes_qty} W:{wheat_qty} / {storage_capacity}")
     
     def toggle_debug(self):
         """Toggle debug info display"""
@@ -1846,7 +1921,9 @@ class UIManager:
     def _handle_employee_count_update(self, event_data):
         """Update employee count display in UI"""
         count = event_data.get('count', 0)
-        self.employee_count_label.set_text(f"Workers: {count}")
+        # Legacy UI disabled - employee count is now handled by EnhancedTopHUD
+        if self.employee_count_label:
+            self.employee_count_label.set_text(f"Workers: {count}")
     
     def _show_applicant_panel(self):
         """Create and show the applicant selection panel"""
@@ -2076,6 +2153,10 @@ class UIManager:
         """Handle real-time employee status updates"""
         employees = event_data.get('employees', [])
         
+        # Legacy UI disabled - employee status is now handled by DynamicRightPanel
+        if not self.employee_status_display:
+            return
+        
         if not employees:
             self.employee_status_display.set_text("<font size=3.5 color='#FFFFFF'>No employees</font>")
             return
@@ -2095,7 +2176,8 @@ class UIManager:
             status_lines.append(f"<i>...and {len(employees) - 4} more</i>")
         
         status_html = f"<font size=3.5 color='#FFFFFF'>{'<br>'.join(status_lines)}</font>"
-        self.employee_status_display.set_text(status_html)
+        if self.employee_status_display:
+            self.employee_status_display.set_text(status_html)
     
     # Interview system completely removed - using Simple Hiring System
     
@@ -2848,7 +2930,9 @@ class UIManager:
             effect_color = '#FFFFFF'
         
         weather_html = f"<font size=2 color='{weather_color}'>{season} - {weather_event}</font><br/><font size=2 color='{effect_color}'>{effect_text}</font>"
-        self.weather_display.set_text(weather_html)
+        # Legacy UI disabled - weather is now handled by EnhancedTopHUD
+        if self.weather_display:
+            self.weather_display.set_text(weather_html)
     
     def _handle_season_change(self, event_data):
         """Handle season transition notifications"""
@@ -2875,16 +2959,18 @@ class UIManager:
         total_tiles = event_data.get('total_tiles', 0)
         daily_cost = event_data.get('daily_cost_during_drought', 0)
         
-        # Update button text to reflect current state
-        if total_tiles == 0:
-            button_text = "No Irrigation"
-            self.irrigation_toggle_button.set_text(button_text)
-            self.irrigation_toggle_button.disable()
-        else:
-            status = "ON" if active else "OFF"
-            button_text = f"Irrigation {status}"
-            self.irrigation_toggle_button.set_text(button_text)
-            self.irrigation_toggle_button.enable()
+        # Legacy UI disabled - irrigation controls are now handled by DynamicRightPanel
+        if self.irrigation_toggle_button:
+            # Update button text to reflect current state
+            if total_tiles == 0:
+                button_text = "No Irrigation"
+                self.irrigation_toggle_button.set_text(button_text)
+                self.irrigation_toggle_button.disable()
+            else:
+                status = "ON" if active else "OFF"
+                button_text = f"Irrigation {status}"
+                self.irrigation_toggle_button.set_text(button_text)
+                self.irrigation_toggle_button.enable()
         
         # Show status notification
         status_text = "activated" if active else "deactivated"
