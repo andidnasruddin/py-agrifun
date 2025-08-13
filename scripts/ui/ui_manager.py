@@ -10,6 +10,8 @@ from scripts.core.config import *
 from scripts.ui.enhanced_ui_components import EnhancedTopHUD, DynamicRightPanel
 from scripts.ui.smart_action_system import SmartActionSystem
 from scripts.ui.main_bottom_bar import MainBottomBar
+from scripts.ui.employee_submenu import EmployeeSubmenu
+from scripts.ui.contracts_submenu import ContractsSubmenu
 from scripts.ui.animation_system import AnimationSystem  # Legacy system
 from scripts.ui.enhanced_animation_system import AnimationManager, EasingType, AnimationPresets
 from scripts.ui.tooltip_system import TooltipManager, TooltipFactory, TooltipData
@@ -64,6 +66,24 @@ class UIManager:
         self.main_bottom_bar = MainBottomBar(
             self.gui_manager,
             self.event_system,
+            WINDOW_WIDTH,
+            WINDOW_HEIGHT
+        )
+        
+        # Initialize employee submenu system
+        self.employee_submenu = EmployeeSubmenu(
+            self.gui_manager,
+            self.event_system,
+            self.main_bottom_bar,
+            WINDOW_WIDTH,
+            WINDOW_HEIGHT
+        )
+        
+        # Initialize contracts submenu system
+        self.contracts_submenu = ContractsSubmenu(
+            self.gui_manager,
+            self.event_system,
+            self.main_bottom_bar,
             WINDOW_WIDTH,
             WINDOW_HEIGHT
         )
@@ -1274,7 +1294,16 @@ class UIManager:
         self.gui_manager.process_events(event)
         
         # Handle our custom events
-        if event.type == pygame_gui.UI_BUTTON_PRESSED:
+        if event.type == pygame_gui.UI_WINDOW_CLOSE:
+            # Handle window close events
+            if hasattr(self, 'employee_submenu'):
+                if self.employee_submenu.handle_window_close(event.ui_element):
+                    return  # Window close handled by employee submenu
+            
+            if hasattr(self, 'contracts_submenu'):
+                if self.contracts_submenu.handle_window_close(event.ui_element):
+                    return  # Window close handled by contracts submenu
+        elif event.type == pygame_gui.UI_BUTTON_PRESSED:
             # Add button press animation for any clicked button - Phase 2.3 enhancement
             button_element = event.ui_element
             if hasattr(button_element, 'rect'):
@@ -1290,6 +1319,27 @@ class UIManager:
                 clicked_action = self.main_bottom_bar.handle_button_click(button_element)
                 if clicked_action:
                     print(f"Main bottom bar action triggered: {clicked_action}")
+                    return  # Early return to prevent processing other button handlers
+            
+            # Handle employee submenu button clicks
+            if hasattr(self, 'employee_submenu') and self.employee_submenu.is_submenu_active:
+                submenu_action = self.employee_submenu.handle_submenu_button_click(button_element)
+                if submenu_action:
+                    print(f"Employee submenu action triggered: {submenu_action}")
+                    return  # Early return to prevent processing other button handlers
+            
+            # Handle employee submenu modal button clicks
+            if hasattr(self, 'employee_submenu'):
+                modal_handled = self.employee_submenu.handle_modal_button_click(button_element)
+                if modal_handled:
+                    print(f"Employee modal button handled")
+                    return  # Early return to prevent processing other button handlers
+            
+            # Handle contracts submenu modal button clicks
+            if hasattr(self, 'contracts_submenu'):
+                modal_handled = self.contracts_submenu.handle_modal_button_click(button_element)
+                if modal_handled:
+                    print(f"Contracts modal button handled")
                     return  # Early return to prevent processing other button handlers
             
             if event.ui_element == self.pause_button:
@@ -1308,53 +1358,53 @@ class UIManager:
                 self.event_system.emit('time_speed_change', {'speed': 2})
             elif event.ui_element == self.speed_4x_button:
                 self.event_system.emit('time_speed_change', {'speed': 4})
-            elif event.ui_element == self.sell_corn_button:
+            elif hasattr(self, 'sell_corn_button') and event.ui_element == self.sell_corn_button:
                 # Test selling corn from inventory
                 self.event_system.emit('sell_crops_requested', {
                     'crop_type': 'corn',
                     'quantity': 10,
                     'price_per_unit': 5.0  # Use average price for testing
                 })
-            elif event.ui_element == self.buy_silo_button:
+            elif hasattr(self, 'buy_silo_button') and event.ui_element == self.buy_silo_button:
                 # Enter placement mode for storage silo
                 self.event_system.emit('enter_building_placement_mode', {
                     'building_type': 'storage_silo'
                 })
-            elif event.ui_element == self.buy_water_cooler_button:
+            elif hasattr(self, 'buy_water_cooler_button') and event.ui_element == self.buy_water_cooler_button:
                 # Enter placement mode for water cooler
                 self.event_system.emit('enter_building_placement_mode', {
                     'building_type': 'water_cooler'
                 })
-            elif event.ui_element == self.buy_tool_shed_button:
+            elif hasattr(self, 'buy_tool_shed_button') and event.ui_element == self.buy_tool_shed_button:
                 # Enter placement mode for tool shed
                 self.event_system.emit('enter_building_placement_mode', {
                     'building_type': 'tool_shed'
                 })
-            elif event.ui_element == self.buy_housing_button:
+            elif hasattr(self, 'buy_housing_button') and event.ui_element == self.buy_housing_button:
                 # Enter placement mode for employee housing
                 self.event_system.emit('enter_building_placement_mode', {
                     'building_type': 'employee_housing'
                 })
-            elif event.ui_element == self.buy_irrigation_button:
+            elif hasattr(self, 'buy_irrigation_button') and event.ui_element == self.buy_irrigation_button:
                 # Enter placement mode for irrigation system
                 self.event_system.emit('enter_building_placement_mode', {
                     'building_type': 'irrigation_system'
                 })
-            elif event.ui_element == self.hire_employee_button:
+            elif hasattr(self, 'hire_employee_button') and event.ui_element == self.hire_employee_button:
                 # Request generation of new applicants for hiring
                 print("DEBUG: Hire Employee button clicked - requesting applicant generation")
                 self.event_system.emit('generate_applicants_requested', {})  # Request new applicants
-            elif event.ui_element == self.view_applicants_button:
+            elif hasattr(self, 'view_applicants_button') and event.ui_element == self.view_applicants_button:
                 # Show the applicant panel with current applicants
                 print("DEBUG: View Applicants button clicked")
                 self._show_applicant_panel()  # Create and display the applicant selection UI
-            elif event.ui_element == self.view_payroll_button:
+            elif hasattr(self, 'view_payroll_button') and event.ui_element == self.view_payroll_button:
                 # Request employee roster and payroll info
                 self.event_system.emit('show_employee_roster_requested', {})
-            elif event.ui_element == self.view_contracts_button:
+            elif hasattr(self, 'view_contracts_button') and event.ui_element == self.view_contracts_button:
                 # Show contract board
                 self._show_contract_board()
-            elif event.ui_element == self.view_specialization_button:
+            elif hasattr(self, 'view_specialization_button') and event.ui_element == self.view_specialization_button:
                 # Show farm specialization panel
                 self._show_specialization_panel()
             elif (hasattr(self, 'close_applicant_panel_button') and 
@@ -1381,30 +1431,30 @@ class UIManager:
                     'specialization_id': specialization_id
                 })
                 self._hide_specialization_panel()
-            elif event.ui_element == self.cancel_tasks_button:
+            elif hasattr(self, 'cancel_tasks_button') and event.ui_element == self.cancel_tasks_button:
                 # Cancel tasks on selected tiles
                 self.event_system.emit('cancel_tasks_requested', {})
-            elif event.ui_element == self.crop_info_button:
+            elif hasattr(self, 'crop_info_button') and event.ui_element == self.crop_info_button:
                 # Show crop information dialog
                 self._show_crop_info_dialog()
-            elif event.ui_element == self.weather_info_button:
+            elif hasattr(self, 'weather_info_button') and event.ui_element == self.weather_info_button:
                 # Show weather information panel
                 self._show_weather_info_panel()
-            elif event.ui_element == self.irrigation_toggle_button:
+            elif hasattr(self, 'irrigation_toggle_button') and event.ui_element == self.irrigation_toggle_button:
                 # Toggle irrigation system
                 self.event_system.emit('toggle_irrigation_requested', {})
-            elif event.ui_element == self.quick_save_button:
+            elif hasattr(self, 'quick_save_button') and event.ui_element == self.quick_save_button:
                 # Quick save current game
                 self.event_system.emit('manual_save_requested', {
                     'save_name': f"Quick Save - Day {self._current_day}",
                     'slot': 0
                 })
-            elif event.ui_element == self.quick_load_button:
+            elif hasattr(self, 'quick_load_button') and event.ui_element == self.quick_load_button:
                 # Quick load game
                 self.event_system.emit('load_game_requested', {
                     'slot': 0
                 })
-            elif event.ui_element == self.save_menu_button:
+            elif hasattr(self, 'save_menu_button') and event.ui_element == self.save_menu_button:
                 # Open save/load menu
                 self._show_save_load_menu()
             # Handle applicant hire buttons (direct hire only)
@@ -1479,6 +1529,17 @@ class UIManager:
             # Check if click was on a notification first
             if self.notification_manager.handle_click(event.pos):
                 return  # Notification handled the click, don't pass through
+            
+            # Handle employee submenu click-outside-to-close functionality
+            if hasattr(self, 'employee_submenu') and self.employee_submenu.is_submenu_active:
+                if self.employee_submenu.handle_click_outside(event.pos):
+                    return  # Employee submenu handled the click
+            
+            # Handle contracts submenu click-outside-to-close functionality
+            if hasattr(self, 'contracts_submenu') and self.contracts_submenu.is_modal_active:
+                if self.contracts_submenu.handle_click_outside(event.pos):
+                    return  # Contracts submenu handled the click
+            
             # This will be handled by employee manager through game manager
             pass
         elif event.type == pygame.MOUSEMOTION:
@@ -1493,6 +1554,10 @@ class UIManager:
         self.enhanced_hud.update(dt)  # Update the enhanced top HUD
         self.smart_action_system.update(dt)  # Update smart action system
         self.animation_system.update(dt)  # Update legacy animation system
+        
+        # Update employee submenu system
+        if hasattr(self, 'employee_submenu'):
+            self.employee_submenu.update(dt)
         
         # Update enhanced animation system - Phase 2.3 enhancement
         self.enhanced_animation_manager.update(dt)

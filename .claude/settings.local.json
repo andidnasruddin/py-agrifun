@@ -16,7 +16,12 @@
       "Bash(git pull:*)",
       "Bash(echo:*)",
       "Bash(mkdir:*)",
-      "mcp__claude-context__index_codebase"
+      "mcp__claude-context__index_codebase",
+      "Bash(git commit:*)",
+      "Bash(grep:*)",
+      "Bash(sed:*)",
+      "Bash(git restore:*)",
+      "Bash(rg:*)"
     ],
     "deny": []
   }
