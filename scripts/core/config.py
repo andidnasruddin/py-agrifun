@@ -142,6 +142,26 @@ MINUTES_PER_GAME_DAY = 20  # real minutes
 WORK_START_HOUR = 5  # 5 AM
 WORK_END_HOUR = 18    # 6 PM
 
+# Enhanced Task System Feature Flags
+# These control the rollout of the new task assignment system
+ENABLE_ENHANCED_TASK_SYSTEM = False  # Main feature flag - False = use legacy system
+ENABLE_EMPLOYEE_SPECIALIZATIONS = False  # Employee roles and skills
+ENABLE_WORK_ORDERS = False  # Advanced work order system
+ENABLE_TASK_PRIORITIES = False  # Priority-based task assignment
+ENABLE_EQUIPMENT_REQUIREMENTS = False  # Equipment and certification requirements
+ENABLE_DYNAMIC_TASK_GENERATION = False  # Auto-generated work orders
+
+# Enhanced Task System Configuration
+ENHANCED_TASK_CONFIG = {
+    'auto_assign_tasks': True,  # Automatically assign tasks to best-suited employees
+    'respect_employee_preferences': True,  # Consider employee task preferences
+    'allow_skill_development': True,  # Employees can learn new skills over time
+    'require_certifications': False,  # Require certifications for advanced tasks
+    'enable_equipment_system': False,  # Equipment requirements and maintenance
+    'show_efficiency_indicators': True,  # Show employee efficiency for tasks
+    'enable_task_tutorials': True,  # Show explanations for new task system
+}
+
 # Colors (RGB)
 COLORS = {
     'background': (34, 34, 34),

@@ -12,6 +12,7 @@ from scripts.ui.smart_action_system import SmartActionSystem
 from scripts.ui.main_bottom_bar import MainBottomBar
 from scripts.ui.employee_submenu import EmployeeSubmenu
 from scripts.ui.contracts_submenu import ContractsSubmenu
+from scripts.ui.task_assignment_modal import TaskAssignmentModal
 from scripts.ui.animation_system import AnimationSystem  # Legacy system
 from scripts.ui.enhanced_animation_system import AnimationManager, EasingType, AnimationPresets
 from scripts.ui.tooltip_system import TooltipManager, TooltipFactory, TooltipData
@@ -88,6 +89,14 @@ class UIManager:
             WINDOW_HEIGHT
         )
         
+        # Initialize enhanced task assignment modal
+        self.task_assignment_modal = TaskAssignmentModal(
+            self.gui_manager,
+            self.event_system,
+            WINDOW_WIDTH,
+            WINDOW_HEIGHT
+        )
+        
         # Keep smart action system for advanced farming actions (can coexist)
         self.smart_action_system = SmartActionSystem(
             self.gui_manager,
@@ -148,6 +157,8 @@ class UIManager:
         # Soil information panel events
         self.event_system.subscribe('tile_selected', self._handle_tile_selected)
         self.event_system.subscribe('tile_deselected', self._handle_tile_deselected)
+        # Enhanced task assignment system events
+        self.event_system.subscribe('show_task_assignment_interface', self._handle_show_task_assignment)
         # Weather system events
         self.event_system.subscribe('weather_updated', self._handle_weather_update)
         self.event_system.subscribe('season_changed', self._handle_season_change)
@@ -1293,6 +1304,10 @@ class UIManager:
         # Let pygame-gui process the event first
         self.gui_manager.process_events(event)
         
+        # Let task assignment modal handle events first
+        if self.task_assignment_modal.handle_event(event):
+            return  # Event was handled by task assignment modal
+        
         # Handle our custom events
         if event.type == pygame_gui.UI_WINDOW_CLOSE:
             # Handle window close events
@@ -1552,6 +1567,9 @@ class UIManager:
         
         # Update enhanced UI components
         self.enhanced_hud.update(dt)  # Update the enhanced top HUD
+        
+        # Update task assignment modal
+        self.task_assignment_modal.update(dt)
         self.smart_action_system.update(dt)  # Update smart action system
         self.animation_system.update(dt)  # Update legacy animation system
         
@@ -2608,6 +2626,12 @@ class UIManager:
     def _handle_tile_deselected(self, event_data):
         """Handle tile deselection to hide soil information panel"""
         self._hide_soil_info_panel()
+    
+    def _handle_show_task_assignment(self, event_data):
+        """Handle request to show the enhanced task assignment interface"""
+        # Show the enhanced task assignment modal
+        self.task_assignment_modal.show_modal()
+        print("Showing enhanced task assignment modal")
     
     def _show_soil_info_panel(self, tile):
         """Show soil information panel for the selected tile"""
