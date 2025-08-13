@@ -5,10 +5,14 @@ Uses pygame-gui for advanced UI components with fallback to custom implementatio
 
 import pygame
 import pygame_gui
+from typing import Dict, Tuple
 from scripts.core.config import *
 from scripts.ui.enhanced_ui_components import EnhancedTopHUD, DynamicRightPanel
 from scripts.ui.smart_action_system import SmartActionSystem
-from scripts.ui.animation_system import AnimationSystem
+from scripts.ui.animation_system import AnimationSystem  # Legacy system
+from scripts.ui.enhanced_animation_system import AnimationManager, EasingType, AnimationPresets
+from scripts.ui.tooltip_system import TooltipManager, TooltipFactory, TooltipData
+from scripts.ui.notification_system import NotificationManager, NotificationFactory, NotificationType, NotificationPriority
 
 
 class UIManager:
@@ -66,12 +70,24 @@ class UIManager:
             button_height=45
         )
         
-        # Initialize animation system
+        # Initialize animation system (legacy)
         self.animation_system = AnimationSystem(self.event_system)
+        
+        # Initialize enhanced animation system - Phase 2.3 UI enhancement
+        self.enhanced_animation_manager = AnimationManager(self.event_system)
+        
+        # Initialize advanced tooltip system - Phase 2 UI enhancement
+        self.tooltip_manager = TooltipManager(self.event_system, WINDOW_WIDTH, WINDOW_HEIGHT)
+        
+        # Initialize advanced notification system - Phase 2.2 UI enhancement
+        self.notification_manager = NotificationManager(self.event_system, WINDOW_WIDTH, WINDOW_HEIGHT)
         
         # Initialize traditional UI elements (for gradual transition)
         self._create_ui_elements()  # Create basic UI components like buttons and panels
         # Note: Applicant panel will be created dynamically when needed
+        
+        # Set up tooltips for all UI components
+        self._setup_ui_tooltips()
         
         # Register for events
         self.event_system.subscribe('time_updated', self._handle_time_update)
@@ -115,6 +131,9 @@ class UIManager:
         self.event_system.subscribe('smart_action_requested', self._handle_smart_action_request)
         self.event_system.subscribe('tiles_selected', self._handle_tiles_selected_for_actions)
         self.event_system.subscribe('selection_cleared', self._handle_selection_cleared_for_actions)
+        
+        # Notification system integration - Phase 2.2 enhancement
+        self._setup_notification_handlers()
         
         # Track current day for expiration calculations
         self._current_day = 1
@@ -187,6 +206,526 @@ class UIManager:
         # Apply the theme to the manager
         # Note: pygame-gui theme system is complex, so we'll handle contrast via manual styling
         print("Improved contrast theme configuration prepared")
+    
+    def _setup_ui_tooltips(self):
+        """Set up tooltips for all UI elements - Phase 2 UI enhancement"""
+        # Register tooltips for main control buttons
+        
+        # Speed control tooltips
+        speed_tooltips = {
+            'pause': TooltipFactory.create_button_tooltip(
+                "Pause Game", 
+                "Pause all game activities including employee movement and crop growth.",
+                "Spacebar"
+            ),
+            '1x': TooltipFactory.create_button_tooltip(
+                "Normal Speed", 
+                "Run the game at normal speed (1x). Good for detailed management and planning."
+            ),
+            '2x': TooltipFactory.create_button_tooltip(
+                "Double Speed", 
+                "Run the game at 2x speed. Useful for routine operations and time progression."
+            ),
+            '4x': TooltipFactory.create_button_tooltip(
+                "Quadruple Speed", 
+                "Run the game at 4x speed. Great for fast-forwarding through slow periods."
+            )
+        }
+        
+        # Economic action tooltips with strategic advice
+        economic_tooltips = {
+            'sell_corn': TooltipFactory.create_economic_tooltip(
+                "Sell Corn",
+                0,  # Cost is 0 since it's income
+                "Immediate cash flow from stored inventory using FIFO system",
+                "Market prices fluctuate daily - check price history for optimal timing"
+            ).add_quick_stat("Market Price", "$3-7/unit", True)
+             .add_educational_note("Selling at peak market prices can double your profits compared to selling at low prices.")
+             .add_strategic_advice("Monitor market trends and sell during price spikes for maximum profit."),
+            
+            'buy_silo': TooltipFactory.create_economic_tooltip(
+                "Storage Silo",
+                500,  # Base cost
+                "Increases storage capacity by 50 units permanently",
+                "Cost increases with each purchase (1.3x multiplier)"
+            ).add_quick_stat("Capacity Bonus", "+50 units")
+             .add_educational_note("Adequate storage prevents crop spoilage and enables strategic market timing.")
+             .add_strategic_advice("Build silos before harvest season to avoid losing crops to spoilage."),
+            
+            'water_cooler': TooltipFactory.create_economic_tooltip(
+                "Water Cooler",
+                200,
+                "Employees can restore thirst, improving work efficiency",
+                "Placement affects employee productivity in surrounding area"
+            ).add_quick_stat("Effect Radius", "3x3 tiles")
+             .add_educational_note("Proper hydration is essential for farm worker productivity and safety.")
+             .add_strategic_advice("Place near work areas to minimize employee downtime."),
+            
+            'tool_shed': TooltipFactory.create_economic_tooltip(
+                "Tool Shed",
+                300,
+                "Increases work efficiency by 10% in surrounding area",
+                "Efficiency bonus only applies within the building's radius"
+            ).add_quick_stat("Efficiency Bonus", "+10%")
+             .add_quick_stat("Effect Radius", "4x4 tiles")
+             .add_educational_note("Organized tool storage reduces time spent searching for equipment.")
+             .add_strategic_advice("Build near high-activity areas like crop fields for maximum benefit."),
+            
+            'employee_housing': TooltipFactory.create_economic_tooltip(
+                "Employee Housing",
+                800,
+                "Reduces commute time and increases employee loyalty",
+                "High cost but improves long-term employee satisfaction"
+            ).add_quick_stat("Loyalty Bonus", "+15%")
+             .add_educational_note("On-site housing reduces transportation costs and improves worker retention.")
+             .add_strategic_advice("Invest in housing after establishing stable income to improve worker efficiency.")
+        }
+        
+        # Employee management tooltips
+        employee_tooltips = {
+            'hire_employees': TooltipFactory.create_button_tooltip(
+                "Hire Employees",
+                "Open the strategic hiring panel to review applicants and hire new workers. "
+                "Each employee has different skills, traits, and wage requirements.",
+                "H"
+            ).add_educational_note("Diverse employee skills create more efficient farm operations.")
+             .add_strategic_advice("Hire workers with complementary traits for balanced team performance."),
+            
+            'show_roster': TooltipFactory.create_button_tooltip(
+                "Employee Roster",
+                "View all current employees, their status, and performance metrics. "
+                "Monitor employee needs and productivity here.",
+                "R"
+            ).add_strategic_advice("Regular monitoring helps identify productivity issues early.")
+        }
+        
+        # Task assignment tooltips with agricultural education
+        task_tooltips = {
+            'till': TooltipFactory.create_educational_tooltip(
+                "Till Soil",
+                "Tilling breaks up compacted soil, improves drainage, and incorporates organic matter. "
+                "Essential preparation before planting any crop. Also removes weeds and crop residue.",
+                "Always till before planting to ensure optimal growing conditions."
+            ).add_quick_stat("Hotkey", "T")
+             .add_quick_stat("Duration", "~30 seconds/tile"),
+            
+            'plant': TooltipFactory.create_educational_tooltip(
+                "Plant Crops",
+                "Seeds crops in prepared (tilled) soil. Different crops have different growing seasons "
+                "and requirements. Plant timing affects yield and quality significantly.",
+                "Check seasonal planting windows for optimal crop performance."
+            ).add_quick_stat("Hotkey", "P")
+             .add_quick_stat("Requires", "Tilled soil"),
+            
+            'harvest': TooltipFactory.create_educational_tooltip(
+                "Harvest Crops",
+                "Collect mature crops for storage and sale. Harvest timing is critical - too early "
+                "reduces yield, too late may cause quality loss or crop failure.",
+                "Harvest at peak ripeness for maximum yield and quality bonuses."
+            ).add_quick_stat("Hotkey", "H")
+             .add_quick_stat("Requires", "Mature crops")
+        }
+        
+        # Register all tooltips with the tooltip manager
+        # (In a real implementation, we'd need to map these to actual UI element IDs)
+        
+        print("Advanced tooltip system configured with educational and strategic content!")
+    
+    def register_tile_tooltip(self, tile, screen_rect: pygame.Rect):
+        """Register a tooltip for a grid tile - called by grid manager"""
+        # Create comprehensive tile data for tooltip generation
+        tile_data = {
+            'x': tile.x,
+            'y': tile.y,
+            'terrain_type': tile.terrain_type,
+            'soil_quality': tile.soil_quality,
+            'current_crop': tile.current_crop,
+            'growth_stage': tile.growth_stage,
+            'soil_nutrients': tile.soil_nutrients,
+            'water_level': tile.water_level,
+            'task_assignment': tile.task_assignment,
+            'building_type': tile.building_type,
+            'has_irrigation': getattr(tile, 'has_irrigation', False),
+            'crop_history': getattr(tile, 'crop_history', []),
+            'seasons_rested': getattr(tile, 'seasons_rested', 0)
+        }
+        
+        # Generate rich tooltip with agricultural information
+        tooltip = TooltipFactory.create_tile_tooltip(tile_data)
+        
+        # Add crop-specific information if present
+        if tile.current_crop:
+            crop_info = self._get_crop_educational_info(tile.current_crop, tile.growth_stage)
+            if crop_info:
+                tooltip.add_educational_note(crop_info)
+        
+        # Add soil health advice based on conditions
+        soil_advice = self._get_soil_strategic_advice(tile_data)
+        if soil_advice:
+            tooltip.add_strategic_advice(soil_advice)
+        
+        # Register the tooltip area with the tooltip manager
+        self.tooltip_manager.register_hover_area(screen_rect, tooltip)
+    
+    def _get_crop_educational_info(self, crop_type: str, growth_stage: int) -> str:
+        """Get educational information about a specific crop and growth stage"""
+        crop_education = {
+            'corn': {
+                'base': "Corn is a heavy feeder that depletes soil nitrogen quickly but provides high yields.",
+                'stages': [
+                    "Germination: Seeds are sprouting and establishing root systems.",
+                    "Seedling: Young plants developing first true leaves.",
+                    "Vegetative: Rapid growth and leaf development phase.",
+                    "Tasseling: Plants preparing to produce grain.",
+                    "Mature: Ready for harvest with maximum grain content."
+                ]
+            },
+            'tomatoes': {
+                'base': "Tomatoes are warm-season crops that benefit from consistent watering and moderate feeding.",
+                'stages': [
+                    "Germination: Seeds developing initial root and shoot systems.",
+                    "Seedling: Small plants establishing basic structure.",
+                    "Flowering: Plants beginning to produce flower buds.",
+                    "Fruit set: Flowers developing into small green tomatoes.",
+                    "Ripe: Tomatoes ready for harvest with full color and flavor."
+                ]
+            },
+            'wheat': {
+                'base': "Wheat is a cool-season grain that improves soil structure and requires minimal nutrients.",
+                'stages': [
+                    "Germination: Seeds sprouting in cool soil conditions.",
+                    "Tillering: Plants developing multiple stems and roots.",
+                    "Jointing: Stems elongating and nodes developing.",
+                    "Heading: Grain heads emerging from protective sheaths.",
+                    "Harvest ready: Grain fully developed and dried for storage."
+                ]
+            }
+        }
+        
+        crop_info = crop_education.get(crop_type, {})
+        base_info = crop_info.get('base', '')
+        stage_info = crop_info.get('stages', [])
+        
+        if growth_stage < len(stage_info):
+            return f"{base_info} Current stage: {stage_info[growth_stage]}"
+        return base_info
+    
+    def _get_soil_strategic_advice(self, tile_data: Dict) -> str:
+        """Generate strategic advice based on soil conditions"""
+        advice_parts = []
+        
+        # Soil quality advice
+        soil_quality = tile_data.get('soil_quality', 5)
+        if soil_quality <= 3:
+            advice_parts.append("Consider crop rotation or letting this field rest to improve soil health.")
+        elif soil_quality >= 8:
+            advice_parts.append("Excellent soil quality - perfect for high-value crops.")
+        
+        # Nutrient-specific advice
+        nutrients = tile_data.get('soil_nutrients', {})
+        low_nutrients = [name for name, level in nutrients.items() if level < 30]
+        if low_nutrients:
+            advice_parts.append(f"Low {', '.join(low_nutrients)} - consider planting light feeders or resting.")
+        
+        # Crop rotation advice
+        crop_history = tile_data.get('crop_history', [])
+        if len(crop_history) >= 2 and crop_history[-1] == crop_history[-2]:
+            advice_parts.append("Avoid planting the same crop repeatedly - rotation prevents soil depletion.")
+        
+        # Irrigation advice
+        if not tile_data.get('has_irrigation') and tile_data.get('terrain_type') == 'tilled':
+            advice_parts.append("Consider irrigation to protect against drought damage.")
+        
+        return ' '.join(advice_parts) if advice_parts else None
+    
+    def _setup_notification_handlers(self):
+        """Set up notification handlers for game events - Phase 2.2 enhancement"""
+        # Economy notifications
+        self.event_system.subscribe('money_changed', self._handle_money_change_notification)
+        self.event_system.subscribe('crop_sold', self._handle_crop_sale_notification)
+        self.event_system.subscribe('building_purchased', self._handle_building_purchase_notification)
+        self.event_system.subscribe('loan_payment_due', self._handle_loan_payment_notification)
+        
+        # Employee notifications
+        self.event_system.subscribe('employee_hired_successfully', self._handle_employee_hired_notification)
+        self.event_system.subscribe('employee_needs_critical', self._handle_employee_needs_critical)
+        self.event_system.subscribe('employee_completed_task', self._handle_task_completion_notification)
+        
+        # Agricultural notifications
+        self.event_system.subscribe('crop_harvested', self._handle_crop_harvest_notification)
+        self.event_system.subscribe('crop_growth_stage_changed', self._handle_crop_growth_notification)
+        self.event_system.subscribe('soil_health_changed', self._handle_soil_health_notification)
+        
+        # Weather notifications
+        self.event_system.subscribe('weather_event_started', self._handle_weather_notification)
+        self.event_system.subscribe('season_changed', self._handle_season_change_notification)
+        
+        # Achievement notifications
+        self.event_system.subscribe('milestone_reached', self._handle_milestone_notification)
+        self.event_system.subscribe('first_harvest_complete', self._handle_first_harvest_achievement)
+        
+        print("Notification system handlers configured with enhanced animation effects!")
+    
+    def create_success_feedback_animation(self, target_position: Tuple[int, int]):
+        """Create success feedback animation with particles - Phase 2.3 enhancement"""
+        success_particles = self.enhanced_animation_manager.get_particle_system("success_feedback")
+        if not success_particles:
+            success_particles = self.enhanced_animation_manager.create_particle_system("success_feedback", 100)
+        
+        success_particles.particle_color = (0, 255, 0, 255)  # Green success particles
+        success_particles.particle_life_span_range = (0.8, 1.5)
+        success_particles.emit_velocity_range = ((-60, -60), (60, 60))  # Small burst
+        success_particles.gravity = 80.0
+        success_particles.emit_burst(target_position, 15)
+    
+    def create_error_feedback_animation(self, target_position: Tuple[int, int]):
+        """Create error feedback animation with particles - Phase 2.3 enhancement"""
+        error_particles = self.enhanced_animation_manager.get_particle_system("error_feedback")
+        if not error_particles:
+            error_particles = self.enhanced_animation_manager.create_particle_system("error_feedback", 100)
+        
+        error_particles.particle_color = (255, 0, 0, 255)  # Red error particles
+        error_particles.particle_life_span_range = (0.5, 1.2)
+        error_particles.emit_velocity_range = ((-40, -40), (40, 40))  # Quick burst
+        error_particles.gravity = 120.0
+        error_particles.emit_burst(target_position, 10)
+    
+    # Notification event handlers - Phase 2.2 enhancement
+    def _handle_money_change_notification(self, event_data):
+        """Handle money change notifications"""
+        amount = event_data.get('amount', 0)
+        reason = event_data.get('reason', 'Transaction')
+        
+        if abs(amount) >= 100:  # Only notify for significant amounts
+            if amount > 0:
+                self.notification_manager.show_notification(
+                    "💰 Income Received",
+                    f"{reason}: +${amount:.0f}",
+                    NotificationType.ECONOMY,
+                    NotificationPriority.NORMAL
+                )
+            else:
+                priority = NotificationPriority.HIGH if abs(amount) >= 500 else NotificationPriority.NORMAL
+                self.notification_manager.show_notification(
+                    "💸 Expense Incurred",
+                    f"{reason}: -${abs(amount):.0f}",
+                    NotificationType.ECONOMY,
+                    priority
+                )
+    
+    def _handle_crop_sale_notification(self, event_data):
+        """Handle crop sale notifications"""
+        crop_type = event_data.get('crop_type', 'crops')
+        quantity = event_data.get('quantity', 0)
+        total_value = event_data.get('total_value', 0)
+        
+        self.notification_manager.show_notification(
+            f"🌾 {crop_type.title()} Sold",
+            f"Sold {quantity} units for ${total_value:.0f}",
+            NotificationType.AGRICULTURE,
+            NotificationPriority.NORMAL
+        )
+    
+    def _handle_building_purchase_notification(self, event_data):
+        """Handle building purchase notifications"""
+        building_type = event_data.get('building_type', 'building')
+        cost = event_data.get('cost', 0)
+        
+        self.notification_manager.show_notification(
+            f"🏗️ {building_type.title()} Built",
+            f"Successfully purchased {building_type} for ${cost:.0f}",
+            NotificationType.BUILDING,
+            NotificationPriority.NORMAL
+        )
+        
+        # Add construction particle effect - Phase 2.3 enhancement  
+        construction_particles = self.enhanced_animation_manager.get_particle_system("construction")
+        if not construction_particles:
+            construction_particles = self.enhanced_animation_manager.create_particle_system("construction", 150)
+        construction_particles.particle_color = (139, 69, 19, 255)  # Brown construction particles
+        construction_particles.particle_life_span_range = (1.0, 2.5)
+        construction_particles.emit_velocity_range = ((-80, -80), (80, 80))  # Scattered debris
+        construction_particles.gravity = 100.0
+        construction_particles.emit_burst((WINDOW_WIDTH - 200, 200), 20)
+    
+    def _handle_employee_hired_notification(self, event_data):
+        """Handle employee hiring notifications"""
+        employee_name = event_data.get('employee_name', 'New Employee')
+        cost = event_data.get('daily_wage', 0)
+        traits = event_data.get('traits', [])
+        
+        trait_text = f" (Traits: {', '.join(traits)})" if traits else ""
+        
+        self.notification_manager.show_notification(
+            f"👤 {employee_name} Hired",
+            f"Welcome to the team! Daily wage: ${cost:.0f}{trait_text}",
+            NotificationType.EMPLOYEE,
+            NotificationPriority.NORMAL
+        )
+    
+    def _handle_employee_needs_critical(self, event_data):
+        """Handle critical employee needs alerts"""
+        employee_name = event_data.get('employee_name', 'Employee')
+        need_type = event_data.get('need_type', 'needs')
+        
+        self.notification_manager.show_alert(
+            f"⚠️ {employee_name} Needs Attention",
+            f"{employee_name}'s {need_type} is critically low! Productivity will suffer.",
+            "View Employee",
+            lambda: self.event_system.emit('show_employee_details', {'employee_name': employee_name})
+        )
+    
+    def _handle_crop_harvest_notification(self, event_data):
+        """Handle crop harvest notifications with achievements"""
+        crop_type = event_data.get('crop_type', 'crops')
+        quantity = event_data.get('quantity', 0)
+        quality = event_data.get('quality', 'good')
+        
+        # Use achievement notification for harvests
+        self.notification_manager.show_achievement(
+            f"🌾 {crop_type.title()} Harvest Complete!",
+            f"Harvested {quantity} units of {quality} quality {crop_type}. Great farming!"
+        )
+        
+        # Add harvest celebration particle effect - Phase 2.3 enhancement
+        harvest_particles = self.enhanced_animation_manager.create_particle_system("harvest_celebration", 200)
+        harvest_particles.particle_color = (255, 215, 0, 255)  # Golden particles
+        harvest_particles.particle_life_span_range = (1.5, 3.0)
+        harvest_particles.emit_velocity_range = ((-100, -150), (100, -50))  # Upward burst
+        harvest_particles.gravity = 50.0  # Light gravity
+        harvest_particles.emit_burst((WINDOW_WIDTH - 200, 150), 30)  # Burst near notifications
+    
+    def _handle_weather_notification(self, event_data):
+        """Handle weather event notifications"""
+        weather_type = event_data.get('weather_type', 'weather change')
+        effect = event_data.get('effect', '')
+        duration = event_data.get('duration', 1)
+        
+        priority = NotificationPriority.HIGH if weather_type in ['drought', 'frost'] else NotificationPriority.NORMAL
+        
+        self.notification_manager.show_notification(
+            f"🌤️ {weather_type.title()} Alert",
+            f"{effect} Duration: {duration} day(s)",
+            NotificationType.WEATHER,
+            priority
+        )
+    
+    def _handle_season_change_notification(self, event_data):
+        """Handle season change notifications"""
+        new_season = event_data.get('season', 'Unknown')
+        day = event_data.get('day', 0)
+        
+        self.notification_manager.show_notification(
+            f"🍂 {new_season.title()} Has Arrived",
+            f"Day {day}: Season changed to {new_season}. Plan your crops accordingly!",
+            NotificationType.WEATHER,
+            NotificationPriority.NORMAL,
+            duration=8.0  # Longer display for important season changes
+        )
+    
+    def _handle_milestone_notification(self, event_data):
+        """Handle milestone achievement notifications"""
+        milestone = event_data.get('milestone', 'Goal')
+        description = event_data.get('description', 'Milestone achieved!')
+        
+        self.notification_manager.show_achievement(
+            f"🏆 {milestone} Achieved!",
+            description
+        )
+    
+    def _handle_first_harvest_achievement(self, event_data):
+        """Handle first harvest achievement"""
+        crop_type = event_data.get('crop_type', 'crops')
+        
+        self.notification_manager.show_achievement(
+            "🎉 First Harvest Complete!",
+            f"Congratulations on your first {crop_type} harvest! You're becoming a real farmer!"
+        )
+        
+        # Add special celebration particle effect - Phase 2.3 enhancement
+        celebration_particles = self.enhanced_animation_manager.create_particle_system("first_harvest_celebration", 300)
+        celebration_particles.particle_color = (255, 105, 180, 255)  # Pink celebration particles
+        celebration_particles.particle_life_span_range = (2.0, 4.0)
+        celebration_particles.emit_velocity_range = ((-120, -200), (120, -100))  # Big upward burst
+        celebration_particles.gravity = 30.0  # Very light gravity for long hang time
+        celebration_particles.emit_burst((WINDOW_WIDTH - 175, 140), 50)  # Large burst for major achievement
+    
+    def _handle_loan_payment_notification(self, event_data):
+        """Handle loan payment notifications"""
+        amount = event_data.get('amount', 0)
+        remaining = event_data.get('remaining_balance', 0)
+        
+        if remaining <= 0:
+            self.notification_manager.show_achievement(
+                "🎉 Loan Paid Off!",
+                "Congratulations! You've successfully paid off your farming loan!"
+            )
+        else:
+            self.notification_manager.show_notification(
+                "💳 Loan Payment",
+                f"Daily loan payment: ${amount:.2f}. Remaining: ${remaining:.2f}",
+                NotificationType.ECONOMY,
+                NotificationPriority.LOW
+            )
+    
+    def _handle_task_completion_notification(self, event_data):
+        """Handle task completion notifications"""
+        employee_name = event_data.get('employee_name', 'Employee')
+        task_type = event_data.get('task_type', 'task')
+        tile_count = event_data.get('tile_count', 1)
+        
+        self.notification_manager.show_notification(
+            f"✅ Task Complete",
+            f"{employee_name} finished {task_type} on {tile_count} tile(s)",
+            NotificationType.EMPLOYEE,
+            NotificationPriority.LOW
+        )
+    
+    def _handle_crop_growth_notification(self, event_data):
+        """Handle crop growth stage notifications"""
+        crop_type = event_data.get('crop_type', 'crops')
+        stage = event_data.get('stage', 0)
+        tile_count = event_data.get('tile_count', 1)
+        
+        stage_names = ['Sprouting', 'Seedling', 'Growing', 'Maturing', 'Ready for Harvest']
+        stage_name = stage_names[min(stage, len(stage_names)-1)]
+        
+        if stage == len(stage_names) - 1:  # Ready for harvest
+            self.notification_manager.show_notification(
+                f"🌱 {crop_type.title()} Ready!",
+                f"{tile_count} {crop_type} plant(s) ready for harvest!",
+                NotificationType.AGRICULTURE,
+                NotificationPriority.HIGH
+            )
+        else:
+            self.notification_manager.show_notification(
+                f"🌱 Crop Growth",
+                f"{tile_count} {crop_type} plant(s) reached {stage_name} stage",
+                NotificationType.AGRICULTURE,
+                NotificationPriority.LOW
+            )
+    
+    def _handle_soil_health_notification(self, event_data):
+        """Handle soil health change notifications"""
+        tile_x = event_data.get('tile_x', 0)
+        tile_y = event_data.get('tile_y', 0)
+        old_health = event_data.get('old_health', 5)
+        new_health = event_data.get('new_health', 5)
+        
+        if new_health < 3 and old_health >= 3:
+            self.notification_manager.show_notification(
+                "⚠️ Poor Soil Health",
+                f"Tile ({tile_x}, {tile_y}) soil quality has dropped to {new_health}/10",
+                NotificationType.AGRICULTURE,
+                NotificationPriority.HIGH
+            )
+        elif new_health >= 8 and old_health < 8:
+            self.notification_manager.show_notification(
+                "🌿 Excellent Soil",
+                f"Tile ({tile_x}, {tile_y}) soil quality improved to {new_health}/10!",
+                NotificationType.AGRICULTURE,
+                NotificationPriority.NORMAL
+            )
     
     def _create_ui_elements(self):
         """Create the main UI elements"""
@@ -674,8 +1213,26 @@ class UIManager:
         
         # Handle our custom events
         if event.type == pygame_gui.UI_BUTTON_PRESSED:
+            # Add button press animation for any clicked button - Phase 2.3 enhancement
+            button_element = event.ui_element
+            if hasattr(button_element, 'rect'):
+                # Create a mock object for animation (since pygame-gui elements can't be directly animated)
+                button_mock = type('ButtonMock', (), {
+                    'scale': 1.0,
+                    'color': (255, 255, 255, 255)
+                })()
+                AnimationPresets.button_press(button_mock, self.enhanced_animation_manager)
+            
             if event.ui_element == self.pause_button:
                 self.event_system.emit('time_speed_change', {'speed': 0})
+                # Show feedback notification
+                self.notification_manager.show_notification(
+                    "⏸️ Game Paused",
+                    "All farm activities are now paused",
+                    NotificationType.SYSTEM,
+                    NotificationPriority.LOW,
+                    duration=2.0
+                )
             elif event.ui_element == self.speed_1x_button:
                 self.event_system.emit('time_speed_change', {'speed': 1})
             elif event.ui_element == self.speed_2x_button:
@@ -850,8 +1407,14 @@ class UIManager:
         
         # Forward mouse events to employee manager for tile selection
         elif event.type == pygame.MOUSEBUTTONDOWN:
+            # Check if click was on a notification first
+            if self.notification_manager.handle_click(event.pos):
+                return  # Notification handled the click, don't pass through
             # This will be handled by employee manager through game manager
             pass
+        elif event.type == pygame.MOUSEMOTION:
+            # Forward mouse motion to tooltip system for hover detection
+            self.tooltip_manager._handle_mouse_motion({'pos': event.pos})
     
     def update(self, dt):
         """Update UI elements"""
@@ -860,7 +1423,17 @@ class UIManager:
         # Update enhanced UI components
         self.enhanced_hud.update(dt)  # Update the enhanced top HUD
         self.smart_action_system.update(dt)  # Update smart action system
-        self.animation_system.update(dt)  # Update animation system
+        self.animation_system.update(dt)  # Update legacy animation system
+        
+        # Update enhanced animation system - Phase 2.3 enhancement
+        self.enhanced_animation_manager.update(dt)
+        
+        # Update advanced tooltip system - Phase 2 enhancement
+        mouse_pos = pygame.mouse.get_pos()
+        self.tooltip_manager.update(dt, mouse_pos)
+        
+        # Update advanced notification system - Phase 2.2 enhancement
+        self.notification_manager.update(dt)
         
         # No complex startup protection needed - panels are created dynamically
         
@@ -883,6 +1456,15 @@ class UIManager:
         
         # Render animations (notifications, effects, etc.)
         self.animation_system.render_notifications(screen)
+        
+        # Render enhanced animation system particles - Phase 2.3 enhancement
+        self.enhanced_animation_manager.render_particles(screen)
+        
+        # Render advanced notification system - Phase 2.2 enhancement
+        self.notification_manager.render(screen)
+        
+        # Render advanced tooltips - Phase 2 enhancement (render last for top layer)
+        self.tooltip_manager.render(screen)
     
     def _render_debug_info(self, screen):
         """Render debug information overlay"""

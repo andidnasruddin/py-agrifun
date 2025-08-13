@@ -204,12 +204,10 @@ class EnhancedGridRenderer:
         """Get the tile at the given screen position"""
         screen_x, screen_y = mouse_pos
         
-        # Adjust for HUD
-        grid_y = screen_y - self.hud_height
-        
         # Convert screen coordinates to world coordinates
+        # Reverse the transformation used in rendering: screen_pos = world_pos * zoom + pan_offset + hud_offset
         world_x = (screen_x - self.pan_offset_x) / self.zoom_factor
-        world_y = (grid_y - self.pan_offset_y) / self.zoom_factor
+        world_y = (screen_y - self.hud_height - self.pan_offset_y) / self.zoom_factor
         
         # Convert world coordinates to grid coordinates
         grid_x = int(world_x // TILE_SIZE)

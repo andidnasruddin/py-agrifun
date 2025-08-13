@@ -515,7 +515,12 @@ class GridManager:
         return None
     
     def get_tile_at_pixel(self, px: int, py: int) -> Optional[Tile]:
-        """Get tile at pixel position"""
+        """Get tile at pixel position with enhanced grid transformation support"""
+        # Use enhanced renderer's transformation logic if available
+        if hasattr(self, 'enhanced_renderer') and self.enhanced_renderer:
+            return self.enhanced_renderer._get_tile_at_position((px, py))
+        
+        # Fallback to legacy calculation for compatibility
         # Account for UI offset
         py -= 70
         
@@ -604,27 +609,39 @@ class GridManager:
             self.enhanced_renderer.handle_mouse_wheel(wheel_event)
     
     def _update_drag_selection(self):
-        """Update tile selection based on drag area"""
+        """Update tile selection based on drag area with enhanced grid transformation support"""
         if not (self.drag_start_pos and self.drag_current_pos):
             return
         
-        # Calculate selection rectangle
-        start_x, start_y = self.drag_start_pos
-        end_x, end_y = self.drag_current_pos
-        
-        # Adjust for UI offset
-        start_y -= 70
-        end_y -= 70
-        
-        # Ensure valid bounds
-        if start_y < 0 or end_y < 0:
-            return
-        
-        # Convert to grid coordinates
-        start_gx = start_x // TILE_SIZE
-        start_gy = start_y // TILE_SIZE
-        end_gx = end_x // TILE_SIZE
-        end_gy = end_y // TILE_SIZE
+        # Use enhanced renderer coordinate transformation if available
+        if hasattr(self, 'enhanced_renderer') and self.enhanced_renderer:
+            start_tile = self.enhanced_renderer._get_tile_at_position(self.drag_start_pos)
+            end_tile = self.enhanced_renderer._get_tile_at_position(self.drag_current_pos)
+            
+            if not (start_tile and end_tile):
+                return
+            
+            # Get grid coordinates from tiles
+            start_gx, start_gy = start_tile.x, start_tile.y
+            end_gx, end_gy = end_tile.x, end_tile.y
+        else:
+            # Fallback to legacy calculation
+            start_x, start_y = self.drag_start_pos
+            end_x, end_y = self.drag_current_pos
+            
+            # Adjust for UI offset
+            start_y -= 70
+            end_y -= 70
+            
+            # Ensure valid bounds
+            if start_y < 0 or end_y < 0:
+                return
+            
+            # Convert to grid coordinates
+            start_gx = start_x // TILE_SIZE
+            start_gy = start_y // TILE_SIZE
+            end_gx = end_x // TILE_SIZE
+            end_gy = end_y // TILE_SIZE
         
         # Ensure correct order
         min_x = min(start_gx, end_gx)
