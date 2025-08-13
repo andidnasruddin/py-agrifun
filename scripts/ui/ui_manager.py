@@ -7,6 +7,8 @@ import pygame
 import pygame_gui
 from scripts.core.config import *
 from scripts.ui.enhanced_ui_components import EnhancedTopHUD, DynamicRightPanel
+from scripts.ui.smart_action_system import SmartActionSystem
+from scripts.ui.animation_system import AnimationSystem
 
 
 class UIManager:
@@ -53,6 +55,20 @@ class UIManager:
             height=panel_height
         )
         
+        # Initialize smart action system
+        action_bar_y = WINDOW_HEIGHT - 60  # Position at bottom of screen
+        self.smart_action_system = SmartActionSystem(
+            self.gui_manager,
+            self.event_system,
+            x_pos=10,
+            y_pos=action_bar_y,
+            button_width=120,
+            button_height=45
+        )
+        
+        # Initialize animation system
+        self.animation_system = AnimationSystem(self.event_system)
+        
         # Initialize traditional UI elements (for gradual transition)
         self._create_ui_elements()  # Create basic UI components like buttons and panels
         # Note: Applicant panel will be created dynamically when needed
@@ -94,6 +110,11 @@ class UIManager:
         self.event_system.subscribe('weather_event_started', self._handle_weather_event)
         self.event_system.subscribe('irrigation_status_changed', self._handle_irrigation_status_change)
         self.event_system.subscribe('irrigation_cost_incurred', self._handle_irrigation_cost_notification)
+        
+        # Smart action system events
+        self.event_system.subscribe('smart_action_requested', self._handle_smart_action_request)
+        self.event_system.subscribe('tiles_selected', self._handle_tiles_selected_for_actions)
+        self.event_system.subscribe('selection_cleared', self._handle_selection_cleared_for_actions)
         
         # Track current day for expiration calculations
         self._current_day = 1
@@ -806,6 +827,9 @@ class UIManager:
             elif (hasattr(self, 'save_load_close_button') and 
                   event.ui_element == self.save_load_close_button):
                 self._destroy_save_load_menu()
+            # Handle smart action buttons
+            elif hasattr(event.ui_element, 'action_id'):
+                self.smart_action_system.handle_button_click(event.ui_element)
         
         # Handle dropdown selection changes
         elif event.type == pygame_gui.UI_DROP_DOWN_MENU_CHANGED:
@@ -835,6 +859,8 @@ class UIManager:
         
         # Update enhanced UI components
         self.enhanced_hud.update(dt)  # Update the enhanced top HUD
+        self.smart_action_system.update(dt)  # Update smart action system
+        self.animation_system.update(dt)  # Update animation system
         
         # No complex startup protection needed - panels are created dynamically
         
@@ -854,6 +880,9 @@ class UIManager:
         
         # Render notifications
         self._render_notifications(screen)
+        
+        # Render animations (notifications, effects, etc.)
+        self.animation_system.render_notifications(screen)
     
     def _render_debug_info(self, screen):
         """Render debug information overlay"""
@@ -1038,13 +1067,17 @@ class UIManager:
         })
     
     def _add_notification(self, message: str, notification_type: str = "info"):
-        """Add a notification to display"""
+        """Add a notification to display with animation"""
+        # Create traditional notification for backward compatibility
         self.notifications.append({
             'message': message,
             'type': notification_type,
             'timer': 3.0,  # Show for 3 seconds
             'alpha': 255
         })
+        
+        # Also create animated notification for enhanced visual feedback
+        self.animation_system.show_notification(message, notification_type, 3.0)
         
         # Limit to 5 notifications max
         if len(self.notifications) > 5:
@@ -2283,3 +2316,85 @@ class UIManager:
         weather_event = event_data.get('weather_event', 'drought')
         
         self._add_notification(f"[IRRIGATION] ${cost:.2f} water cost for {irrigated_tiles} tiles during {weather_event}", "info")
+    
+    def _handle_smart_action_request(self, event_data):
+        """Handle smart action button requests"""
+        action_id = event_data.get('action_id')
+        selected_tiles = event_data.get('selected_tiles', [])
+        estimated_cost = event_data.get('estimated_cost', 0)
+        
+        # Map smart actions to actual game commands
+        action_mapping = {
+            'till_soil': 'till',
+            'plant_corn': lambda: self._plant_crop('corn'),
+            'plant_tomatoes': lambda: self._plant_crop('tomatoes'),
+            'plant_wheat': lambda: self._plant_crop('wheat'),
+            'harvest_crops': 'harvest',
+            'build_irrigation': lambda: self._build_infrastructure('irrigation'),
+            'build_storage': lambda: self._build_infrastructure('storage'),
+            'clear_tiles': 'clear',
+            'fertilize': lambda: self._apply_fertilizer()
+        }
+        
+        # Execute the mapped action
+        if action_id in action_mapping:
+            mapped_action = action_mapping[action_id]
+            
+            if callable(mapped_action):
+                # Execute function-based action
+                mapped_action()
+            else:
+                # Execute simple task assignment
+                self._assign_task_to_tiles(mapped_action, selected_tiles)
+            
+            # Add feedback notification
+            tile_count = len(selected_tiles)
+            self._add_notification(f"Smart Action: {action_id} assigned to {tile_count} tiles", "success")
+        else:
+            self._add_notification(f"Unknown action: {action_id}", "error")
+    
+    def _plant_crop(self, crop_type):
+        """Handle crop planting through smart actions"""
+        # Update current crop selection and emit plant task
+        self.current_crop_type = crop_type
+        self.event_system.emit('task_assignment_requested', {
+            'task_type': 'plant',
+            'crop_type': crop_type
+        })
+    
+    def _build_infrastructure(self, infrastructure_type):
+        """Handle infrastructure building through smart actions"""
+        building_mapping = {
+            'irrigation': 'irrigation_system',
+            'storage': 'storage_silo'
+        }
+        
+        if infrastructure_type in building_mapping:
+            building_type = building_mapping[infrastructure_type]
+            self.event_system.emit('enter_building_placement_mode', {
+                'building_type': building_type
+            })
+    
+    def _apply_fertilizer(self):
+        """Handle fertilizer application through smart actions"""
+        self.event_system.emit('task_assignment_requested', {
+            'task_type': 'fertilize'
+        })
+    
+    def _assign_task_to_tiles(self, task_type, tiles):
+        """Assign a task type to specific tiles"""
+        self.event_system.emit('task_assignment_requested', {
+            'task_type': task_type,
+            'tiles': tiles
+        })
+    
+    def _handle_tiles_selected_for_actions(self, event_data):
+        """Handle tile selection for smart action updates"""
+        # Forward to smart action system for context analysis
+        tiles = event_data.get('tiles', [])
+        print(f"Smart Actions: {len(tiles)} tiles selected for action analysis")
+    
+    def _handle_selection_cleared_for_actions(self, event_data):
+        """Handle selection cleared for smart action updates"""
+        # Forward to smart action system
+        print("Smart Actions: Selection cleared, updating available actions")

@@ -1,19 +1,19 @@
 {
   "save_version": "1.0",
   "save_name": "Quick Save - Day 1",
-  "save_date": "2025-08-12T08:58:22.045527",
+  "save_date": "2025-08-12T10:58:29.465840",
   "time_state": {
     "current_day": 1,
     "current_hour": 0,
     "current_minute": 11,
     "time_speed": 1,
     "is_paused": false,
-    "game_time_elapsed": 9.815000000000008
+    "game_time_elapsed": 9.183000000000012
   },
   "economy_state": {
-    "cash": 10000,
+    "cash": 105479,
     "total_income": 10000,
-    "total_expenses": 0,
+    "total_expenses": 4521,
     "loans": [
       {
         "principal": 10000,
@@ -39,11 +39,41 @@
         "description": "First-time farmer loan",
         "type": "loan",
         "day": 1
+      },
+      {
+        "amount": -500,
+        "description": "Purchase Storage Silo",
+        "type": "building",
+        "day": 1
+      },
+      {
+        "amount": -650,
+        "description": "Purchase Storage Silo",
+        "type": "building",
+        "day": 1
+      },
+      {
+        "amount": -845,
+        "description": "Purchase Storage Silo",
+        "type": "building",
+        "day": 1
+      },
+      {
+        "amount": -1098,
+        "description": "Purchase Storage Silo",
+        "type": "building",
+        "day": 1
+      },
+      {
+        "amount": -1428,
+        "description": "Purchase Storage Silo",
+        "type": "building",
+        "day": 1
       }
     ]
   },
   "inventory_state": {
-    "storage_capacity": 100,
+    "storage_capacity": 350,
     "current_storage": 0,
     "crops": {
       "corn": []
@@ -57,113 +87,75 @@
         {
           "x": 0,
           "y": 0,
-          "terrain_type": "soil",
-          "soil_quality": 5,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 1,
-          "y": 0,
-          "terrain_type": "soil",
-          "soil_quality": 7,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 2,
-          "y": 0,
-          "terrain_type": "soil",
-          "soil_quality": 4,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 3,
-          "y": 0,
-          "terrain_type": "soil",
-          "soil_quality": 3,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 4,
-          "y": 0,
-          "terrain_type": "soil",
-          "soil_quality": 3,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 5,
-          "y": 0,
-          "terrain_type": "soil",
+          "terrain_type": "building",
           "soil_quality": 6,
           "water_level": 100,
           "current_crop": null,
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": "storage_silo",
+          "is_occupied": true
         },
         {
-          "x": 6,
+          "x": 1,
           "y": 0,
-          "terrain_type": "soil",
-          "soil_quality": 3,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 7,
-          "y": 0,
-          "terrain_type": "soil",
-          "soil_quality": 8,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 8,
-          "y": 0,
-          "terrain_type": "soil",
+          "terrain_type": "building",
           "soil_quality": 7,
           "water_level": 100,
           "current_crop": null,
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": "storage_silo",
+          "is_occupied": true
         },
         {
-          "x": 9,
+          "x": 2,
+          "y": 0,
+          "terrain_type": "building",
+          "soil_quality": 3,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": "storage_silo",
+          "is_occupied": true
+        },
+        {
+          "x": 3,
+          "y": 0,
+          "terrain_type": "building",
+          "soil_quality": 8,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": "storage_silo",
+          "is_occupied": true
+        },
+        {
+          "x": 4,
+          "y": 0,
+          "terrain_type": "building",
+          "soil_quality": 4,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": "storage_silo",
+          "is_occupied": true
+        },
+        {
+          "x": 5,
           "y": 0,
           "terrain_type": "soil",
           "soil_quality": 5,
@@ -172,34 +164,12 @@
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
-          "x": 10,
-          "y": 0,
-          "terrain_type": "soil",
-          "soil_quality": 5,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 11,
-          "y": 0,
-          "terrain_type": "soil",
-          "soil_quality": 6,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 12,
+          "x": 6,
           "y": 0,
           "terrain_type": "soil",
           "soil_quality": 8,
@@ -208,10 +178,40 @@
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
-          "x": 13,
+          "x": 7,
+          "y": 0,
+          "terrain_type": "soil",
+          "soil_quality": 3,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 8,
+          "y": 0,
+          "terrain_type": "soil",
+          "soil_quality": 5,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 9,
           "y": 0,
           "terrain_type": "soil",
           "soil_quality": 7,
@@ -220,10 +220,54 @@
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
-          "x": 14,
+          "x": 10,
+          "y": 0,
+          "terrain_type": "soil",
+          "soil_quality": 4,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 11,
+          "y": 0,
+          "terrain_type": "soil",
+          "soil_quality": 4,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 12,
+          "y": 0,
+          "terrain_type": "soil",
+          "soil_quality": 7,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 13,
           "y": 0,
           "terrain_type": "soil",
           "soil_quality": 8,
@@ -232,19 +276,37 @@
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 14,
+          "y": 0,
+          "terrain_type": "soil",
+          "soil_quality": 7,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 15,
           "y": 0,
           "terrain_type": "soil",
-          "soil_quality": 8,
+          "soil_quality": 3,
           "water_level": 100,
           "current_crop": null,
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         }
       ],
       [
@@ -252,13 +314,15 @@
           "x": 0,
           "y": 1,
           "terrain_type": "soil",
-          "soil_quality": 4,
+          "soil_quality": 5,
           "water_level": 100,
           "current_crop": null,
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 1,
@@ -270,130 +334,26 @@
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 2,
           "y": 1,
           "terrain_type": "soil",
-          "soil_quality": 5,
+          "soil_quality": 7,
           "water_level": 100,
           "current_crop": null,
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 3,
-          "y": 1,
-          "terrain_type": "soil",
-          "soil_quality": 8,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 4,
-          "y": 1,
-          "terrain_type": "soil",
-          "soil_quality": 6,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 5,
-          "y": 1,
-          "terrain_type": "soil",
-          "soil_quality": 5,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 6,
-          "y": 1,
-          "terrain_type": "soil",
-          "soil_quality": 3,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 7,
-          "y": 1,
-          "terrain_type": "soil",
-          "soil_quality": 5,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 8,
-          "y": 1,
-          "terrain_type": "soil",
-          "soil_quality": 6,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 9,
-          "y": 1,
-          "terrain_type": "soil",
-          "soil_quality": 7,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 10,
-          "y": 1,
-          "terrain_type": "soil",
-          "soil_quality": 6,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 11,
-          "y": 1,
-          "terrain_type": "soil",
-          "soil_quality": 7,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 12,
           "y": 1,
           "terrain_type": "soil",
           "soil_quality": 8,
@@ -402,7 +362,135 @@
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 4,
+          "y": 1,
+          "terrain_type": "soil",
+          "soil_quality": 4,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 5,
+          "y": 1,
+          "terrain_type": "soil",
+          "soil_quality": 8,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 6,
+          "y": 1,
+          "terrain_type": "soil",
+          "soil_quality": 8,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 7,
+          "y": 1,
+          "terrain_type": "soil",
+          "soil_quality": 8,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 8,
+          "y": 1,
+          "terrain_type": "soil",
+          "soil_quality": 8,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 9,
+          "y": 1,
+          "terrain_type": "soil",
+          "soil_quality": 8,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 10,
+          "y": 1,
+          "terrain_type": "soil",
+          "soil_quality": 3,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 11,
+          "y": 1,
+          "terrain_type": "soil",
+          "soil_quality": 5,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 12,
+          "y": 1,
+          "terrain_type": "soil",
+          "soil_quality": 8,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 13,
@@ -414,31 +502,37 @@
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 14,
           "y": 1,
           "terrain_type": "soil",
-          "soil_quality": 6,
+          "soil_quality": 8,
           "water_level": 100,
           "current_crop": null,
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 15,
           "y": 1,
           "terrain_type": "soil",
-          "soil_quality": 4,
+          "soil_quality": 3,
           "water_level": 100,
           "current_crop": null,
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         }
       ],
       [
@@ -446,16 +540,32 @@
           "x": 0,
           "y": 2,
           "terrain_type": "soil",
-          "soil_quality": 3,
+          "soil_quality": 6,
           "water_level": 100,
           "current_crop": null,
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 1,
+          "y": 2,
+          "terrain_type": "soil",
+          "soil_quality": 4,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 2,
           "y": 2,
           "terrain_type": "soil",
           "soil_quality": 8,
@@ -464,19 +574,9 @@
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 2,
-          "y": 2,
-          "terrain_type": "soil",
-          "soil_quality": 3,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 3,
@@ -488,46 +588,26 @@
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 4,
           "y": 2,
           "terrain_type": "soil",
-          "soil_quality": 7,
+          "soil_quality": 4,
           "water_level": 100,
           "current_crop": null,
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 5,
-          "y": 2,
-          "terrain_type": "soil",
-          "soil_quality": 4,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 6,
-          "y": 2,
-          "terrain_type": "soil",
-          "soil_quality": 4,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 7,
           "y": 2,
           "terrain_type": "soil",
           "soil_quality": 6,
@@ -536,34 +616,12 @@
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
-          "x": 8,
-          "y": 2,
-          "terrain_type": "soil",
-          "soil_quality": 7,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 9,
-          "y": 2,
-          "terrain_type": "soil",
-          "soil_quality": 4,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 10,
+          "x": 6,
           "y": 2,
           "terrain_type": "soil",
           "soil_quality": 6,
@@ -572,10 +630,26 @@
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
-          "x": 11,
+          "x": 7,
+          "y": 2,
+          "terrain_type": "soil",
+          "soil_quality": 5,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 8,
           "y": 2,
           "terrain_type": "soil",
           "soil_quality": 6,
@@ -584,10 +658,26 @@
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
-          "x": 12,
+          "x": 9,
+          "y": 2,
+          "terrain_type": "soil",
+          "soil_quality": 8,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 10,
           "y": 2,
           "terrain_type": "soil",
           "soil_quality": 3,
@@ -596,22 +686,68 @@
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 11,
+          "y": 2,
+          "terrain_type": "soil",
+          "soil_quality": 5,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 12,
+          "y": 2,
+          "terrain_type": "soil",
+          "soil_quality": 6,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 13,
           "y": 2,
           "terrain_type": "soil",
-          "soil_quality": 3,
+          "soil_quality": 6,
           "water_level": 100,
           "current_crop": null,
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 14,
+          "y": 2,
+          "terrain_type": "soil",
+          "soil_quality": 8,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 15,
           "y": 2,
           "terrain_type": "soil",
           "soil_quality": 4,
@@ -620,19 +756,9 @@
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 15,
-          "y": 2,
-          "terrain_type": "soil",
-          "soil_quality": 7,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         }
       ],
       [
@@ -646,91 +772,107 @@
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 1,
           "y": 3,
           "terrain_type": "soil",
-          "soil_quality": 6,
+          "soil_quality": 4,
           "water_level": 100,
           "current_crop": null,
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 2,
           "y": 3,
           "terrain_type": "soil",
-          "soil_quality": 5,
+          "soil_quality": 8,
           "water_level": 100,
           "current_crop": null,
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 3,
           "y": 3,
           "terrain_type": "soil",
-          "soil_quality": 8,
+          "soil_quality": 4,
           "water_level": 100,
           "current_crop": null,
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 4,
           "y": 3,
           "terrain_type": "soil",
+          "soil_quality": 3,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 5,
+          "y": 3,
+          "terrain_type": "soil",
           "soil_quality": 8,
           "water_level": 100,
           "current_crop": null,
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 5,
-          "y": 3,
-          "terrain_type": "soil",
-          "soil_quality": 5,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 6,
           "y": 3,
           "terrain_type": "soil",
-          "soil_quality": 5,
+          "soil_quality": 4,
           "water_level": 100,
           "current_crop": null,
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 7,
           "y": 3,
           "terrain_type": "soil",
-          "soil_quality": 6,
+          "soil_quality": 4,
           "water_level": 100,
           "current_crop": null,
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 8,
@@ -742,19 +884,23 @@
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 9,
           "y": 3,
           "terrain_type": "soil",
-          "soil_quality": 8,
+          "soil_quality": 7,
           "water_level": 100,
           "current_crop": null,
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 10,
@@ -766,58 +912,40 @@
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 11,
           "y": 3,
           "terrain_type": "soil",
-          "soil_quality": 3,
+          "soil_quality": 6,
           "water_level": 100,
           "current_crop": null,
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 12,
           "y": 3,
           "terrain_type": "soil",
-          "soil_quality": 5,
+          "soil_quality": 8,
           "water_level": 100,
           "current_crop": null,
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 13,
-          "y": 3,
-          "terrain_type": "soil",
-          "soil_quality": 4,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 14,
-          "y": 3,
-          "terrain_type": "soil",
-          "soil_quality": 5,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 15,
           "y": 3,
           "terrain_type": "soil",
           "soil_quality": 3,
@@ -826,7 +954,37 @@
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 14,
+          "y": 3,
+          "terrain_type": "soil",
+          "soil_quality": 3,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 15,
+          "y": 3,
+          "terrain_type": "soil",
+          "soil_quality": 7,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         }
       ],
       [
@@ -834,25 +992,29 @@
           "x": 0,
           "y": 4,
           "terrain_type": "soil",
-          "soil_quality": 7,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 1,
-          "y": 4,
-          "terrain_type": "soil",
           "soil_quality": 6,
           "water_level": 100,
           "current_crop": null,
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 1,
+          "y": 4,
+          "terrain_type": "soil",
+          "soil_quality": 3,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 2,
@@ -864,106 +1026,12 @@
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 3,
-          "y": 4,
-          "terrain_type": "soil",
-          "soil_quality": 7,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 4,
-          "y": 4,
-          "terrain_type": "soil",
-          "soil_quality": 6,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 5,
-          "y": 4,
-          "terrain_type": "soil",
-          "soil_quality": 4,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 6,
-          "y": 4,
-          "terrain_type": "soil",
-          "soil_quality": 4,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 7,
-          "y": 4,
-          "terrain_type": "soil",
-          "soil_quality": 4,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 8,
-          "y": 4,
-          "terrain_type": "soil",
-          "soil_quality": 6,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 9,
-          "y": 4,
-          "terrain_type": "soil",
-          "soil_quality": 6,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 10,
-          "y": 4,
-          "terrain_type": "soil",
-          "soil_quality": 4,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 11,
           "y": 4,
           "terrain_type": "soil",
           "soil_quality": 8,
@@ -972,22 +1040,12 @@
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
-          "x": 12,
-          "y": 4,
-          "terrain_type": "soil",
-          "soil_quality": 5,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 13,
+          "x": 4,
           "y": 4,
           "terrain_type": "soil",
           "soil_quality": 3,
@@ -996,22 +1054,68 @@
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
-          "x": 14,
+          "x": 5,
           "y": 4,
           "terrain_type": "soil",
-          "soil_quality": 6,
+          "soil_quality": 7,
           "water_level": 100,
           "current_crop": null,
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
-          "x": 15,
+          "x": 6,
+          "y": 4,
+          "terrain_type": "soil",
+          "soil_quality": 7,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 7,
+          "y": 4,
+          "terrain_type": "soil",
+          "soil_quality": 5,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 8,
+          "y": 4,
+          "terrain_type": "soil",
+          "soil_quality": 7,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 9,
           "y": 4,
           "terrain_type": "soil",
           "soil_quality": 4,
@@ -1020,7 +1124,93 @@
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 10,
+          "y": 4,
+          "terrain_type": "soil",
+          "soil_quality": 8,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 11,
+          "y": 4,
+          "terrain_type": "soil",
+          "soil_quality": 4,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 12,
+          "y": 4,
+          "terrain_type": "soil",
+          "soil_quality": 7,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 13,
+          "y": 4,
+          "terrain_type": "soil",
+          "soil_quality": 5,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 14,
+          "y": 4,
+          "terrain_type": "soil",
+          "soil_quality": 4,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 15,
+          "y": 4,
+          "terrain_type": "soil",
+          "soil_quality": 7,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         }
       ],
       [
@@ -1028,88 +1218,18 @@
           "x": 0,
           "y": 5,
           "terrain_type": "soil",
-          "soil_quality": 8,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 1,
-          "y": 5,
-          "terrain_type": "soil",
           "soil_quality": 5,
           "water_level": 100,
           "current_crop": null,
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
-          "x": 2,
-          "y": 5,
-          "terrain_type": "soil",
-          "soil_quality": 8,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 3,
-          "y": 5,
-          "terrain_type": "soil",
-          "soil_quality": 3,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 4,
-          "y": 5,
-          "terrain_type": "soil",
-          "soil_quality": 8,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 5,
-          "y": 5,
-          "terrain_type": "soil",
-          "soil_quality": 3,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 6,
-          "y": 5,
-          "terrain_type": "soil",
-          "soil_quality": 3,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 7,
+          "x": 1,
           "y": 5,
           "terrain_type": "soil",
           "soil_quality": 7,
@@ -1118,22 +1238,12 @@
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
-          "x": 8,
-          "y": 5,
-          "terrain_type": "soil",
-          "soil_quality": 5,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 9,
+          "x": 2,
           "y": 5,
           "terrain_type": "soil",
           "soil_quality": 3,
@@ -1142,7 +1252,107 @@
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 3,
+          "y": 5,
+          "terrain_type": "soil",
+          "soil_quality": 4,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 4,
+          "y": 5,
+          "terrain_type": "soil",
+          "soil_quality": 7,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 5,
+          "y": 5,
+          "terrain_type": "soil",
+          "soil_quality": 6,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 6,
+          "y": 5,
+          "terrain_type": "soil",
+          "soil_quality": 8,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 7,
+          "y": 5,
+          "terrain_type": "soil",
+          "soil_quality": 8,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 8,
+          "y": 5,
+          "terrain_type": "soil",
+          "soil_quality": 8,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 9,
+          "y": 5,
+          "terrain_type": "soil",
+          "soil_quality": 6,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 10,
@@ -1154,22 +1364,12 @@
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 11,
-          "y": 5,
-          "terrain_type": "soil",
-          "soil_quality": 3,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 12,
           "y": 5,
           "terrain_type": "soil",
           "soil_quality": 6,
@@ -1178,43 +1378,65 @@
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 12,
+          "y": 5,
+          "terrain_type": "soil",
+          "soil_quality": 3,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 13,
           "y": 5,
           "terrain_type": "soil",
-          "soil_quality": 8,
+          "soil_quality": 4,
           "water_level": 100,
           "current_crop": null,
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 14,
           "y": 5,
           "terrain_type": "soil",
-          "soil_quality": 4,
+          "soil_quality": 7,
           "water_level": 100,
           "current_crop": null,
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 15,
           "y": 5,
           "terrain_type": "soil",
-          "soil_quality": 4,
+          "soil_quality": 5,
           "water_level": 100,
           "current_crop": null,
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         }
       ],
       [
@@ -1222,40 +1444,18 @@
           "x": 0,
           "y": 6,
           "terrain_type": "soil",
-          "soil_quality": 5,
+          "soil_quality": 8,
           "water_level": 100,
           "current_crop": null,
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 1,
-          "y": 6,
-          "terrain_type": "soil",
-          "soil_quality": 7,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 2,
-          "y": 6,
-          "terrain_type": "soil",
-          "soil_quality": 6,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 3,
           "y": 6,
           "terrain_type": "soil",
           "soil_quality": 8,
@@ -1264,10 +1464,26 @@
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
-          "x": 4,
+          "x": 2,
+          "y": 6,
+          "terrain_type": "soil",
+          "soil_quality": 4,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 3,
           "y": 6,
           "terrain_type": "soil",
           "soil_quality": 7,
@@ -1276,10 +1492,12 @@
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
-          "x": 5,
+          "x": 4,
           "y": 6,
           "terrain_type": "soil",
           "soil_quality": 3,
@@ -1288,10 +1506,68 @@
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 5,
+          "y": 6,
+          "terrain_type": "soil",
+          "soil_quality": 6,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 6,
+          "y": 6,
+          "terrain_type": "soil",
+          "soil_quality": 7,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 7,
+          "y": 6,
+          "terrain_type": "soil",
+          "soil_quality": 4,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 8,
+          "y": 6,
+          "terrain_type": "soil",
+          "soil_quality": 8,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 9,
           "y": 6,
           "terrain_type": "soil",
           "soil_quality": 5,
@@ -1300,43 +1576,9 @@
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 7,
-          "y": 6,
-          "terrain_type": "soil",
-          "soil_quality": 7,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": "till",
-          "task_assigned_to": "emp_001"
-        },
-        {
-          "x": 8,
-          "y": 6,
-          "terrain_type": "soil",
-          "soil_quality": 7,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": "till",
-          "task_assigned_to": "emp_001"
-        },
-        {
-          "x": 9,
-          "y": 6,
-          "terrain_type": "soil",
-          "soil_quality": 8,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": "till",
-          "task_assigned_to": "emp_001"
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 10,
@@ -1347,8 +1589,10 @@
           "current_crop": null,
           "growth_stage": 0,
           "days_growing": 0,
-          "task_assignment": "till",
-          "task_assigned_to": "emp_001"
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 11,
@@ -1359,20 +1603,24 @@
           "current_crop": null,
           "growth_stage": 0,
           "days_growing": 0,
-          "task_assignment": "till",
-          "task_assigned_to": "emp_001"
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 12,
           "y": 6,
           "terrain_type": "soil",
-          "soil_quality": 4,
+          "soil_quality": 7,
           "water_level": 100,
           "current_crop": null,
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 13,
@@ -1384,22 +1632,12 @@
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 14,
-          "y": 6,
-          "terrain_type": "soil",
-          "soil_quality": 5,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 15,
           "y": 6,
           "terrain_type": "soil",
           "soil_quality": 4,
@@ -1408,7 +1646,23 @@
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 15,
+          "y": 6,
+          "terrain_type": "soil",
+          "soil_quality": 8,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         }
       ],
       [
@@ -1416,28 +1670,18 @@
           "x": 0,
           "y": 7,
           "terrain_type": "soil",
-          "soil_quality": 7,
+          "soil_quality": 5,
           "water_level": 100,
           "current_crop": null,
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 1,
-          "y": 7,
-          "terrain_type": "soil",
-          "soil_quality": 6,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 2,
           "y": 7,
           "terrain_type": "soil",
           "soil_quality": 4,
@@ -1446,19 +1690,37 @@
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
-          "x": 3,
+          "x": 2,
           "y": 7,
           "terrain_type": "soil",
-          "soil_quality": 7,
+          "soil_quality": 8,
           "water_level": 100,
           "current_crop": null,
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 3,
+          "y": 7,
+          "terrain_type": "soil",
+          "soil_quality": 5,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 4,
@@ -1470,46 +1732,68 @@
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 5,
           "y": 7,
           "terrain_type": "soil",
-          "soil_quality": 8,
+          "soil_quality": 7,
           "water_level": 100,
           "current_crop": null,
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 6,
           "y": 7,
           "terrain_type": "soil",
+          "soil_quality": 6,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 7,
+          "y": 7,
+          "terrain_type": "soil",
+          "soil_quality": 7,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 8,
+          "y": 7,
+          "terrain_type": "soil",
           "soil_quality": 8,
           "water_level": 100,
           "current_crop": null,
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
-          "x": 7,
-          "y": 7,
-          "terrain_type": "soil",
-          "soil_quality": 4,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": "till",
-          "task_assigned_to": "emp_001"
-        },
-        {
-          "x": 8,
+          "x": 9,
           "y": 7,
           "terrain_type": "soil",
           "soil_quality": 5,
@@ -1517,32 +1801,24 @@
           "current_crop": null,
           "growth_stage": 0,
           "days_growing": 0,
-          "task_assignment": "till",
-          "task_assigned_to": "emp_001"
-        },
-        {
-          "x": 9,
-          "y": 7,
-          "terrain_type": "soil",
-          "soil_quality": 8,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": "till",
-          "task_assigned_to": "emp_001"
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 10,
           "y": 7,
           "terrain_type": "soil",
-          "soil_quality": 3,
+          "soil_quality": 6,
           "water_level": 100,
           "current_crop": null,
           "growth_stage": 0,
           "days_growing": 0,
-          "task_assignment": "till",
-          "task_assigned_to": "emp_001"
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 11,
@@ -1553,11 +1829,41 @@
           "current_crop": null,
           "growth_stage": 0,
           "days_growing": 0,
-          "task_assignment": "till",
-          "task_assigned_to": "emp_001"
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 12,
+          "y": 7,
+          "terrain_type": "soil",
+          "soil_quality": 7,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 13,
+          "y": 7,
+          "terrain_type": "soil",
+          "soil_quality": 4,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 14,
           "y": 7,
           "terrain_type": "soil",
           "soil_quality": 6,
@@ -1566,31 +1872,9 @@
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 13,
-          "y": 7,
-          "terrain_type": "soil",
-          "soil_quality": 8,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 14,
-          "y": 7,
-          "terrain_type": "soil",
-          "soil_quality": 8,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 15,
@@ -1602,7 +1886,9 @@
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         }
       ],
       [
@@ -1610,40 +1896,32 @@
           "x": 0,
           "y": 8,
           "terrain_type": "soil",
-          "soil_quality": 8,
+          "soil_quality": 7,
           "water_level": 100,
           "current_crop": null,
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 1,
           "y": 8,
           "terrain_type": "soil",
-          "soil_quality": 8,
+          "soil_quality": 7,
           "water_level": 100,
           "current_crop": null,
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 2,
-          "y": 8,
-          "terrain_type": "soil",
-          "soil_quality": 4,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 3,
           "y": 8,
           "terrain_type": "soil",
           "soil_quality": 6,
@@ -1652,46 +1930,26 @@
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 3,
+          "y": 8,
+          "terrain_type": "soil",
+          "soil_quality": 7,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 4,
-          "y": 8,
-          "terrain_type": "soil",
-          "soil_quality": 8,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 5,
-          "y": 8,
-          "terrain_type": "soil",
-          "soil_quality": 5,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 6,
-          "y": 8,
-          "terrain_type": "soil",
-          "soil_quality": 3,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 7,
           "y": 8,
           "terrain_type": "soil",
           "soil_quality": 4,
@@ -1700,7 +1958,51 @@
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 5,
+          "y": 8,
+          "terrain_type": "soil",
+          "soil_quality": 6,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 6,
+          "y": 8,
+          "terrain_type": "soil",
+          "soil_quality": 6,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 7,
+          "y": 8,
+          "terrain_type": "soil",
+          "soil_quality": 6,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 8,
@@ -1712,19 +2014,23 @@
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 9,
           "y": 8,
           "terrain_type": "soil",
-          "soil_quality": 7,
+          "soil_quality": 3,
           "water_level": 100,
           "current_crop": null,
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 10,
@@ -1736,10 +2042,26 @@
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 11,
+          "y": 8,
+          "terrain_type": "soil",
+          "soil_quality": 3,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 12,
           "y": 8,
           "terrain_type": "soil",
           "soil_quality": 4,
@@ -1748,10 +2070,12 @@
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
-          "x": 12,
+          "x": 13,
           "y": 8,
           "terrain_type": "soil",
           "soil_quality": 6,
@@ -1760,43 +2084,37 @@
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 13,
-          "y": 8,
-          "terrain_type": "soil",
-          "soil_quality": 8,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 14,
           "y": 8,
           "terrain_type": "soil",
-          "soil_quality": 4,
+          "soil_quality": 6,
           "water_level": 100,
           "current_crop": null,
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 15,
           "y": 8,
           "terrain_type": "soil",
-          "soil_quality": 5,
+          "soil_quality": 7,
           "water_level": 100,
           "current_crop": null,
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         }
       ],
       [
@@ -1804,25 +2122,29 @@
           "x": 0,
           "y": 9,
           "terrain_type": "soil",
-          "soil_quality": 8,
+          "soil_quality": 5,
           "water_level": 100,
           "current_crop": null,
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 1,
           "y": 9,
           "terrain_type": "soil",
-          "soil_quality": 6,
+          "soil_quality": 7,
           "water_level": 100,
           "current_crop": null,
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 2,
@@ -1834,19 +2156,23 @@
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 3,
           "y": 9,
           "terrain_type": "soil",
-          "soil_quality": 4,
+          "soil_quality": 6,
           "water_level": 100,
           "current_crop": null,
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 4,
@@ -1858,106 +2184,110 @@
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 5,
           "y": 9,
           "terrain_type": "soil",
-          "soil_quality": 4,
+          "soil_quality": 7,
           "water_level": 100,
           "current_crop": null,
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 6,
           "y": 9,
           "terrain_type": "soil",
-          "soil_quality": 8,
+          "soil_quality": 4,
           "water_level": 100,
           "current_crop": null,
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 7,
           "y": 9,
           "terrain_type": "soil",
+          "soil_quality": 3,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 8,
+          "y": 9,
+          "terrain_type": "soil",
+          "soil_quality": 7,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 9,
+          "y": 9,
+          "terrain_type": "soil",
+          "soil_quality": 3,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 10,
+          "y": 9,
+          "terrain_type": "soil",
           "soil_quality": 8,
           "water_level": 100,
           "current_crop": null,
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 8,
-          "y": 9,
-          "terrain_type": "soil",
-          "soil_quality": 4,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 9,
-          "y": 9,
-          "terrain_type": "soil",
-          "soil_quality": 4,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 10,
-          "y": 9,
-          "terrain_type": "soil",
-          "soil_quality": 4,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 11,
           "y": 9,
           "terrain_type": "soil",
-          "soil_quality": 5,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 12,
-          "y": 9,
-          "terrain_type": "soil",
           "soil_quality": 3,
           "water_level": 100,
           "current_crop": null,
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
-          "x": 13,
+          "x": 12,
           "y": 9,
           "terrain_type": "soil",
           "soil_quality": 4,
@@ -1966,31 +2296,51 @@
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 13,
+          "y": 9,
+          "terrain_type": "soil",
+          "soil_quality": 6,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 14,
           "y": 9,
           "terrain_type": "soil",
-          "soil_quality": 3,
+          "soil_quality": 4,
           "water_level": 100,
           "current_crop": null,
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 15,
           "y": 9,
           "terrain_type": "soil",
-          "soil_quality": 5,
+          "soil_quality": 8,
           "water_level": 100,
           "current_crop": null,
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         }
       ],
       [
@@ -1998,13 +2348,15 @@
           "x": 0,
           "y": 10,
           "terrain_type": "soil",
-          "soil_quality": 4,
+          "soil_quality": 3,
           "water_level": 100,
           "current_crop": null,
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 1,
@@ -2016,31 +2368,37 @@
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 2,
           "y": 10,
           "terrain_type": "soil",
-          "soil_quality": 7,
+          "soil_quality": 8,
           "water_level": 100,
           "current_crop": null,
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 3,
           "y": 10,
           "terrain_type": "soil",
-          "soil_quality": 4,
+          "soil_quality": 3,
           "water_level": 100,
           "current_crop": null,
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 4,
@@ -2052,7 +2410,9 @@
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 5,
@@ -2064,34 +2424,12 @@
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 6,
-          "y": 10,
-          "terrain_type": "soil",
-          "soil_quality": 4,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 7,
-          "y": 10,
-          "terrain_type": "soil",
-          "soil_quality": 4,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 8,
           "y": 10,
           "terrain_type": "soil",
           "soil_quality": 3,
@@ -2100,19 +2438,51 @@
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
-          "x": 9,
+          "x": 7,
           "y": 10,
           "terrain_type": "soil",
-          "soil_quality": 6,
+          "soil_quality": 5,
           "water_level": 100,
           "current_crop": null,
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 8,
+          "y": 10,
+          "terrain_type": "soil",
+          "soil_quality": 4,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 9,
+          "y": 10,
+          "terrain_type": "soil",
+          "soil_quality": 3,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 10,
@@ -2124,10 +2494,26 @@
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 11,
+          "y": 10,
+          "terrain_type": "soil",
+          "soil_quality": 6,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 12,
           "y": 10,
           "terrain_type": "soil",
           "soil_quality": 3,
@@ -2136,10 +2522,12 @@
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
-          "x": 12,
+          "x": 13,
           "y": 10,
           "terrain_type": "soil",
           "soil_quality": 5,
@@ -2148,43 +2536,37 @@
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 13,
-          "y": 10,
-          "terrain_type": "soil",
-          "soil_quality": 3,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 14,
           "y": 10,
           "terrain_type": "soil",
-          "soil_quality": 4,
+          "soil_quality": 5,
           "water_level": 100,
           "current_crop": null,
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 15,
           "y": 10,
           "terrain_type": "soil",
-          "soil_quality": 7,
+          "soil_quality": 8,
           "water_level": 100,
           "current_crop": null,
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         }
       ],
       [
@@ -2192,112 +2574,46 @@
           "x": 0,
           "y": 11,
           "terrain_type": "soil",
-          "soil_quality": 3,
+          "soil_quality": 4,
           "water_level": 100,
           "current_crop": null,
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 1,
           "y": 11,
           "terrain_type": "soil",
-          "soil_quality": 3,
+          "soil_quality": 7,
           "water_level": 100,
           "current_crop": null,
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 2,
           "y": 11,
           "terrain_type": "soil",
-          "soil_quality": 5,
+          "soil_quality": 6,
           "water_level": 100,
           "current_crop": null,
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 3,
-          "y": 11,
-          "terrain_type": "soil",
-          "soil_quality": 8,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 4,
-          "y": 11,
-          "terrain_type": "soil",
-          "soil_quality": 7,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 5,
-          "y": 11,
-          "terrain_type": "soil",
-          "soil_quality": 7,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 6,
-          "y": 11,
-          "terrain_type": "soil",
-          "soil_quality": 8,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 7,
-          "y": 11,
-          "terrain_type": "soil",
-          "soil_quality": 8,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 8,
-          "y": 11,
-          "terrain_type": "soil",
-          "soil_quality": 8,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 9,
           "y": 11,
           "terrain_type": "soil",
           "soil_quality": 3,
@@ -2306,31 +2622,121 @@
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 4,
+          "y": 11,
+          "terrain_type": "soil",
+          "soil_quality": 5,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 5,
+          "y": 11,
+          "terrain_type": "soil",
+          "soil_quality": 5,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 6,
+          "y": 11,
+          "terrain_type": "soil",
+          "soil_quality": 4,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 7,
+          "y": 11,
+          "terrain_type": "soil",
+          "soil_quality": 7,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 8,
+          "y": 11,
+          "terrain_type": "soil",
+          "soil_quality": 4,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 9,
+          "y": 11,
+          "terrain_type": "soil",
+          "soil_quality": 8,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 10,
           "y": 11,
           "terrain_type": "soil",
-          "soil_quality": 5,
+          "soil_quality": 4,
           "water_level": 100,
           "current_crop": null,
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 11,
           "y": 11,
           "terrain_type": "soil",
-          "soil_quality": 5,
+          "soil_quality": 8,
           "water_level": 100,
           "current_crop": null,
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 12,
@@ -2342,19 +2748,23 @@
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 13,
           "y": 11,
           "terrain_type": "soil",
-          "soil_quality": 4,
+          "soil_quality": 5,
           "water_level": 100,
           "current_crop": null,
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 14,
@@ -2366,19 +2776,23 @@
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 15,
           "y": 11,
           "terrain_type": "soil",
-          "soil_quality": 8,
+          "soil_quality": 6,
           "water_level": 100,
           "current_crop": null,
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         }
       ],
       [
@@ -2386,40 +2800,18 @@
           "x": 0,
           "y": 12,
           "terrain_type": "soil",
-          "soil_quality": 5,
+          "soil_quality": 4,
           "water_level": 100,
           "current_crop": null,
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 1,
-          "y": 12,
-          "terrain_type": "soil",
-          "soil_quality": 5,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 2,
-          "y": 12,
-          "terrain_type": "soil",
-          "soil_quality": 7,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 3,
           "y": 12,
           "terrain_type": "soil",
           "soil_quality": 4,
@@ -2428,7 +2820,37 @@
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 2,
+          "y": 12,
+          "terrain_type": "soil",
+          "soil_quality": 4,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 3,
+          "y": 12,
+          "terrain_type": "soil",
+          "soil_quality": 3,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 4,
@@ -2440,82 +2862,12 @@
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 5,
-          "y": 12,
-          "terrain_type": "soil",
-          "soil_quality": 6,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 6,
-          "y": 12,
-          "terrain_type": "soil",
-          "soil_quality": 6,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 7,
-          "y": 12,
-          "terrain_type": "soil",
-          "soil_quality": 3,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 8,
-          "y": 12,
-          "terrain_type": "soil",
-          "soil_quality": 6,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 9,
-          "y": 12,
-          "terrain_type": "soil",
-          "soil_quality": 4,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 10,
-          "y": 12,
-          "terrain_type": "soil",
-          "soil_quality": 6,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 11,
           "y": 12,
           "terrain_type": "soil",
           "soil_quality": 7,
@@ -2524,7 +2876,93 @@
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 6,
+          "y": 12,
+          "terrain_type": "soil",
+          "soil_quality": 7,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 7,
+          "y": 12,
+          "terrain_type": "soil",
+          "soil_quality": 5,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 8,
+          "y": 12,
+          "terrain_type": "soil",
+          "soil_quality": 3,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 9,
+          "y": 12,
+          "terrain_type": "soil",
+          "soil_quality": 7,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 10,
+          "y": 12,
+          "terrain_type": "soil",
+          "soil_quality": 5,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 11,
+          "y": 12,
+          "terrain_type": "soil",
+          "soil_quality": 8,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 12,
@@ -2536,22 +2974,12 @@
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 13,
-          "y": 12,
-          "terrain_type": "soil",
-          "soil_quality": 3,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 14,
           "y": 12,
           "terrain_type": "soil",
           "soil_quality": 4,
@@ -2560,19 +2988,37 @@
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
-          "x": 15,
+          "x": 14,
           "y": 12,
           "terrain_type": "soil",
-          "soil_quality": 5,
+          "soil_quality": 8,
           "water_level": 100,
           "current_crop": null,
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 15,
+          "y": 12,
+          "terrain_type": "soil",
+          "soil_quality": 7,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         }
       ],
       [
@@ -2586,7 +3032,9 @@
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 1,
@@ -2598,31 +3046,37 @@
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 2,
           "y": 13,
           "terrain_type": "soil",
-          "soil_quality": 8,
+          "soil_quality": 6,
           "water_level": 100,
           "current_crop": null,
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 3,
           "y": 13,
           "terrain_type": "soil",
-          "soil_quality": 7,
+          "soil_quality": 6,
           "water_level": 100,
           "current_crop": null,
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 4,
@@ -2634,22 +3088,12 @@
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 5,
-          "y": 13,
-          "terrain_type": "soil",
-          "soil_quality": 3,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 6,
           "y": 13,
           "terrain_type": "soil",
           "soil_quality": 7,
@@ -2658,10 +3102,12 @@
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
-          "x": 7,
+          "x": 6,
           "y": 13,
           "terrain_type": "soil",
           "soil_quality": 3,
@@ -2670,7 +3116,23 @@
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 7,
+          "y": 13,
+          "terrain_type": "soil",
+          "soil_quality": 6,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 8,
@@ -2682,19 +3144,23 @@
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 9,
           "y": 13,
           "terrain_type": "soil",
-          "soil_quality": 7,
+          "soil_quality": 4,
           "water_level": 100,
           "current_crop": null,
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 10,
@@ -2706,7 +3172,9 @@
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 11,
@@ -2718,19 +3186,23 @@
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 12,
           "y": 13,
           "terrain_type": "soil",
-          "soil_quality": 7,
+          "soil_quality": 4,
           "water_level": 100,
           "current_crop": null,
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 13,
@@ -2742,7 +3214,9 @@
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 14,
@@ -2754,19 +3228,23 @@
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 15,
           "y": 13,
           "terrain_type": "soil",
-          "soil_quality": 3,
+          "soil_quality": 6,
           "water_level": 100,
           "current_crop": null,
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         }
       ],
       [
@@ -2774,28 +3252,46 @@
           "x": 0,
           "y": 14,
           "terrain_type": "soil",
-          "soil_quality": 4,
+          "soil_quality": 8,
           "water_level": 100,
           "current_crop": null,
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 1,
           "y": 14,
           "terrain_type": "soil",
-          "soil_quality": 6,
+          "soil_quality": 5,
           "water_level": 100,
           "current_crop": null,
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 2,
+          "y": 14,
+          "terrain_type": "soil",
+          "soil_quality": 3,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 3,
           "y": 14,
           "terrain_type": "soil",
           "soil_quality": 7,
@@ -2804,55 +3300,51 @@
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 3,
-          "y": 14,
-          "terrain_type": "soil",
-          "soil_quality": 8,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 4,
           "y": 14,
           "terrain_type": "soil",
-          "soil_quality": 5,
+          "soil_quality": 7,
           "water_level": 100,
           "current_crop": null,
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 5,
           "y": 14,
           "terrain_type": "soil",
-          "soil_quality": 4,
+          "soil_quality": 3,
           "water_level": 100,
           "current_crop": null,
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 6,
           "y": 14,
           "terrain_type": "soil",
-          "soil_quality": 5,
+          "soil_quality": 6,
           "water_level": 100,
           "current_crop": null,
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 7,
@@ -2864,31 +3356,37 @@
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 8,
           "y": 14,
           "terrain_type": "soil",
-          "soil_quality": 7,
+          "soil_quality": 8,
           "water_level": 100,
           "current_crop": null,
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 9,
           "y": 14,
           "terrain_type": "soil",
-          "soil_quality": 3,
+          "soil_quality": 8,
           "water_level": 100,
           "current_crop": null,
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 10,
@@ -2900,10 +3398,40 @@
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 11,
+          "y": 14,
+          "terrain_type": "soil",
+          "soil_quality": 7,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 12,
+          "y": 14,
+          "terrain_type": "soil",
+          "soil_quality": 3,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 13,
           "y": 14,
           "terrain_type": "soil",
           "soil_quality": 5,
@@ -2912,22 +3440,12 @@
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
-          "x": 12,
-          "y": 14,
-          "terrain_type": "soil",
-          "soil_quality": 6,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 13,
+          "x": 14,
           "y": 14,
           "terrain_type": "soil",
           "soil_quality": 8,
@@ -2936,31 +3454,23 @@
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 14,
-          "y": 14,
-          "terrain_type": "soil",
-          "soil_quality": 5,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 15,
           "y": 14,
           "terrain_type": "soil",
-          "soil_quality": 6,
+          "soil_quality": 8,
           "water_level": 100,
           "current_crop": null,
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         }
       ],
       [
@@ -2968,13 +3478,15 @@
           "x": 0,
           "y": 15,
           "terrain_type": "soil",
-          "soil_quality": 7,
+          "soil_quality": 6,
           "water_level": 100,
           "current_crop": null,
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 1,
@@ -2986,31 +3498,37 @@
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 2,
           "y": 15,
           "terrain_type": "soil",
-          "soil_quality": 5,
+          "soil_quality": 3,
           "water_level": 100,
           "current_crop": null,
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 3,
           "y": 15,
           "terrain_type": "soil",
-          "soil_quality": 5,
+          "soil_quality": 6,
           "water_level": 100,
           "current_crop": null,
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 4,
@@ -3022,7 +3540,9 @@
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 5,
@@ -3034,34 +3554,12 @@
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 6,
-          "y": 15,
-          "terrain_type": "soil",
-          "soil_quality": 6,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 7,
-          "y": 15,
-          "terrain_type": "soil",
-          "soil_quality": 6,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 8,
           "y": 15,
           "terrain_type": "soil",
           "soil_quality": 7,
@@ -3070,7 +3568,37 @@
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 7,
+          "y": 15,
+          "terrain_type": "soil",
+          "soil_quality": 7,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 8,
+          "y": 15,
+          "terrain_type": "soil",
+          "soil_quality": 4,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 9,
@@ -3082,10 +3610,26 @@
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 10,
+          "y": 15,
+          "terrain_type": "soil",
+          "soil_quality": 6,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 11,
           "y": 15,
           "terrain_type": "soil",
           "soil_quality": 3,
@@ -3094,19 +3638,9 @@
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 11,
-          "y": 15,
-          "terrain_type": "soil",
-          "soil_quality": 7,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 12,
@@ -3118,22 +3652,12 @@
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 13,
-          "y": 15,
-          "terrain_type": "soil",
-          "soil_quality": 7,
-          "water_level": 100,
-          "current_crop": null,
-          "growth_stage": 0,
-          "days_growing": 0,
-          "task_assignment": null,
-          "task_assigned_to": null
-        },
-        {
-          "x": 14,
           "y": 15,
           "terrain_type": "soil",
           "soil_quality": 3,
@@ -3142,7 +3666,23 @@
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
+        },
+        {
+          "x": 14,
+          "y": 15,
+          "terrain_type": "soil",
+          "soil_quality": 7,
+          "water_level": 100,
+          "current_crop": null,
+          "growth_stage": 0,
+          "days_growing": 0,
+          "task_assignment": null,
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         },
         {
           "x": 15,
@@ -3154,7 +3694,9 @@
           "growth_stage": 0,
           "days_growing": 0,
           "task_assignment": null,
-          "task_assigned_to": null
+          "task_assigned_to": null,
+          "building_type": null,
+          "is_occupied": false
         }
       ]
     ]
@@ -3164,25 +3706,70 @@
       {
         "id": "emp_001",
         "name": "Sam",
-        "x": 7,
-        "y": 6,
-        "target_x": 7,
-        "target_y": 6,
-        "state": "working",
-        "state_timer": 0.9890000000000008,
+        "x": 8.0,
+        "y": 8.0,
+        "target_x": 8.0,
+        "target_y": 8.0,
+        "state": "idle",
+        "state_timer": 9.183000000000012,
         "skill_level": 1.0,
         "walking_speed": 2.0,
         "max_stamina": 100,
-        "hunger": 99.99727361110975,
-        "thirst": 99.99454722222333,
-        "rest": 99.99776977083029,
+        "hunger": 99.99744916666523,
+        "thirst": 99.9948983333342,
+        "rest": 99.99808687499706,
         "traits": [
           "hard_worker"
         ],
         "work_efficiency": 1.1,
         "daily_wage": 80,
-        "assigned_tasks": [
-          {
-            "type": "till",
-            "tiles": [
-              
+        "assigned_tasks": [],
+        "current_task": null
+      }
+    ],
+    "next_employee_id": 2
+  },
+  "building_state": {
+    "owned_buildings": [
+      {
+        "building_type_id": "storage_silo",
+        "x": 0,
+        "y": 0,
+        "level": 1,
+        "purchase_day": 1
+      },
+      {
+        "building_type_id": "storage_silo",
+        "x": 1,
+        "y": 0,
+        "level": 1,
+        "purchase_day": 1
+      },
+      {
+        "building_type_id": "storage_silo",
+        "x": 2,
+        "y": 0,
+        "level": 1,
+        "purchase_day": 1
+      },
+      {
+        "building_type_id": "storage_silo",
+        "x": 3,
+        "y": 0,
+        "level": 1,
+        "purchase_day": 1
+      },
+      {
+        "building_type_id": "storage_silo",
+        "x": 4,
+        "y": 0,
+        "level": 1,
+        "purchase_day": 1
+      }
+    ]
+  },
+  "ui_state": {
+    "current_crop_type": "corn",
+    "show_debug": true
+  }
+}

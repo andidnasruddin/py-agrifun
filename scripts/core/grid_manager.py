@@ -6,6 +6,7 @@ Manages tile states, rendering, and interactions for the farming simulation.
 import pygame
 from typing import List, Tuple, Optional, Dict
 from scripts.core.config import *
+from scripts.ui.enhanced_grid_renderer import EnhancedGridRenderer
 
 
 class Tile:
@@ -444,6 +445,12 @@ class GridManager:
         self.preview_building_type = None
         self.preview_tile = None
         
+        # Enhanced rendering system
+        self.enhanced_renderer = EnhancedGridRenderer(self)
+        
+        # Subscribe to enhanced renderer events
+        self._setup_enhanced_renderer_events()
+        
         # Register for events
         self.event_system.subscribe('day_passed', self._handle_day_passed)
         self.event_system.subscribe('day_passed_with_weather', self._handle_day_passed)  # Weather-enhanced day events
@@ -451,7 +458,43 @@ class GridManager:
         self.event_system.subscribe('building_placement_preview_start', self._handle_preview_start)
         self.event_system.subscribe('building_placement_preview_stop', self._handle_preview_stop)
         
-        print(f"Grid Manager initialized with {GRID_WIDTH}x{GRID_HEIGHT} tiles")
+        print(f"Grid Manager initialized with {GRID_WIDTH}x{GRID_HEIGHT} tiles and enhanced rendering")
+    
+    def _setup_enhanced_renderer_events(self):
+        """Setup event subscriptions for enhanced renderer"""
+        # Subscribe to zoom and pan control events
+        self.event_system.subscribe('grid_zoom_in', self._handle_zoom_in)
+        self.event_system.subscribe('grid_zoom_out', self._handle_zoom_out)
+        self.event_system.subscribe('grid_reset_viewport', self._handle_reset_viewport)
+        self.event_system.subscribe('toggle_soil_health_overlay', self._handle_toggle_soil_overlay)
+        self.event_system.subscribe('toggle_irrigation_overlay', self._handle_toggle_irrigation_overlay)
+        
+        print("Enhanced grid renderer events configured")
+    
+    def _handle_zoom_in(self, event_data):
+        """Handle zoom in request"""
+        if hasattr(self.enhanced_renderer, 'zoom_in'):
+            self.enhanced_renderer.zoom_in()
+    
+    def _handle_zoom_out(self, event_data):
+        """Handle zoom out request"""
+        if hasattr(self.enhanced_renderer, 'zoom_out'):
+            self.enhanced_renderer.zoom_out()
+    
+    def _handle_reset_viewport(self, event_data):
+        """Handle viewport reset request"""
+        if hasattr(self.enhanced_renderer, 'reset_viewport'):
+            self.enhanced_renderer.reset_viewport()
+    
+    def _handle_toggle_soil_overlay(self, event_data):
+        """Handle soil health overlay toggle"""
+        if hasattr(self.enhanced_renderer, 'toggle_soil_health_overlay'):
+            self.enhanced_renderer.toggle_soil_health_overlay()
+    
+    def _handle_toggle_irrigation_overlay(self, event_data):
+        """Handle irrigation overlay toggle"""
+        if hasattr(self.enhanced_renderer, 'toggle_irrigation_overlay'):
+            self.enhanced_renderer.toggle_irrigation_overlay()
     
     def _create_grid(self):
         """Create the initial tile grid"""
@@ -485,7 +528,11 @@ class GridManager:
         return self.get_tile(grid_x, grid_y)
     
     def handle_mouse_down(self, pos: Tuple[int, int], button: int):
-        """Handle mouse button down for tile selection or building placement"""
+        """Handle mouse button down for tile selection, building placement, or enhanced grid interaction"""
+        # Forward to enhanced renderer for zoom/pan handling
+        if hasattr(self.enhanced_renderer, 'handle_mouse_button_down'):
+            mouse_event = type('MouseEvent', (), {'pos': pos, 'button': button})()
+            self.enhanced_renderer.handle_mouse_button_down(mouse_event)
         if button == 1:  # Left click
             tile = self.get_tile_at_pixel(*pos)
             
@@ -548,6 +595,13 @@ class GridManager:
             
             self.drag_start_pos = None
             self.drag_current_pos = None
+    
+    def handle_mouse_wheel(self, pos: Tuple[int, int], direction: int):
+        """Handle mouse wheel events for zoom functionality"""
+        if hasattr(self.enhanced_renderer, 'handle_mouse_wheel'):
+            # Create mock event object for enhanced renderer
+            wheel_event = type('WheelEvent', (), {'pos': pos, 'y': direction})()
+            self.enhanced_renderer.handle_mouse_wheel(wheel_event)
     
     def _update_drag_selection(self):
         """Update tile selection based on drag area"""
@@ -644,29 +698,15 @@ class GridManager:
                     tile.update_growth(days_per_frame)
     
     def render(self, screen: pygame.Surface):
-        """Render the grid"""
-        # Render tiles
-        for row in self.grid:
-            for tile in row:
-                color = tile.get_color()
-                pygame.draw.rect(screen, color, tile.rect)
-                
-                # Draw grid lines
-                pygame.draw.rect(screen, COLORS['grid_line'], tile.rect, 1)
-                
-                # Draw task assignment indicator
-                if tile.task_assignment:
-                    self._render_task_indicator(screen, tile)
-                
-                # Draw irrigation indicator for tilled tiles with irrigation
-                if tile.has_irrigation and tile.is_tilled and not tile.building_type:
-                    self._render_irrigation_indicator(screen, tile)
+        """Render the grid using enhanced rendering system"""
+        # Use enhanced renderer for professional grid visualization
+        self.enhanced_renderer.render(screen)
         
-        # Render selection rectangle if dragging
+        # Fallback: Render selection rectangle if dragging (enhanced renderer will handle this better)
         if self.drag_start_pos and self.drag_current_pos:
             self._render_selection_rectangle(screen)
         
-        # Render building placement preview
+        # Render building placement preview (enhanced renderer integration can be added later)
         if self.building_placement_preview and self.preview_tile:
             self._render_building_preview(screen)
     

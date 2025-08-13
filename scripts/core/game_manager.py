@@ -177,6 +177,9 @@ class GameManager:
                     self.employee_manager.handle_mouse_drag(event.pos)
             elif event.type == pygame.MOUSEBUTTONUP:
                 self.employee_manager.handle_mouse_up(event.pos, event.button)
+            elif event.type == pygame.MOUSEWHEEL:
+                # Forward mouse wheel events to grid manager for zoom functionality
+                self.grid_manager.handle_mouse_wheel(pygame.mouse.get_pos(), event.y)
             elif event.type == pygame.KEYDOWN:
                 # Check for building placement cancellation
                 if event.key == pygame.K_ESCAPE and self.building_placement_mode:
