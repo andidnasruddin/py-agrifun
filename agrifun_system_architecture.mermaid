@@ -1,0 +1,761 @@
+flowchart TD
+    %% ===== GAME CORE FOUNDATION =====
+    MAIN[🎮 AgriFun Farming Simulation]
+    
+    %% Core Infrastructure Layer
+    MAIN --> CORE[🔧 Core Foundation Layer]
+    CORE --> EVENT_SYS[📡 Event System Architecture]
+    CORE --> GRID_SYS[🏗️ Grid Management System]
+    CORE --> TIME_SYS[⏰ Time Management System]
+    CORE --> CONFIG_SYS[⚙️ Configuration System]
+    CORE --> SAVE_SYS[💾 Save/Load Infrastructure]
+    CORE --> DEBUG_SYS[🔍 Debug & Diagnostics]
+
+    %% Event System Details
+    EVENT_SYS --> EVENT_BUS[Event Bus with Frame Processing]
+    EVENT_SYS --> PUB_SUB[Publisher/Subscriber Pattern]
+    EVENT_SYS --> EVENT_QUEUE[Priority Event Queue]
+    EVENT_SYS --> EVENT_TYPES[Event Type Registry]
+    EVENT_TYPES --> WORK_EVENTS[Work Order Events]
+    EVENT_TYPES --> EMPLOYEE_EVENTS[Employee State Events]
+    EVENT_TYPES --> CROP_EVENTS[Agricultural Events]
+    EVENT_TYPES --> WEATHER_EVENTS[Weather Change Events]
+    EVENT_TYPES --> MARKET_EVENTS[Economic Events]
+    EVENT_TYPES --> UI_EVENTS[Interface Events]
+
+    %% Grid System Details
+    GRID_SYS --> GRID_16X16[16x16 Grid Matrix]
+    GRID_SYS --> TILE_PROPS[Individual Tile Properties]
+    GRID_SYS --> SPATIAL_INDEX[Spatial Indexing System]
+    GRID_SYS --> COLLISION_MAP[Collision Detection Map]
+    TILE_PROPS --> TERRAIN_TYPE[Terrain Classification]
+    TILE_PROPS --> SOIL_DATA[Soil Quality & NPK Values]
+    TILE_PROPS --> TASK_ASSIGN[Task Assignment Tracking]
+    TILE_PROPS --> BUILDING_DATA[Building Occupancy]
+    TILE_PROPS --> CROP_STATE[Crop Growth State]
+    TILE_PROPS --> IRRIGATION_STATUS[Irrigation Coverage]
+
+    %% Time System Details
+    TIME_SYS --> WORKDAY_CYCLE[20-min Workday Cycle 5AM-6PM]
+    TIME_SYS --> SPEED_CONTROL[Speed Controls: Pause/1x/2x/4x]
+    TIME_SYS --> SEASON_CYCLE[Seasonal Progression System]
+    TIME_SYS --> WEATHER_CYCLE[Weather Pattern Generation]
+    TIME_SYS --> TASK_SCHEDULING[Task Time Scheduling]
+    SEASON_CYCLE --> SPRING[Spring: Growth Bonus +20%]
+    SEASON_CYCLE --> SUMMER[Summer: Heat Stress Risk]
+    SEASON_CYCLE --> FALL[Fall: Harvest Season Bonus]
+    SEASON_CYCLE --> WINTER[Winter: Dormancy & Planning]
+
+    %% ===== EMPLOYEE MANAGEMENT SYSTEM =====
+    MAIN --> EMPLOYEE_SYS[👥 Employee Management System]
+    
+    %% Employee Core Components
+    EMPLOYEE_SYS --> MULTI_EMP[Multi-Employee Management]
+    EMPLOYEE_SYS --> HIRING_SYS[🤝 Hiring System]
+    EMPLOYEE_SYS --> NEEDS_SYS[💧 Employee Needs System]
+    EMPLOYEE_SYS --> AI_BEHAVIOR[🧠 Employee AI Behavior]
+    EMPLOYEE_SYS --> SPECIALIZATION[🎯 Employee Specialization]
+    EMPLOYEE_SYS --> PERFORMANCE[📊 Performance Tracking]
+
+    %% Multi-Employee Details
+    MULTI_EMP --> EMP_CLASS[Employee Class with State Machine]
+    MULTI_EMP --> PATHFINDING[A* Pathfinding with Collision]
+    MULTI_EMP --> EMP_COORDINATION[Employee Coordination System]
+    EMP_CLASS --> EMP_STATS[Employee Statistics System]
+    EMP_CLASS --> EMP_TRAITS[Trait System (Pro/Con/Mixed)]
+    EMP_CLASS --> EMP_CERTIFICATIONS[Certification System]
+
+    %% Employee Stats Deep Dive
+    EMP_STATS --> BASE_STATS[Base Statistics]
+    BASE_STATS --> MOVEMENT_SPEED[Movement: 1 plot/0.3 sec]
+    BASE_STATS --> CARRY_WEIGHT[Carry Weight: 20 kg]
+    BASE_STATS --> CARRY_TOOLS[Tool Capacity: 2 tools]
+    BASE_STATS --> CARRY_ITEMS[Item Types: 3 different]
+    
+    EMP_STATS --> NEEDS_STATS[Needs Statistics 0-100]
+    NEEDS_STATS --> ENERGY[Energy: 100 points]
+    NEEDS_STATS --> THIRST[Thirst: 100 points]
+    NEEDS_STATS --> HUNGER[Hunger: 100 points]
+    NEEDS_STATS --> BLADDER[Bladder: 100 points]
+    NEEDS_STATS --> SOCIAL[Social: 100 points]
+    NEEDS_STATS --> HAPPINESS[Happiness: 100 points]
+    NEEDS_STATS --> HIDDEN_SALARY[Salary Expectation (Hidden)]
+
+    %% Age Effect System
+    EMP_STATS --> AGE_EFFECTS[Age Effect Modifiers]
+    AGE_EFFECTS --> AGE_PENALTY[Age >40: -1 point per year]
+    AGE_EFFECTS --> EXPERIENCE_BONUS[Experience Bonuses]
+
+    %% Employee Traits System
+    EMP_TRAITS --> POSITIVE_TRAITS[Positive Traits]
+    EMP_TRAITS --> NEGATIVE_TRAITS[Negative Traits]
+    EMP_TRAITS --> MIXED_TRAITS[Mixed Pro/Con Traits]
+
+    POSITIVE_TRAITS --> DILIGENT[Diligent: +15% speed, -5% fatigue]
+    POSITIVE_TRAITS --> MECHANICAL[Mechanically Inclined: +20% repair, -10% breakdown]
+    POSITIVE_TRAITS --> GREEN_THUMB[Green Thumb: +10% yield, -5% disease]
+    POSITIVE_TRAITS --> HARD_WORKER[Hard Worker: +10% peak speed, +15% stamina]
+    POSITIVE_TRAITS --> SOCIALITE[Socialite: +10% team morale, +5% adjacent efficiency]
+
+    NEGATIVE_TRAITS --> LAZY[Lazy: -20% speed, +15% idle time]
+    NEGATIVE_TRAITS --> PESSIMIST[Pessimist: -10% morale, -5% adverse weather]
+    NEGATIVE_TRAITS --> INDIVIDUALIST[Individualist: -25% team tasks, +10% conflicts]
+    NEGATIVE_TRAITS --> WEAK[Weak: +20% fatigue, +15% injury chance]
+
+    MIXED_TRAITS --> SLOW_WALKER[Slow Walker: -30% movement, +10% delicate tasks]
+    MIXED_TRAITS --> FAST_WORKER[Fast Worker: +25% speed, -10% quality]
+    MIXED_TRAITS --> SLOW_WORKER[Slow Worker: -30% speed, +20% quality]
+    MIXED_TRAITS --> FAST_WALKER[Fast Walker: +30% movement, +10% accident risk]
+
+    %% Employee Certifications
+    EMP_CERTIFICATIONS --> CERT_PESTICIDE[Pesticide Applicator License]
+    EMP_CERTIFICATIONS --> CERT_PROCESSOR[Raw Goods Processor]
+    EMP_CERTIFICATIONS --> CERT_TRACTOR[Tractor Operations]
+    EMP_CERTIFICATIONS --> CERT_COMBINE[Advanced Harvester License]
+    EMP_CERTIFICATIONS --> CERT_FERTILIZER[Fertilizer Application Specialist]
+    EMP_CERTIFICATIONS --> CERT_IRRIGATION[Irrigation System Technician]
+    EMP_CERTIFICATIONS --> CERT_SEEDS[Seed Quality & Treatment Specialist]
+
+    %% Hiring System
+    HIRING_SYS --> APPLICANT_GEN[Applicant Generation System]
+    HIRING_SYS --> INTERVIEW_SYS[Interview Process System]
+    HIRING_SYS --> WAGE_MGMT[Wage Management & Daily Payment]
+    HIRING_SYS --> CONTRACT_TERMS[Employment Contract Terms]
+    APPLICANT_GEN --> SKILL_DIST[Skill Distribution Algorithm]
+    APPLICANT_GEN --> TRAIT_COMBO[Trait Combination Generator]
+    APPLICANT_GEN --> CERT_ASSIGNMENT[Certification Assignment]
+
+    %% Employee AI Behavior System
+    AI_BEHAVIOR --> STATE_MACHINE[Employee State Machine]
+    AI_BEHAVIOR --> PATHFIND_AI[Intelligent Pathfinding]
+    AI_BEHAVIOR --> DECISION_TREE[Decision Making Tree]
+    AI_BEHAVIOR --> SOCIAL_AI[Social Interaction AI]
+
+    STATE_MACHINE --> IDLE_MODE[Idle Mode Behavior]
+    STATE_MACHINE --> ACTIVE_MODE[Active Work Mode]
+    STATE_MACHINE --> MOVING_MODE[Movement Mode]
+    STATE_MACHINE --> RESTING_MODE[Rest/Break Mode]
+    STATE_MACHINE --> SOCIAL_MODE[Social Interaction Mode]
+
+    IDLE_MODE --> IDLE_NO_AMENITIES[No Amenities: Farm Wandering]
+    IDLE_MODE --> IDLE_WITH_AMENITIES[With Amenities: Purposeful Movement]
+    IDLE_WITH_AMENITIES --> AMENITY_USAGE[Visit Canteen/Bathroom/Common Room]
+    IDLE_WITH_AMENITIES --> SOCIAL_INTERACT[Talk to Colleagues (Max 3/hour)]
+
+    %% ===== TASK MANAGEMENT SYSTEM =====
+    MAIN --> TASK_SYS[📋 Professional Task Management]
+    
+    TASK_SYS --> ENHANCED_ASSIGN[Enhanced Task Assignment]
+    TASK_SYS --> WORK_ORDER_SYS[🎯 Work Order System]
+    TASK_SYS --> MULTI_COORD[Multi-Employee Coordination]
+    TASK_SYS --> TASK_VALIDATION[Task Validation System]
+
+    %% Work Order System
+    WORK_ORDER_SYS --> PRIORITY_QUEUE[Priority-Based Work Orders]
+    WORK_ORDER_SYS --> FIFO_QUEUE[FIFO Task Queue Management]
+    WORK_ORDER_SYS --> AUTO_ASSIGN[Automatic Employee Assignment]
+    WORK_ORDER_SYS --> VISUAL_OVERLAY[Visual Work Order Overlays]
+    WORK_ORDER_SYS --> AUTO_COMPLETE[Auto-Completion System]
+    WORK_ORDER_SYS --> PROGRESS_TRACK[Task Progress Tracking]
+
+    %% Task Types & Requirements
+    WORK_ORDER_SYS --> TASK_TYPES[Task Type Classification]
+    TASK_TYPES --> MANUAL_TASKS[Manual Activity Tasks]
+    TASK_TYPES --> MACHINE_TASKS[Machinery-Based Tasks]
+    TASK_TYPES --> PROCESSING_TASKS[Post-Harvest Processing]
+    TASK_TYPES --> MAINTENANCE_TASKS[Equipment Maintenance]
+
+    %% Manual Tasks Detail
+    MANUAL_TASKS --> HAND_TILL[Hand Tilling Operations]
+    MANUAL_TASKS --> HAND_PLANT[Hand Field Planting]
+    MANUAL_TASKS --> HAND_WATER[Hand Watering Systems]
+    MANUAL_TASKS --> HAND_HARVEST[Hand Harvesting]
+    MANUAL_TASKS --> HAND_TRANSPLANT[Hand Field Transplanting]
+
+    %% Hand Tilling Details
+    HAND_TILL --> TILL_BASE[Base: 100pts=10sec/plot, -10% energy, -2 hunger, -5 thirst]
+    HAND_TILL --> TILL_TOOLS[Tilling Tool Modifiers]
+    TILL_TOOLS --> HOE_TILL[Hoe: +40% speed, -50% energy loss]
+    TILL_TOOLS --> SHOVEL_TILL[Shovel: +20% speed, -30% energy loss]
+    TILL_TOOLS --> BROADFORK_TILL[Broadfork: +50% speed, -70% energy loss]
+
+    %% Hand Planting Details
+    HAND_PLANT --> PLANT_BASE[Base: 150pts=15sec/plot, -2% energy]
+    HAND_PLANT --> PLANT_TOOLS[Planting Tool Modifiers]
+    HAND_PLANT --> SEED_REQ[Requires: Seeds]
+    PLANT_TOOLS --> HOE_PLANT[Hoe: +20% speed]
+    PLANT_TOOLS --> SPADE_PLANT[Spade: +50% speed, -20% energy loss]
+    PLANT_TOOLS --> JAB_PLANTER[Jab Planter: +70% speed, -50% energy loss]
+
+    %% Hand Watering Details
+    HAND_WATER --> WATER_BASE[Base: 50pts=5sec/plot]
+    HAND_WATER --> WATER_TOOLS[Watering Tool Systems]
+    HAND_WATER --> SEEDLING_REQ[Requires: Seedlings Present]
+    WATER_TOOLS --> WATERING_CAN[Watering Can: 30 plots, +50% speed, -10% movement]
+    WATER_TOOLS --> BUCKET[Bucket: 15 plots, +50% speed, -10% movement]
+
+    %% Hand Harvesting Details
+    HAND_HARVEST --> HARVEST_BASE[Base: 100pts=10sec/plot, -5% energy, -2 hunger, -5 thirst]
+    HAND_HARVEST --> HARVEST_TOOLS[Harvesting Tool Modifiers]
+    HARVEST_TOOLS --> HARVEST_BASKET[Harvest Basket: +capacity]
+    HARVEST_TOOLS --> HARVEST_KNIFE[Harvesting Knife: +precision]
+
+    %% ===== AGRICULTURAL SCIENCE SYSTEM =====
+    MAIN --> AGRI_SYS[🌾 Agricultural Science System]
+    
+    AGRI_SYS --> CROP_SYS[Multi-Crop Management]
+    AGRI_SYS --> SOIL_SYS[Soil Health & Management]
+    AGRI_SYS --> WEATHER_SYS[Weather & Climate System]
+    AGRI_SYS --> IRRIGATION_SYS[💧 Irrigation Infrastructure]
+    AGRI_SYS --> DISEASE_SYS[🦠 Disease & Pest Management]
+
+    %% Crop System Details
+    CROP_SYS --> CROP_TYPES[Crop Type Categories]
+    CROP_SYS --> GROWTH_SYS[5-Stage Growth System]
+    CROP_SYS --> YIELD_SYS[Yield Calculation System]
+    CROP_SYS --> QUALITY_SYS[Quality Assessment System]
+
+    CROP_TYPES --> GRAIN_CROPS[Grain Crops]
+    CROP_TYPES --> HORTICULTURE[Horticultural Crops]
+    
+    GRAIN_CROPS --> CORN[Corn: 90-day cycle]
+    GRAIN_CROPS --> WHEAT[Wheat: 120-day cycle]
+    GRAIN_CROPS --> SOYBEAN[Soybean: 100-day cycle]
+    GRAIN_CROPS --> BARLEY[Barley: 90-day cycle]
+    GRAIN_CROPS --> OATS[Oats: 80-day cycle]
+
+    HORTICULTURE --> TOMATO[Tomato: 75-day cycle]
+    HORTICULTURE --> POTATO[Potato: 70-day cycle]
+    HORTICULTURE --> CARROT[Carrot: 60-day cycle]
+    HORTICULTURE --> LETTUCE[Lettuce: 45-day cycle]
+    HORTICULTURE --> BELL_PEPPER[Bell Pepper: 80-day cycle]
+
+    %% Growth System
+    GROWTH_SYS --> STAGE1[Stage 1: Seed/Planted]
+    GROWTH_SYS --> STAGE2[Stage 2: Sprouted]
+    GROWTH_SYS --> STAGE3[Stage 3: Vegetative]
+    GROWTH_SYS --> STAGE4[Stage 4: Flowering/Fruiting]
+    GROWTH_SYS --> STAGE5[Stage 5: Mature/Harvestable]
+
+    %% Soil Health System
+    SOIL_SYS --> NPK_TRACKING[N-P-K Nutrient Tracking]
+    SOIL_SYS --> ROTATION_SYS[Crop Rotation System]
+    SOIL_SYS --> SOIL_REST[Soil Rest Mechanics]
+    SOIL_SYS --> SOIL_PANEL[Soil Information Panel]
+    SOIL_SYS --> FERTILITY[Soil Fertility Management]
+
+    NPK_TRACKING --> NITROGEN[Nitrogen (N): Leaf Growth]
+    NPK_TRACKING --> PHOSPHORUS[Phosphorus (P): Root/Flower]
+    NPK_TRACKING --> POTASSIUM[Potassium (K): Overall Health]
+
+    ROTATION_SYS --> ROTATION_BONUS[Rotation Bonuses +15-20%]
+    ROTATION_SYS --> LEGUME_BONUS[Legume Nitrogen Fixation]
+    ROTATION_SYS --> PEST_REDUCTION[Pest/Disease Cycle Breaking]
+
+    %% Weather System Detailed
+    WEATHER_SYS --> WEATHER_TYPES[Weather Pattern Types]
+    WEATHER_SYS --> WEATHER_EFFECTS[Weather Effect System]
+    WEATHER_SYS --> SEASONAL_WEATHER[Seasonal Weather Patterns]
+
+    WEATHER_TYPES --> RAIN[Rain: +growth, +disease risk]
+    WEATHER_TYPES --> SUNNY[Sunny: Optimal photosynthesis]
+    WEATHER_TYPES --> CLOUDY[Cloudy: Reduced growth]
+    WEATHER_TYPES --> DRIZZLE[Drizzle: Mild growth boost]
+    WEATHER_TYPES --> COLD[Cold: Growth slowdown]
+    WEATHER_TYPES --> HOT[Hot: Heat stress risk]
+
+    WEATHER_EFFECTS --> GROWTH_MODIFIERS[Growth Rate Modifiers]
+    WEATHER_EFFECTS --> YIELD_MODIFIERS[Yield Impact Modifiers]
+    WEATHER_EFFECTS --> WORK_EFFICIENCY[Employee Work Efficiency]
+    WEATHER_EFFECTS --> EQUIPMENT_EFFECTS[Equipment Performance Effects]
+
+    %% Irrigation System
+    IRRIGATION_SYS --> INSTALL_SYS[Installation System $150/tile]
+    IRRIGATION_SYS --> DROUGHT_MIT[Drought Mitigation +30%]
+    IRRIGATION_SYS --> OP_COSTS[Operational Costs $5/day/tile]
+    IRRIGATION_SYS --> IRRIGATION_TYPES[Irrigation Technology Types]
+    IRRIGATION_TYPES --> SPRINKLER[Sprinkler Systems]
+    IRRIGATION_TYPES --> DRIP[Drip Irrigation]
+    IRRIGATION_TYPES --> FLOOD[Flood Irrigation]
+
+    %% ===== ECONOMIC SYSTEM =====
+    MAIN --> ECONOMY_SYS[💰 Economic Management System]
+    
+    ECONOMY_SYS --> FINANCE_MGMT[Financial Management]
+    ECONOMY_SYS --> INVENTORY_SYS[📦 Inventory System]
+    ECONOMY_SYS --> BUILDING_SYS[🏢 Building System]
+    ECONOMY_SYS --> CONTRACT_SYS[📄 Contract System]
+    ECONOMY_SYS --> MARKET_SYS[📈 Market System]
+
+    %% Financial Management
+    FINANCE_MGMT --> STARTING_CAPITAL[Starting: $100k Cash, $10k Loan]
+    FINANCE_MGMT --> LOAN_SYS[Loan System with Interest]
+    FINANCE_MGMT --> TRANSACTION_HIST[Transaction History Tracking]
+    FINANCE_MGMT --> DAILY_EXPENSES[Daily Operating Expenses]
+    FINANCE_MGMT --> CASH_FLOW[Cash Flow Management]
+    FINANCE_MGMT --> BUDGET_PLANNING[Budget Planning & Forecasting]
+
+    DAILY_EXPENSES --> WAGE_PAYMENTS[Employee Wage Payments]
+    DAILY_EXPENSES --> UTILITY_COSTS[Utility & Operational Costs]
+    DAILY_EXPENSES --> EQUIPMENT_MAINT[Equipment Maintenance Costs]
+    DAILY_EXPENSES --> LOAN_INTEREST[Loan Interest Payments]
+
+    %% Inventory System
+    INVENTORY_SYS --> STORAGE_CAP[1000-Unit Base Storage Capacity]
+    INVENTORY_SYS --> MANUAL_SELL[Manual Selling System]
+    INVENTORY_SYS --> FIFO_INV[FIFO Inventory Management]
+    INVENTORY_SYS --> QUALITY_TRACK[Quality & Date Tracking]
+    INVENTORY_SYS --> INV_CATEGORIES[Inventory Categories]
+
+    INV_CATEGORIES --> GRAIN_INV[Grain Storage]
+    INV_CATEGORIES --> PRODUCE_INV[Fresh Produce Storage]
+    INV_CATEGORIES --> SEED_INV[Seed Inventory]
+    INV_CATEGORIES --> TOOL_INV[Tool & Equipment Inventory]
+    INV_CATEGORIES --> SUPPLY_INV[Supply & Material Inventory]
+
+    %% Building System
+    BUILDING_SYS --> PURCHASABLE[Purchasable Buildings]
+    BUILDING_SYS --> CAPACITY_UPGRADE[Storage Upgrades +50 units]
+    BUILDING_SYS --> GRID_PLACEMENT[Grid-Based Click Placement]
+    BUILDING_SYS --> BUILDING_EFFECTS[Building Effect System]
+
+    PURCHASABLE --> WORK_BUILDINGS[Work Buildings]
+    PURCHASABLE --> AMENITY_BUILDINGS[Employee Amenities]
+    PURCHASABLE --> STORAGE_BUILDINGS[Storage Buildings]
+
+    WORK_BUILDINGS --> SILO_SMALL[Small Silo: 300 grain units]
+    WORK_BUILDINGS --> SILO_MEDIUM[Medium Silo: 600 grain units]
+    WORK_BUILDINGS --> SILO_LARGE[Large Silo: 1000 grain units]
+    WORK_BUILDINGS --> COLD_SMALL[Small Cold Room: 300 produce units]
+    WORK_BUILDINGS --> COLD_MEDIUM[Medium Cold Room: 600 produce units]
+    WORK_BUILDINGS --> COLD_LARGE[Large Cold Room: 1000 produce units]
+
+    AMENITY_BUILDINGS --> CANTEEN[Canteen: +hunger recovery, +social]
+    AMENITY_BUILDINGS --> BATHROOM[Bathroom: +bladder relief, +hygiene]
+    AMENITY_BUILDINGS --> COMMON_ROOM[Common Room: +social, +happiness, +rest]
+    AMENITY_BUILDINGS --> TOOL_SHED[Tool Shed: Equipment storage]
+
+    %% Contract & Market System
+    CONTRACT_SYS --> CONTRACT_TYPES[Contract Categories]
+    CONTRACT_SYS --> CONTRACT_MGMT[Contract Management]
+    CONTRACT_SYS --> BUYER_RELATIONS[Buyer Relationship System]
+    CONTRACT_SYS --> FULFILLMENT[Contract Fulfillment Tracking]
+
+    CONTRACT_TYPES --> VOLUME_CONTRACTS[Volume Contracts: Bulk quantity]
+    CONTRACT_TYPES --> PREMIUM_CONTRACTS[Premium Contracts: High quality]
+    CONTRACT_TYPES --> SEASONAL_CONTRACTS[Seasonal Contracts: Time-specific]
+    CONTRACT_TYPES --> BULK_CONTRACTS[Bulk Contracts: Mixed products]
+
+    MARKET_SYS --> DYNAMIC_PRICING[Dynamic Pricing with 30-Day History]
+    MARKET_SYS --> QUALITY_PRICING[Quality-Based Pricing Tiers]
+    MARKET_SYS --> STRATEGIC_SELL[Strategic Selling Decisions]
+    MARKET_SYS --> PRICE_FORECAST[Market Price Forecasting]
+    MARKET_SYS --> SUPPLY_DEMAND[Supply & Demand Modeling]
+
+    %% ===== USER INTERFACE SYSTEM =====
+    MAIN --> UI_SYS[🖥️ Professional UI System]
+    
+    UI_SYS --> ENHANCED_UI[Enhanced UI Components]
+    UI_SYS --> NAVIGATION[Bottom Navigation System]
+    UI_SYS --> MODAL_SYS[Modal Management System]
+    UI_SYS --> ADVANCED_UI[Advanced UI Features]
+    UI_SYS --> RESPONSIVE[Responsive Design System]
+
+    %% Enhanced UI Components
+    ENHANCED_UI --> TOP_HUD[Top HUD 6-Section Farm Info]
+    ENHANCED_UI --> RIGHT_PANEL[Dynamic Right Panel System]
+    ENHANCED_UI --> GRID_RENDER[Enhanced Grid Renderer]
+    ENHANCED_UI --> SMART_ACTION[Smart Action System]
+    ENHANCED_UI --> ANIMATION_SYS[Animation System]
+
+    TOP_HUD --> CASH_DISPLAY[Cash & Financial Status]
+    TOP_HUD --> TIME_DISPLAY[Time & Season Display]
+    TOP_HUD --> WEATHER_DISPLAY[Weather Information]
+    TOP_HUD --> EMPLOYEE_COUNT[Active Employee Count]
+    TOP_HUD --> TASK_PROGRESS[Active Task Progress]
+    TOP_HUD --> ALERT_SYSTEM[Alert & Notification Area]
+
+    %% Navigation System
+    NAVIGATION --> NAV_BUTTONS[6-Button Navigation]
+    NAVIGATION --> SUBMENU_SYS[Professional Submenu Systems]
+    
+    NAV_BUTTONS --> ASSIGN_NAV[Task Assignment Interface]
+    NAV_BUTTONS --> EMPLOYEE_NAV[Employee Management Interface]
+    NAV_BUTTONS --> CONTRACT_NAV[Contract Management Interface]
+    NAV_BUTTONS --> BUY_NAV[Purchase & Market Interface]
+    NAV_BUTTONS --> DESIGN_NAV[Farm Design Interface]
+    NAV_BUTTONS --> MAP_NAV[Farm Overview Map]
+
+    SUBMENU_SYS --> EMP_SUBMENU[Employee Submenu: Hire/Organize]
+    SUBMENU_SYS --> CONTRACT_SUBMENU[Contract Submenu Management]
+    SUBMENU_SYS --> TASK_SUBMENU[Task Assignment Submenu]
+
+    %% Modal System
+    MODAL_SYS --> TASK_MODAL[Task Assignment Modal]
+    MODAL_SYS --> HIRE_MODAL[Employee Hiring Interface]
+    MODAL_SYS --> ORG_MODAL[Employee Organization Interface]
+    MODAL_SYS --> CONTRACT_MODAL[Contract Management Modal]
+    MODAL_SYS --> MARKET_MODAL[Market Trading Interface]
+    MODAL_SYS --> PRIORITY_MGMT[Modal Priority Management]
+
+    %% Advanced UI Features
+    ADVANCED_UI --> TOOLTIP_SYS[Comprehensive Tooltip System]
+    ADVANCED_UI --> NOTIFICATION[Notification System]
+    ADVANCED_UI --> DASHBOARD[Dashboard Analytics F2]
+    ADVANCED_UI --> THEME_MGMT[Theme Management]
+    ADVANCED_UI --> KEYBOARD_SHORTCUTS[Keyboard Shortcut System]
+
+    KEYBOARD_SHORTCUTS --> T_KEY[T: Task Assignment]
+    KEYBOARD_SHORTCUTS --> P_KEY[P: Planting Mode]
+    KEYBOARD_SHORTCUTS --> H_KEY[H: Harvesting Mode]
+    KEYBOARD_SHORTCUTS --> F1_DEBUG[F1: Debug Overlay]
+    KEYBOARD_SHORTCUTS --> F2_DASH[F2: Dashboard]
+
+    %% ===== SPECIALIZATION SYSTEM =====
+    MAIN --> SPECIAL_SYS[🎯 Farm Specialization System]
+    
+    SPECIAL_SYS --> SPEC_TRACKS[Specialization Tracks]
+    SPECIAL_SYS --> PROGRESSION[Progression Tracking System]
+    SPECIAL_SYS --> SPEC_BONUSES[Specialization Bonuses]
+    SPECIAL_SYS --> RESEARCH[Research & Development]
+
+    SPEC_TRACKS --> GRAIN_SPEC[Grain Specialization Track]
+    SPEC_TRACKS --> GARDEN_SPEC[Market Garden Specialization]
+    SPEC_TRACKS --> DIVERSE_SPEC[Diversified Farming]
+    SPEC_TRACKS --> ORGANIC_SPEC[Organic Farming Specialization]
+    SPEC_TRACKS --> TECH_SPEC[Technology-Forward Farming]
+
+    %% ===== MACHINERY SYSTEM =====
+    MAIN --> MACHINERY_SYS[🚜 Machinery & Equipment System]
+    
+    MACHINERY_SYS --> TRACTOR_SYS[Tractor Operations]
+    MACHINERY_SYS --> HARVEST_SYS[Harvesting Equipment]
+    MACHINERY_SYS --> PROCESSING_SYS[Processing Equipment]
+    MACHINERY_SYS --> MAINTENANCE_SYS[Maintenance System]
+
+    TRACTOR_SYS --> TRACTOR_TYPES[Tractor Classifications]
+    TRACTOR_SYS --> IMPLEMENT_SYS[Implement Attachment System]
+    TRACTOR_SYS --> OPERATOR_REQ[Operator Requirements]
+
+    %% ===== TECHNICAL INFRASTRUCTURE =====
+    MAIN --> TECH_SYS[⚡ Technical Infrastructure]
+    
+    TECH_SYS --> SAVE_LOAD[💾 Save/Load System]
+    TECH_SYS --> PERFORMANCE[🚀 Performance Optimization]
+    TECH_SYS --> DEBUG_TOOLS[🔍 Debug Tools]
+    TECH_SYS --> ERROR_HANDLING[Error Handling & Recovery]
+
+    SAVE_LOAD --> JSON_SERIAL[JSON-Based Serialization]
+    SAVE_LOAD --> MULTI_SLOT[Multiple Save Slots]
+    SAVE_LOAD --> AUTO_SAVE[Auto-Save Functionality]
+    SAVE_LOAD --> VERSION_COMPAT[Version Compatibility]
+
+    PERFORMANCE --> FPS_TARGET[60 FPS Target]
+    PERFORMANCE --> VIEWPORT_CULL[Viewport Culling]
+    PERFORMANCE --> PATH_CACHE[Path Caching System]
+    PERFORMANCE --> EVENT_DRIVEN[Event-Driven Updates]
+    PERFORMANCE --> MEMORY_MGMT[Memory Management]
+
+    DEBUG_TOOLS --> DEBUG_OVERLAY[Debug Overlay F1]
+    DEBUG_TOOLS --> UI_HEALTH[UI Health Check Systems]
+    DEBUG_TOOLS --> LOGGING_SYS[Logging & Diagnostics]
+    DEBUG_TOOLS --> PERF_MONITOR[Performance Monitoring]
+
+    %% ===== SYSTEM INTEGRATION NETWORK =====
+    %% Event System Coordination
+    EVENT_BUS -.->|Coordinates| EMPLOYEE_SYS
+    EVENT_BUS -.->|Coordinates| TASK_SYS
+    EVENT_BUS -.->|Coordinates| AGRI_SYS
+    EVENT_BUS -.->|Coordinates| ECONOMY_SYS
+    EVENT_BUS -.->|Coordinates| UI_SYS
+    EVENT_BUS -.->|Coordinates| WEATHER_SYS
+    EVENT_BUS -.->|Coordinates| MARKET_SYS
+    EVENT_BUS -.->|Coordinates| MACHINERY_SYS
+
+    %% Cross-System Dependencies
+    EMPLOYEE_SYS -.->|Work Orders| TASK_SYS
+    TASK_SYS -.->|Task Events| AGRI_SYS
+    AGRI_SYS -.->|Harvest Data| INVENTORY_SYS
+    INVENTORY_SYS -.->|Market Data| MARKET_SYS
+    MARKET_SYS -.->|Price Events| CONTRACT_SYS
+    CONTRACT_SYS -.->|Financial Events| FINANCE_MGMT
+    WEATHER_SYS -.->|Weather Events| AGRI_SYS
+    WEATHER_SYS -.->|Work Conditions| EMPLOYEE_SYS
+    SOIL_SYS -.->|Fertility Data| CROP_SYS
+    CROP_SYS -.->|Growth Events| TASK_SYS
+    IRRIGATION_SYS -.->|Water Status| CROP_SYS
+    BUILDING_SYS -.->|Capacity Updates| INVENTORY_SYS
+    HIRING_SYS -.->|Employee Events| UI_SYS
+    PATHFINDING -.->|Movement Data| GRID_SYS
+    TRAIT_COMBO -.->|Performance Modifiers| AI_BEHAVIOR
+    CERTIFICATION -.->|Task Eligibility| WORK_ORDER_SYS
+    DISEASE_SYS -.->|Health Events| CROP_SYS
+    MACHINERY_SYS -.->|Equipment Events| TASK_SYS
+    SPECIAL_SYS -.->|Bonus Modifiers| AGRI_SYS
+
+    %% ===== ADVANCED SYSTEMS =====
+    
+    %% Disease & Pest Management System
+    DISEASE_SYS --> PEST_TYPES[Pest Classification System]
+    DISEASE_SYS --> DISEASE_TYPES[Disease Classification System]
+    DISEASE_SYS --> PREVENTION[Prevention Strategies]
+    DISEASE_SYS --> TREATMENT[Treatment Options]
+    DISEASE_SYS --> MONITORING[Monitoring & Detection]
+
+    PEST_TYPES --> INSECTS[Insect Pests]
+    PEST_TYPES --> WEEDS[Weed Management]
+    PEST_TYPES --> RODENTS[Rodent Control]
+    PEST_TYPES --> BIRDS[Bird Damage Control]
+
+    INSECTS --> APHIDS[Aphids: Sap feeders, virus vectors]
+    INSECTS --> CATERPILLARS[Caterpillars: Leaf damage]
+    INSECTS --> BEETLES[Beetles: Root/fruit damage]
+    INSECTS --> THRIPS[Thrips: Flower/fruit damage]
+
+    DISEASE_TYPES --> FUNGAL[Fungal Diseases]
+    DISEASE_TYPES --> BACTERIAL[Bacterial Diseases]
+    DISEASE_TYPES --> VIRAL[Viral Diseases]
+    DISEASE_TYPES --> NUTRIENT_DEF[Nutrient Deficiencies]
+
+    FUNGAL --> BLIGHT[Blight: Rapid tissue death]
+    FUNGAL --> RUST[Rust: Orange/brown pustules]
+    FUNGAL --> MILDEW[Mildew: White powdery coating]
+    FUNGAL --> ROT[Root/Crown Rot: Decay]
+
+    PREVENTION --> IPM[Integrated Pest Management]
+    PREVENTION --> CROP_ROTATION_PEST[Crop Rotation for Pest Control]
+    PREVENTION --> BENEFICIAL_INSECTS[Beneficial Insect Programs]
+    PREVENTION --> RESISTANT_VARIETIES[Disease-Resistant Varieties]
+
+    TREATMENT --> ORGANIC_TREATMENT[Organic Treatment Options]
+    TREATMENT --> CHEMICAL_TREATMENT[Chemical Treatment Options]
+    TREATMENT --> BIOLOGICAL_CONTROL[Biological Control Agents]
+    TREATMENT --> CULTURAL_CONTROL[Cultural Control Methods]
+
+    %% Advanced Machinery System Details
+    TRACTOR_TYPES --> COMPACT_TRACTOR[Compact Tractors: <40HP]
+    TRACTOR_TYPES --> UTILITY_TRACTOR[Utility Tractors: 40-100HP]
+    TRACTOR_TYPES --> ROW_CROP[Row Crop Tractors: 100-200HP]
+    TRACTOR_TYPES --> HIGH_HP[High Horsepower: >200HP]
+
+    IMPLEMENT_SYS --> TILLAGE_IMPL[Tillage Implements]
+    IMPLEMENT_SYS --> PLANTING_IMPL[Planting Implements]
+    IMPLEMENT_SYS --> CULTIVATION_IMPL[Cultivation Implements]
+    IMPLEMENT_SYS --> HARVEST_IMPL[Harvesting Implements]
+
+    TILLAGE_IMPL --> PLOW[Moldboard Plow: Primary tillage]
+    TILLAGE_IMPL --> DISC[Disc Harrow: Secondary tillage]
+    TILLAGE_IMPL --> CULTIVATOR[Field Cultivator: Seedbed prep]
+    TILLAGE_IMPL --> CHISEL[Chisel Plow: Deep tillage]
+
+    PLANTING_IMPL --> SEED_DRILL[Seed Drill: Precise placement]
+    PLANTING_IMPL --> PLANTER[Row Planter: Corn/soybean]
+    PLANTING_IMPL --> TRANSPLANTER[Transplanter: Seedling placement]
+    PLANTING_IMPL --> BROADCASTER[Broadcast Seeder: Cover crops]
+
+    HARVEST_SYS --> COMBINE_HARVESTER[Combine Harvester System]
+    HARVEST_SYS --> SPECIALTY_HARVEST[Specialty Harvesting Equipment]
+    HARVEST_SYS --> POST_HARVEST[Post-Harvest Equipment]
+
+    COMBINE_HARVESTER --> GRAIN_COMBINE[Grain Combine: Cereals]
+    COMBINE_HARVESTER --> CORN_HEAD[Corn Head Attachment]
+    COMBINE_HARVESTER --> BEAN_HEAD[Soybean Head Attachment]
+    COMBINE_HARVESTER --> SMALL_GRAIN_HEAD[Small Grain Head]
+
+    SPECIALTY_HARVEST --> POTATO_HARVESTER[Potato Harvester]
+    SPECIALTY_HARVEST --> VEGETABLE_HARVESTER[Vegetable Harvester]
+    SPECIALTY_HARVEST --> FRUIT_HARVESTER[Fruit Harvesting Equipment]
+
+    %% Processing System Details
+    PROCESSING_SYS --> CLEANING_EQUIP[Grain Cleaning Equipment]
+    PROCESSING_SYS --> DRYING_EQUIP[Drying Systems]
+    PROCESSING_SYS --> PACKAGING_EQUIP[Packaging Equipment]
+    PROCESSING_SYS --> QUALITY_TESTING[Quality Testing Equipment]
+
+    CLEANING_EQUIP --> GRAIN_CLEANER[Gravity Grain Cleaner]
+    CLEANING_EQUIP --> SEED_CLEANER[Seed Cleaning System]
+    CLEANING_EQUIP --> VEGETABLE_WASHER[Vegetable Washing System]
+
+    DRYING_EQUIP --> GRAIN_DRYER[Grain Drying System]
+    DRYING_EQUIP --> SOLAR_DRYER[Solar Drying System]
+    DRYING_EQUIP --> FORCED_AIR[Forced Air Drying]
+
+    %% Maintenance System Details
+    MAINTENANCE_SYS --> PREVENTIVE_MAINT[Preventive Maintenance]
+    MAINTENANCE_SYS --> BREAKDOWN_REPAIR[Breakdown Repair System]
+    MAINTENANCE_SYS --> PARTS_INVENTORY[Parts Inventory Management]
+    MAINTENANCE_SYS --> SERVICE_SCHEDULING[Service Scheduling]
+
+    PREVENTIVE_MAINT --> DAILY_CHECKS[Daily Equipment Checks]
+    PREVENTIVE_MAINT --> SCHEDULED_SERVICE[Scheduled Service Intervals]
+    PREVENTIVE_MAINT --> LUBRICATION[Lubrication Programs]
+    PREVENTIVE_MAINT --> CALIBRATION[Equipment Calibration]
+
+    BREAKDOWN_REPAIR --> DIAGNOSTIC_SYS[Diagnostic Systems]
+    BREAKDOWN_REPAIR --> EMERGENCY_REPAIR[Emergency Repair Protocols]
+    BREAKDOWN_REPAIR --> CONTRACTOR_SERVICES[External Contractor Services]
+
+    %% ===== ADVANCED EMPLOYEE SYSTEMS =====
+    
+    %% Employee Performance Tracking
+    PERFORMANCE --> PRODUCTIVITY_METRICS[Productivity Metrics]
+    PERFORMANCE --> QUALITY_METRICS[Quality Metrics]
+    PERFORMANCE --> EFFICIENCY_TRACKING[Efficiency Tracking]
+    PERFORMANCE --> LEARNING_CURVE[Learning Curve Analysis]
+
+    PRODUCTIVITY_METRICS --> TASKS_PER_HOUR[Tasks Completed Per Hour]
+    PRODUCTIVITY_METRICS --> AREA_COVERED[Area Covered Per Day]
+    PRODUCTIVITY_METRICS --> UPTIME_PERCENTAGE[Equipment Uptime Percentage]
+
+    QUALITY_METRICS --> ERROR_RATE[Task Error Rate]
+    QUALITY_METRICS --> REWORK_PERCENTAGE[Rework Requirements]
+    QUALITY_METRICS --> DAMAGE_INCIDENTS[Equipment/Crop Damage Incidents]
+
+    %% Employee Specialization Details
+    SPECIALIZATION --> CROP_SPECIALISTS[Crop Specialists]
+    SPECIALIZATION --> EQUIPMENT_OPERATORS[Equipment Operators]
+    SPECIALIZATION --> SUPERVISORS[Supervisory Roles]
+    SPECIALIZATION --> TECHNICAL_SPECIALISTS[Technical Specialists]
+
+    CROP_SPECIALISTS --> GRAIN_EXPERT[Grain Production Expert]
+    CROP_SPECIALISTS --> VEGETABLE_EXPERT[Vegetable Production Expert]
+    CROP_SPECIALISTS --> PEST_SCOUT[Pest & Disease Scout]
+    CROP_SPECIALISTS --> SOIL_TECHNICIAN[Soil Management Technician]
+
+    EQUIPMENT_OPERATORS --> TRACTOR_OPERATOR[Certified Tractor Operator]
+    EQUIPMENT_OPERATORS --> COMBINE_OPERATOR[Combine Harvester Operator]
+    EQUIPMENT_OPERATORS --> IRRIGATION_TECH[Irrigation System Technician]
+
+    SUPERVISORS --> FIELD_SUPERVISOR[Field Operations Supervisor]
+    SUPERVISORS --> HARVEST_COORDINATOR[Harvest Coordinator]
+    SUPERVISORS --> QUALITY_SUPERVISOR[Quality Control Supervisor]
+
+    %% ===== RESEARCH & DEVELOPMENT SYSTEM =====
+    
+    RESEARCH --> CROP_RESEARCH[Crop Research Programs]
+    RESEARCH --> TECH_RESEARCH[Technology Research]
+    RESEARCH --> EFFICIENCY_RESEARCH[Efficiency Improvement Research]
+    RESEARCH --> SUSTAINABILITY[Sustainability Research]
+
+    CROP_RESEARCH --> VARIETY_TRIALS[Variety Trial Programs]
+    CROP_RESEARCH --> BREEDING_PROGRAM[Plant Breeding Programs]
+    CROP_RESEARCH --> GENETICS[Genetic Research]
+
+    TECH_RESEARCH --> PRECISION_AG[Precision Agriculture]
+    TECH_RESEARCH --> AUTOMATION[Automation Research]
+    TECH_RESEARCH --> SENSORS[Sensor Technology]
+    TECH_RESEARCH --> AI_AGRICULTURE[AI in Agriculture]
+
+    PRECISION_AG --> GPS_GUIDANCE[GPS Guidance Systems]
+    PRECISION_AG --> VARIABLE_RATE[Variable Rate Application]
+    PRECISION_AG --> YIELD_MAPPING[Yield Mapping Technology]
+    PRECISION_AG --> DRONE_TECH[Drone Technology]
+
+    SUSTAINABILITY --> CARBON_SEQUESTRATION[Carbon Sequestration Programs]
+    SUSTAINABILITY --> WATER_CONSERVATION[Water Conservation Research]
+    SUSTAINABILITY --> RENEWABLE_ENERGY[Renewable Energy Integration]
+    SUSTAINABILITY --> WASTE_REDUCTION[Waste Reduction Programs]
+
+    %% ===== ADVANCED ECONOMIC SYSTEMS =====
+    
+    %% Risk Management System
+    ECONOMY_SYS --> RISK_MGMT[🛡️ Risk Management System]
+    RISK_MGMT --> INSURANCE[Crop Insurance Programs]
+    RISK_MGMT --> HEDGING[Market Hedging Strategies]
+    RISK_MGMT --> DIVERSIFICATION[Revenue Diversification]
+    RISK_MGMT --> EMERGENCY_FUND[Emergency Fund Management]
+
+    INSURANCE --> CROP_INSURANCE[Multi-Peril Crop Insurance]
+    INSURANCE --> REVENUE_INSURANCE[Revenue Protection Insurance]
+    INSURANCE --> EQUIPMENT_INSURANCE[Equipment Insurance]
+    INSURANCE --> LIABILITY_INSURANCE[Liability Coverage]
+
+    HEDGING --> FUTURES_CONTRACTS[Futures Contracts]
+    HEDGING --> OPTIONS_TRADING[Options Trading]
+    HEDGING --> FORWARD_CONTRACTS[Forward Contracts]
+
+    %% Supply Chain Management
+    ECONOMY_SYS --> SUPPLY_CHAIN[📦 Supply Chain Management]
+    SUPPLY_CHAIN --> SUPPLIER_MGMT[Supplier Management]
+    SUPPLY_CHAIN --> LOGISTICS[Logistics Coordination]
+    SUPPLY_CHAIN --> DISTRIBUTION[Distribution Networks]
+    SUPPLY_CHAIN --> TRACEABILITY[Product Traceability]
+
+    SUPPLIER_MGMT --> SEED_SUPPLIERS[Seed Supplier Network]
+    SUPPLIER_MGMT --> FERTILIZER_SUPPLIERS[Fertilizer Suppliers]
+    SUPPLIER_MGMT --> EQUIPMENT_DEALERS[Equipment Dealers]
+    SUPPLIER_MGMT --> SERVICE_PROVIDERS[Service Providers]
+
+    LOGISTICS --> TRANSPORTATION[Transportation Management]
+    LOGISTICS --> WAREHOUSING[Warehousing Solutions]
+    LOGISTICS --> COLD_CHAIN[Cold Chain Management]
+
+    %% Advanced Contract System
+    CONTRACT_MGMT --> CONTRACT_NEGOTIATION[Contract Negotiation System]
+    CONTRACT_MGMT --> PERFORMANCE_MONITORING[Performance Monitoring]
+    CONTRACT_MGMT --> DISPUTE_RESOLUTION[Dispute Resolution]
+    CONTRACT_MGMT --> RENEWAL_SYSTEM[Contract Renewal System]
+
+    %% ===== ENVIRONMENTAL SYSTEMS =====
+    
+    MAIN --> ENVIRONMENT_SYS[🌍 Environmental Management]
+    ENVIRONMENT_SYS --> CLIMATE_ADAPTATION[Climate Adaptation Strategies]
+    ENVIRONMENT_SYS --> CONSERVATION[Conservation Programs]
+    ENVIRONMENT_SYS --> MONITORING[Environmental Monitoring]
+    ENVIRONMENT_SYS --> COMPLIANCE[Regulatory Compliance]
+
+    CLIMATE_ADAPTATION --> DROUGHT_STRATEGIES[Drought Adaptation]
+    CLIMATE_ADAPTATION --> FLOOD_MANAGEMENT[Flood Management]
+    CLIMATE_ADAPTATION --> TEMPERATURE_MGMT[Temperature Management]
+
+    CONSERVATION --> SOIL_CONSERVATION[Soil Conservation]
+    CONSERVATION --> WATER_CONSERVATION_DETAILED[Water Conservation]
+    CONSERVATION --> BIODIVERSITY[Biodiversity Conservation]
+    CONSERVATION --> ENERGY_EFFICIENCY[Energy Efficiency]
+
+    MONITORING --> WEATHER_MONITORING[Weather Monitoring Stations]
+    MONITORING --> SOIL_MONITORING[Soil Health Monitoring]
+    MONITORING --> WATER_QUALITY[Water Quality Monitoring]
+    MONITORING --> AIR_QUALITY[Air Quality Monitoring]
+
+    %% ===== STYLING DEFINITIONS =====
+    classDef coreSystem fill:#e1f5fe,stroke:#01579b,stroke-width:2px,color:#000
+    classDef employeeSystem fill:#f3e5f5,stroke:#4a148c,stroke-width:2px,color:#000
+    classDef taskSystem fill:#e8f5e8,stroke:#1b5e20,stroke-width:2px,color:#000
+    classDef agriSystem fill:#fff3e0,stroke:#e65100,stroke-width:2px,color:#000
+    classDef econSystem fill:#f1f8e9,stroke:#33691e,stroke-width:2px,color:#000
+    classDef uiSystem fill:#fce4ec,stroke:#880e4f,stroke-width:2px,color:#000
+    classDef techSystem fill:#f9fbe7,stroke:#827717,stroke-width:2px,color:#000
+    classDef machinerySystem fill:#e8eaf6,stroke:#283593,stroke-width:2px,color:#000
+    classDef environmentSystem fill:#e0f2f1,stroke:#00695c,stroke-width:2px,color:#000
+    classDef researchSystem fill:#fff8e1,stroke:#ef6c00,stroke-width:2px,color:#000
+
+    %% Apply styles to core systems
+    class CORE,EVENT_SYS,GRID_SYS,TIME_SYS,CONFIG_SYS,SAVE_SYS,DEBUG_SYS,EVENT_BUS,PUB_SUB,EVENT_QUEUE,EVENT_TYPES,GRID_16X16,TILE_PROPS,SPATIAL_INDEX,COLLISION_MAP,WORKDAY_CYCLE,SPEED_CONTROL,SEASON_CYCLE coreSystem
+    
+    %% Apply styles to employee systems
+    class EMPLOYEE_SYS,MULTI_EMP,HIRING_SYS,NEEDS_SYS,AI_BEHAVIOR,SPECIALIZATION,PERFORMANCE,EMP_CLASS,PATHFINDING,EMP_COORDINATION,EMP_STATS,EMP_TRAITS,EMP_CERTIFICATIONS,BASE_STATS,NEEDS_STATS,AGE_EFFECTS,POSITIVE_TRAITS,NEGATIVE_TRAITS,MIXED_TRAITS,STATE_MACHINE employeeSystem
+    
+    %% Apply styles to task systems
+    class TASK_SYS,ENHANCED_ASSIGN,WORK_ORDER_SYS,MULTI_COORD,TASK_VALIDATION,PRIORITY_QUEUE,FIFO_QUEUE,AUTO_ASSIGN,TASK_TYPES,MANUAL_TASKS,MACHINE_TASKS,PROCESSING_TASKS,MAINTENANCE_TASKS,HAND_TILL,HAND_PLANT,HAND_WATER,HAND_HARVEST taskSystem
+    
+    %% Apply styles to agricultural systems
+    class AGRI_SYS,CROP_SYS,SOIL_SYS,WEATHER_SYS,IRRIGATION_SYS,DISEASE_SYS,CROP_TYPES,GROWTH_SYS,YIELD_SYS,QUALITY_SYS,GRAIN_CROPS,HORTICULTURE,NPK_TRACKING,ROTATION_SYS,SOIL_REST,WEATHER_TYPES,WEATHER_EFFECTS agriSystem
+    
+    %% Apply styles to economic systems
+    class ECONOMY_SYS,FINANCE_MGMT,INVENTORY_SYS,BUILDING_SYS,CONTRACT_SYS,MARKET_SYS,STARTING_CAPITAL,LOAN_SYS,TRANSACTION_HIST,DAILY_EXPENSES,STORAGE_CAP,MANUAL_SELL,FIFO_INV,PURCHASABLE,DYNAMIC_PRICING econSystem
+    
+    %% Apply styles to UI systems
+    class UI_SYS,ENHANCED_UI,NAVIGATION,MODAL_SYS,ADVANCED_UI,RESPONSIVE,TOP_HUD,RIGHT_PANEL,GRID_RENDER,SMART_ACTION,NAV_BUTTONS,SUBMENU_SYS,TASK_MODAL,HIRE_MODAL,TOOLTIP_SYS,KEYBOARD_SHORTCUTS uiSystem
+    
+    %% Apply styles to technical systems
+    class TECH_SYS,SAVE_LOAD,PERFORMANCE,DEBUG_TOOLS,ERROR_HANDLING,JSON_SERIAL,MULTI_SLOT,AUTO_SAVE,FPS_TARGET,VIEWPORT_CULL,PATH_CACHE,EVENT_DRIVEN,DEBUG_OVERLAY,UI_HEALTH techSystem
+    
+    %% Apply styles to machinery systems
+    class MACHINERY_SYS,TRACTOR_SYS,HARVEST_SYS,PROCESSING_SYS,MAINTENANCE_SYS,TRACTOR_TYPES,IMPLEMENT_SYS,OPERATOR_REQ,COMBINE_HARVESTER,SPECIALTY_HARVEST,CLEANING_EQUIP,PREVENTIVE_MAINT machinerySystem
+    
+    %% Apply styles to environmental systems
+    class ENVIRONMENT_SYS,CLIMATE_ADAPTATION,CONSERVATION,MONITORING,COMPLIANCE,DROUGHT_STRATEGIES,SOIL_CONSERVATION,WEATHER_MONITORING,WATER_QUALITY environmentSystem
+    
+    %% Apply styles to research systems
+    class RESEARCH,CROP_RESEARCH,TECH_RESEARCH,EFFICIENCY_RESEARCH,SUSTAINABILITY,PRECISION_AG,AUTOMATION,VARIETY_TRIALS,CARBON_SEQUESTRATION researchSystem
