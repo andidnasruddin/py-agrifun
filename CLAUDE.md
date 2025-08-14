@@ -261,11 +261,66 @@ This is a Python/Pygame project with specific technical considerations:
 
 ## Current Technical Status
 
-**Architecture Health:** ✅ Professional-grade event-driven system with advanced task management
+**Architecture Health:** 🔄 **COMPREHENSIVE OVERHAUL IN PROGRESS** - Transitioning to AAA-level simulation engine
 **Performance:** ✅ 60 FPS target achieved with multi-employee coordination
 **Code Quality:** ✅ Enhanced with comprehensive collision detection and workflow validation
-**Extensibility:** ✅ Modular task system ready for advanced agricultural features
-**Task Management:** 🎯 **NEW** - Professional work order system with intelligent employee coordination  
+**Extensibility:** 🚀 **MAJOR UPGRADE** - Full mermaid diagram implementation with ECS architecture
+**Task Management:** ✅ Professional work order system with intelligent employee coordination
+
+## 🏗️ ARCHITECTURAL OVERHAUL PROJECT
+
+**Current Branch:** `feature/comprehensive-architecture-overhaul`
+**Backup Branch:** `feature/enhanced-task-system` (contains complete working game)
+**Target:** Full implementation of agrifun_system_architecture.mermaid
+
+### Phase 1: Architectural Foundation (Months 1-2)
+- [ ] **Event System Architecture**: Universal pub/sub with priority queues and middleware
+- [ ] **Entity-Component System**: Full ECS with dynamic component registration
+- [ ] **Content Registry**: Data-driven content loading for all game mechanics
+- [ ] **Advanced Grid System**: Multi-layer grid with spatial indexing
+- [ ] **Plugin System**: Hot-loadable modules for extensibility
+
+### Phase 2: Core Game Systems (Months 3-4)
+- [ ] **Advanced Employee System**: Multi-employee management with dynamic stats
+- [ ] **Professional Task System**: Work orders with priority management
+- [ ] **Economic Framework**: Advanced financial tracking and market dynamics
+- [ ] **Inventory Management**: Multi-category storage with quality tracking
+
+### Phase 3: Agricultural Science Foundation (Months 5-7)
+- [ ] **Multi-Crop Framework**: Support for unlimited crop types
+- [ ] **Advanced Growth System**: 5+ stage growth with environmental factors
+- [ ] **Soil Health System**: N-P-K tracking, pH levels, organic matter simulation
+- [ ] **Weather System**: Realistic weather patterns and climate impact
+
+### Phase 4: Equipment & Machinery Systems (Months 8-10)
+- [ ] **Tractor System**: Multiple tractor types with operational capabilities
+- [ ] **Implement Framework**: Tillage, planting, harvesting implements
+- [ ] **Combine Harvester System**: Grain combines with header types
+- [ ] **Equipment Economics**: Purchase vs. lease decisions
+
+### Phase 5: Advanced Economic Systems (Months 11-12)
+- [ ] **Dynamic Pricing**: Supply/demand modeling and market volatility
+- [ ] **Contract Framework**: Volume contracts and quality premiums
+- [ ] **Risk Management**: Crop insurance and market hedging
+- [ ] **Supply Chain**: Input purchasing and logistics
+
+### Phase 6: Disease & Pest Management (Months 13-14)
+- [ ] **Disease Framework**: Fungal, bacterial, viral diseases
+- [ ] **Pest Framework**: Insect pests and lifecycle modeling
+- [ ] **Integrated Pest Management**: Cultural, biological, chemical control
+- [ ] **Treatment Systems**: Pesticide application and resistance management
+
+### Phase 7: Research & Development (Months 15-16)
+- [ ] **Research Trees**: Technology progression paths
+- [ ] **Specialization Tracks**: Grain farming, organic farming, precision agriculture
+- [ ] **Innovation System**: Breakthrough discoveries
+- [ ] **Automation**: Autonomous equipment and smart farming
+
+### Phase 8: Environmental & Regulatory Systems (Months 17-18)
+- [ ] **Climate Adaptation**: Long-term climate trends
+- [ ] **Conservation Programs**: Soil and water conservation
+- [ ] **Environmental Monitoring**: Air and water quality tracking
+- [ ] **System Integration**: All 15+ major systems working together  
 
 **Resolved Technical Items:**
 - ✅ A* pathfinding fully implemented with visualization
