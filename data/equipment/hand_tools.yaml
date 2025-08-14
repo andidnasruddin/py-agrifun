@@ -1,0 +1,413 @@
+# Hand tools for AgriFun comprehensive agricultural simulation
+# These tools represent the foundation of manual farming operations
+
+# Basic hoe - starting tool
+hoe_basic:
+  content_id: "hoe_basic"
+  equipment_type: "hoe"
+  category: "hand_tool"
+  display_name: "Basic Garden Hoe"
+  description: "Essential hand tool for breaking up soil and basic cultivation"
+  version: "1.0"
+  
+  # Technical specifications
+  specifications:
+    weight_kg: 1.2
+    handle_length_cm: 120
+    blade_width_cm: 15
+    material: "steel_basic"
+    durability_rating: 6
+  
+  # Operational capabilities
+  capabilities:
+    - "hand_tilling"
+    - "weed_cultivation"
+    - "soil_breaking"
+  
+  # Performance modifiers
+  performance:
+    tilling_speed_multiplier: 1.4    # 40% faster than hand tilling
+    energy_efficiency: 0.5           # Uses 50% of base energy
+    quality_bonus: 0.1               # 10% better soil preparation
+    durability_hours: 200           # Hours of use before replacement
+    maintenance_interval: 50        # Hours between maintenance
+  
+  # Cost and economics
+  economics:
+    purchase_price: 25.0
+    maintenance_cost_per_hour: 0.02
+    resale_value_percentage: 0.3    # Retains 30% value when sold
+  
+  # Operator requirements (minimal for basic tools)
+  operator_requirements:
+    skill_minimums:
+      tool_use: 10  # Very basic skill requirement
+    experience_hours: 0
+    certifications: []
+  
+  # Unlocked from start
+  unlock_requirements: {}
+
+# Professional hoe - upgraded version
+hoe_professional:
+  content_id: "hoe_professional"
+  equipment_type: "hoe"
+  category: "hand_tool"
+  display_name: "Professional Garden Hoe"
+  description: "High-quality hoe with ergonomic design and superior materials"
+  version: "1.0"
+  
+  # Enhanced specifications
+  specifications:
+    weight_kg: 1.4
+    handle_length_cm: 125
+    blade_width_cm: 18
+    material: "steel_carbon"
+    durability_rating: 9
+  
+  capabilities:
+    - "hand_tilling"
+    - "weed_cultivation"
+    - "soil_breaking"
+    - "precision_cultivation"
+  
+  # Better performance than basic hoe
+  performance:
+    tilling_speed_multiplier: 1.8
+    energy_efficiency: 0.3           # Even more energy efficient
+    quality_bonus: 0.2               # 20% better soil preparation
+    durability_hours: 500           # Lasts much longer
+    maintenance_interval: 100
+  
+  economics:
+    purchase_price: 75.0
+    maintenance_cost_per_hour: 0.01  # Lower maintenance costs
+    resale_value_percentage: 0.5
+  
+  operator_requirements:
+    skill_minimums:
+      tool_use: 25  # Requires some experience to use effectively
+
+# Shovel - multi-purpose digging tool
+shovel_standard:
+  content_id: "shovel_standard"
+  equipment_type: "shovel"
+  category: "hand_tool"
+  display_name: "Standard Shovel"
+  description: "Versatile digging tool for various farm tasks"
+  version: "1.0"
+  
+  specifications:
+    weight_kg: 2.1
+    handle_length_cm: 115
+    blade_width_cm: 22
+    material: "steel_basic"
+    durability_rating: 7
+  
+  capabilities:
+    - "hand_tilling"
+    - "digging"
+    - "trenching"
+    - "loading"
+    - "soil_moving"
+  
+  performance:
+    tilling_speed_multiplier: 1.2   # Slower than hoe for tilling
+    digging_speed_multiplier: 2.0   # Much faster for digging
+    energy_efficiency: 0.7          # More energy intensive
+    quality_bonus: 0.05
+    durability_hours: 300
+    maintenance_interval: 75
+  
+  economics:
+    purchase_price: 35.0
+    maintenance_cost_per_hour: 0.025
+    resale_value_percentage: 0.4
+  
+  operator_requirements:
+    skill_minimums:
+      tool_use: 15
+      physical_strength: 30  # Requires more strength
+
+# Broadfork - soil aeration specialist tool
+broadfork:
+  content_id: "broadfork"
+  equipment_type: "broadfork"
+  category: "hand_tool"
+  display_name: "Broadfork"
+  description: "Specialized tool for deep soil aeration without disrupting soil structure"
+  version: "1.0"
+  
+  specifications:
+    weight_kg: 3.5
+    handle_length_cm: 100
+    tine_count: 5
+    tine_length_cm: 25
+    material: "steel_carbon"
+    durability_rating: 8
+  
+  capabilities:
+    - "soil_aeration"
+    - "deep_cultivation"
+    - "compaction_relief"
+    - "root_zone_improvement"
+  
+  performance:
+    aeration_effectiveness: 2.5     # Excellent soil aeration
+    soil_health_bonus: 0.15        # Improves soil health
+    energy_efficiency: 0.4         # Very energy efficient for deep work
+    quality_bonus: 0.25            # Significant soil quality improvement
+    durability_hours: 400
+    maintenance_interval: 80
+  
+  economics:
+    purchase_price: 120.0
+    maintenance_cost_per_hour: 0.015
+    resale_value_percentage: 0.6   # Retains value well
+  
+  operator_requirements:
+    skill_minimums:
+      tool_use: 40
+      soil_management: 25
+    certifications: []
+  
+  # Requires research to unlock
+  unlock_requirements:
+    research: ["soil_health_management"]
+
+# Planting tools section
+dibble_stick:
+  content_id: "dibble_stick"
+  equipment_type: "dibble_stick"
+  category: "hand_tool"
+  display_name: "Dibble Stick"
+  description: "Simple pointed tool for making precise planting holes"
+  version: "1.0"
+  
+  specifications:
+    weight_kg: 0.3
+    handle_length_cm: 30
+    tip_diameter_cm: 1.5
+    material: "hardwood"
+    durability_rating: 5
+  
+  capabilities:
+    - "precision_planting"
+    - "seed_hole_creation"
+    - "transplant_hole_creation"
+  
+  performance:
+    planting_speed_multiplier: 1.5
+    precision_bonus: 0.2           # More precise seed placement
+    energy_efficiency: 0.8         # Very light tool
+    seed_spacing_accuracy: 0.9     # 90% accurate spacing
+    durability_hours: 150
+    maintenance_interval: 25
+  
+  economics:
+    purchase_price: 15.0
+    maintenance_cost_per_hour: 0.01
+    resale_value_percentage: 0.2
+  
+  operator_requirements:
+    skill_minimums:
+      tool_use: 5
+      planting: 10
+
+# Advanced jab planter
+jab_planter:
+  content_id: "jab_planter"
+  equipment_type: "jab_planter"
+  category: "hand_tool"
+  display_name: "Jab Planter"
+  description: "Mechanical hand planter for efficient seed placement and covering"
+  version: "1.0"
+  
+  specifications:
+    weight_kg: 2.8
+    handle_length_cm: 95
+    seed_chamber_capacity: 50  # Seeds
+    depth_adjustment_range_cm: [2, 8]
+    material: "steel_aluminum"
+    durability_rating: 8
+  
+  capabilities:
+    - "precision_planting"
+    - "automatic_seed_metering"
+    - "depth_control"
+    - "seed_covering"
+  
+  performance:
+    planting_speed_multiplier: 2.2  # Much faster than manual
+    precision_bonus: 0.3
+    energy_efficiency: 0.6
+    seed_spacing_accuracy: 0.95     # Very accurate
+    depth_consistency: 0.9          # Consistent planting depth
+    durability_hours: 350
+    maintenance_interval: 60
+  
+  economics:
+    purchase_price: 180.0
+    maintenance_cost_per_hour: 0.03
+    resale_value_percentage: 0.55
+  
+  operator_requirements:
+    skill_minimums:
+      tool_use: 35
+      planting: 40
+      mechanical_aptitude: 20
+  
+  unlock_requirements:
+    research: ["precision_planting_tools"]
+
+# Harvesting tools section
+harvest_basket:
+  content_id: "harvest_basket"
+  equipment_type: "harvest_basket"
+  category: "hand_tool"
+  display_name: "Harvest Basket"
+  description: "Traditional woven basket for collecting harvested crops"
+  version: "1.0"
+  
+  specifications:
+    weight_kg: 0.8
+    capacity_kg: 15
+    material: "wicker"
+    durability_rating: 4
+  
+  capabilities:
+    - "crop_collection"
+    - "temporary_storage"
+    - "transport"
+  
+  performance:
+    harvest_speed_bonus: 0.1       # Slight efficiency improvement
+    capacity_bonus: 15             # Can carry 15kg of crops
+    organization_bonus: 0.15       # Better crop organization
+    damage_reduction: 0.05         # Reduces crop damage during harvest
+    durability_hours: 200
+    maintenance_interval: 40
+  
+  economics:
+    purchase_price: 20.0
+    maintenance_cost_per_hour: 0.005
+    resale_value_percentage: 0.25
+  
+  operator_requirements:
+    skill_minimums: {}  # No special skills required
+
+# Precision harvesting knife
+harvest_knife:
+  content_id: "harvest_knife"
+  equipment_type: "harvest_knife"
+  category: "hand_tool"
+  display_name: "Harvesting Knife"
+  description: "Sharp, curved blade designed for clean crop cutting"
+  version: "1.0"
+  
+  specifications:
+    weight_kg: 0.5
+    blade_length_cm: 12
+    handle_length_cm: 10
+    material: "steel_carbon"
+    durability_rating: 7
+  
+  capabilities:
+    - "precision_cutting"
+    - "clean_harvesting"
+    - "stem_cutting"
+    - "pruning"
+  
+  performance:
+    harvest_speed_multiplier: 1.3
+    quality_bonus: 0.2             # Better harvest quality
+    precision_bonus: 0.25          # Very precise cutting
+    crop_damage_reduction: 0.3     # Reduces damage significantly
+    durability_hours: 300
+    maintenance_interval: 30       # Needs regular sharpening
+  
+  economics:
+    purchase_price: 45.0
+    maintenance_cost_per_hour: 0.02
+    resale_value_percentage: 0.4
+  
+  operator_requirements:
+    skill_minimums:
+      tool_use: 20
+      harvesting: 25
+      knife_safety: 15
+
+# Watering tools section
+watering_can:
+  content_id: "watering_can"
+  equipment_type: "watering_can"
+  category: "hand_tool"
+  display_name: "Watering Can"
+  description: "Metal watering can for precise water application"
+  version: "1.0"
+  
+  specifications:
+    weight_kg: 1.5
+    capacity_liters: 10
+    spout_type: "rose_head"
+    material: "galvanized_steel"
+    durability_rating: 6
+  
+  capabilities:
+    - "manual_watering"
+    - "precise_water_application"
+    - "seedling_care"
+  
+  performance:
+    watering_coverage_plots: 20     # Can water 20 plots per fill
+    water_efficiency: 0.9          # 90% of water reaches plants
+    precision_bonus: 0.2           # Precise water application
+    movement_speed_modifier: 0.9   # Slightly slower when full
+    durability_hours: 250
+    maintenance_interval: 50
+  
+  economics:
+    purchase_price: 30.0
+    maintenance_cost_per_hour: 0.015
+    resale_value_percentage: 0.35
+  
+  operator_requirements:
+    skill_minimums:
+      tool_use: 10
+
+# Large water bucket for irrigation
+water_bucket:
+  content_id: "water_bucket"
+  equipment_type: "water_bucket"
+  category: "hand_tool"
+  display_name: "Water Bucket"
+  description: "Large bucket for carrying water to crops"
+  version: "1.0"
+  
+  specifications:
+    weight_kg: 2.0
+    capacity_liters: 20
+    material: "plastic_heavy_duty"
+    durability_rating: 5
+  
+  capabilities:
+    - "manual_watering"
+    - "water_transport"
+    - "flood_irrigation"
+  
+  performance:
+    watering_coverage_plots: 15     # Can water 15 plots per fill
+    water_efficiency: 0.7          # Less precise than watering can
+    capacity_bonus: 20             # Large water capacity
+    movement_speed_modifier: 0.7   # Significantly slower when full
+    durability_hours: 300
+    maintenance_interval: 60
+  
+  economics:
+    purchase_price: 18.0
+    maintenance_cost_per_hour: 0.01
+    resale_value_percentage: 0.3
+  
+  operator_requirements:
+    skill_minimums:
+      physical_strength: 25  # Heavy when full
