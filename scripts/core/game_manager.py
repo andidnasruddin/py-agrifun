@@ -62,6 +62,7 @@ from scripts.ui.ui_manager import UIManager
 from scripts.core.save_manager import SaveManager
 from scripts.contracts.contract_manager import ContractManager
 from scripts.core.weather_manager import WeatherManager
+from scripts.tasks.task_integration import TaskSystemIntegration
 
 
 class GameManager:
@@ -94,6 +95,9 @@ class GameManager:
         # Initialize simple hiring system for employee recruitment  
         self.hiring_system = SimpleHiringSystem(self.event_system, self.economy_manager, self.employee_manager)
         
+        # Initialize enhanced task system integration (Phase 2B)
+        self.task_integration = TaskSystemIntegration(self.event_system, self.grid_manager, self.employee_manager)
+        
         # NOTE: Interview system sync temporarily removed
         # self.interview_system.set_current_day(self.time_manager.current_day)
         
@@ -101,6 +105,10 @@ class GameManager:
         self.employee_manager.set_inventory_manager(self.inventory_manager)
         
         self.ui_manager = UIManager(self.event_system, self.screen)
+        
+        # Connect task integration to UI manager for direct access to work orders
+        if hasattr(self, 'task_integration'):
+            self.ui_manager.set_task_integration(self.task_integration)
         
         # Initialize contract system (after economy, time, and inventory systems)
         self.contract_manager = ContractManager(self.event_system, self.economy_manager, self.time_manager, self.inventory_manager)
@@ -221,6 +229,10 @@ class GameManager:
     
     def _handle_quit(self, event_data):
         """Handle quit event"""
+        # Cleanup task integration system
+        if hasattr(self, 'task_integration'):
+            self.task_integration.cleanup()
+        
         self.running = False
         print("Quit event received.")
     

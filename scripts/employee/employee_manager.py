@@ -38,6 +38,7 @@ class EmployeeManager:
         self.event_system.subscribe('get_employee_count', self._handle_employee_count_request)
         self.event_system.subscribe('cancel_tasks_requested', self._handle_cancel_tasks_request)
         self.event_system.subscribe('crop_type_provided', self._handle_crop_type_for_planting)
+        self.event_system.subscribe('work_order_cancelled', self._handle_work_order_cancelled)
         
         # Create starting employee for MVP (can be disabled for pure hiring system)
         if create_starting_employee:
@@ -46,7 +47,28 @@ class EmployeeManager:
         else:
             print("Employee Manager initialized - No employees (hiring required)")
         
+        # Set up task completion callbacks for work order integration
+        self._setup_task_completion_callbacks()
+        
         print("Employee Manager: Direct movement system active")
+    
+    def _setup_task_completion_callbacks(self):
+        """Set up task completion callbacks for all employees"""
+        for employee in self.employees.values():
+            employee.set_completion_callback(self._handle_employee_task_completion)
+    
+    def _handle_employee_task_completion(self, employee_id: str, completed_task: dict):
+        """Handle employee task completion and notify work order system"""
+        work_order_id = completed_task.get('work_order_id')
+        if work_order_id:
+            print(f"Employee {employee_id} completed task for work order {work_order_id}")
+            # Emit event for work order system to handle completion
+            self.event_system.emit('employee_task_completed', {
+                'employee_id': employee_id,
+                'work_order_id': work_order_id,
+                'task_type': completed_task.get('type'),
+                'completed_tiles': len(completed_task.get('completed_tiles', []))
+            })
     
     def set_inventory_manager(self, inventory_manager):
         """Set inventory manager for synchronous harvest processing"""
@@ -93,6 +115,9 @@ class EmployeeManager:
                 employee.add_trait(trait)
         
         # Direct movement (no pathfinding setup needed)
+        
+        # Set up task completion callback
+        employee.set_completion_callback(self._handle_employee_task_completion)
         
         self.employees[employee_id] = employee
         
@@ -370,11 +395,11 @@ class EmployeeManager:
         
         return removed_count
     
-    def assign_task_to_employee(self, employee_id: str, task_type: str, tiles: List):
+    def assign_task_to_employee(self, employee_id: str, task_type: str, tiles: List, **kwargs):
         """Assign a task to a specific employee"""
         employee = self.get_employee(employee_id)
         if employee:
-            employee.assign_task(task_type, tiles)
+            employee.assign_task(task_type, tiles, **kwargs)
             return True
         return False
     
@@ -499,6 +524,11 @@ class EmployeeManager:
     
     def assign_task_to_selection(self, task_type: str) -> bool:
         """Assign task to selected tiles distributing among available employees"""
+        # Check if enhanced task system is enabled - if so, skip legacy assignment
+        if ENABLE_ENHANCED_TASK_SYSTEM or ENABLE_WORK_ORDERS:
+            print(f"Legacy task assignment bypassed for {task_type} - using enhanced task system")
+            return True  # Return success but don't actually assign
+        
         if not self.grid_manager.selected_tiles:
             # Emit feedback about no selection
             self.event_system.emit('task_assignment_failed', {
@@ -697,6 +727,11 @@ class EmployeeManager:
     
     def assign_planting_task_to_selection(self, crop_type: str = DEFAULT_CROP_TYPE) -> bool:
         """Assign planting task with specific crop type to selected tiles"""
+        # Check if enhanced task system is enabled - if so, skip legacy assignment
+        if ENABLE_ENHANCED_TASK_SYSTEM or ENABLE_WORK_ORDERS:
+            print(f"Legacy planting assignment bypassed for {crop_type} - using enhanced task system")
+            return True  # Return success but don't actually assign
+        
         if not self.grid_manager.selected_tiles:
             self.event_system.emit('task_assignment_failed', {
                 'reason': 'no_selection',
@@ -758,3 +793,44 @@ class EmployeeManager:
         })
         
         return True
+    
+    def _handle_work_order_cancelled(self, event_data):
+        """Handle work order cancellation - stop employees from working on cancelled tasks"""
+        work_order_id = event_data.get('work_order_id')
+        task_type = event_data.get('task_type')
+        reason = event_data.get('reason', 'Work order cancelled')
+        
+        print(f"Work order cancellation received: {work_order_id} ({task_type}) - {reason}")
+        
+        # Stop all employees working on tasks related to this work order
+        cancelled_count = 0
+        for employee_id, employee in self.employees.items():
+            # Check if employee has current task
+            if employee.current_task:
+                current_task_type = employee.current_task.get('type', '')
+                # For now, cancel all tasks of the same type - can be enhanced with work order ID tracking
+                if current_task_type == task_type.lower():
+                    print(f"Cancelling {task_type} task for employee {employee.name}")
+                    # Clear current task
+                    employee.current_task = None
+                    # Return to idle state
+                    employee.state = employee.EmployeeState.IDLE
+                    employee.state_timer = 0.0
+                    cancelled_count += 1
+                    
+                    # Clear task assignments from tiles
+                    if hasattr(employee, 'assigned_tasks'):
+                        for task in employee.assigned_tasks[:]:
+                            if task.get('type') == task_type.lower():
+                                # Clear tile assignments
+                                for tile in task.get('tiles', []):
+                                    if hasattr(tile, 'task_assignment'):
+                                        tile.task_assignment = None
+                                        tile.task_assigned_to = None
+                                # Remove from assigned tasks
+                                employee.assigned_tasks.remove(task)
+        
+        if cancelled_count > 0:
+            print(f"Successfully stopped {cancelled_count} employee(s) from working on cancelled {task_type} tasks")
+        else:
+            print(f"No employees were working on {task_type} tasks to cancel")

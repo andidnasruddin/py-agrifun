@@ -23,6 +23,7 @@
       "Bash(git restore:*)",
       "Bash(rg:*)"
     ],
-    "deny": []
+    "deny": [],
+    "defaultMode": "acceptEdits"
   }
 }

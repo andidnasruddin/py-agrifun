@@ -144,12 +144,12 @@ WORK_END_HOUR = 18    # 6 PM
 
 # Enhanced Task System Feature Flags
 # These control the rollout of the new task assignment system
-ENABLE_ENHANCED_TASK_SYSTEM = False  # Main feature flag - False = use legacy system
+ENABLE_ENHANCED_TASK_SYSTEM = True  # Main feature flag - True = use work order system
 ENABLE_EMPLOYEE_SPECIALIZATIONS = True  # Employee roles and skills - Phase 2A ENABLED
-ENABLE_WORK_ORDERS = False  # Advanced work order system
+ENABLE_WORK_ORDERS = True  # Advanced work order system - Phase 2B ENABLED
 ENABLE_TASK_PRIORITIES = False  # Priority-based task assignment
 ENABLE_EQUIPMENT_REQUIREMENTS = False  # Equipment and certification requirements
-ENABLE_DYNAMIC_TASK_GENERATION = False  # Auto-generated work orders
+ENABLE_DYNAMIC_TASK_GENERATION = True  # Auto-generated work orders - Phase 2B ENABLED
 
 # Enhanced Task System Configuration
 ENHANCED_TASK_CONFIG = {
@@ -167,7 +167,7 @@ COLORS = {
     'background': (34, 34, 34),
     'grid_line': (60, 60, 60),
     'tile_soil': (101, 67, 33),
-    'tile_tilled': (139, 90, 43),
+    'tile_tilled': (80, 50, 20),
     'tile_planted': (34, 89, 34),
     'tile_water': (64, 164, 223),
     'employee': (255, 200, 100),

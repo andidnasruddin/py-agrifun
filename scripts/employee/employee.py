@@ -109,6 +109,7 @@ class Employee:
             **kwargs  # Allow additional task parameters like crop_type
         }
         self.assigned_tasks.append(task)
+        print(f"Employee {self.name}: Assigned {task_type} task for {len(target_tiles)} tiles")
         
         # Start working on this task if idle
         if self.state == EmployeeState.IDLE and not self.current_task:
@@ -129,6 +130,7 @@ class Employee:
                 if remaining_tiles:
                     self.current_task = task
                     task['status'] = 'in_progress'
+                    print(f"Employee {self.name}: Starting {task['type']} task with {len(remaining_tiles)} tiles remaining")
                     
                     # Move to first tile that needs work
                     target_tile = remaining_tiles[0]
@@ -315,8 +317,13 @@ class Employee:
         # Work takes time based on efficiency
         work_time_needed = 3.0 / effective_efficiency  # Base 3 seconds per task
         
+        # Debug output - show when close to completion
+        if self.state_timer >= work_time_needed - 0.5:  # Show last 0.5 seconds
+            print(f"Employee {self.name}: Almost done with {self.current_task['type']} at ({int(self.x)}, {int(self.y)}), timer: {self.state_timer:.1f}s/{work_time_needed:.1f}s")
+        
         if self.state_timer >= work_time_needed:
             # Complete the work on this tile
+            print(f"Employee {self.name}: Work timer reached {self.state_timer:.1f}s (needed {work_time_needed:.1f}s) - executing work on ({tile.x}, {tile.y})")
             if self._perform_work_on_tile(tile, grid_manager):
                 self._complete_current_tile()
             else:
@@ -329,14 +336,28 @@ class Employee:
             return False
         
         task_type = self.current_task['type']
+        print(f"Employee {self.name}: Performing work - task_type: '{task_type}' (type: {type(task_type)})")
         
-        if task_type == 'till' and tile.can_till():
-            return tile.till()
-        elif task_type == 'plant' and tile.can_plant():
+        # Handle both old format ('till') and new work order format ('tilling')
+        if task_type in ['till', 'tilling']:
+            if tile.can_till():
+                success = tile.till()
+                if success:
+                    print(f"Employee {self.name}: Successfully tilled plot ({tile.x}, {tile.y}) - terrain now: {tile.terrain_type}")
+                else:
+                    print(f"Employee {self.name}: Failed to till plot ({tile.x}, {tile.y})")
+                return success
+            else:
+                print(f"Employee {self.name}: Cannot till plot ({tile.x}, {tile.y}) - terrain: {tile.terrain_type}, crop: {tile.current_crop}, occupied: {tile.is_occupied}")
+                return False
+        elif task_type in ['plant', 'planting'] and tile.can_plant():
             # Get crop type from current task, default to corn for backward compatibility
             crop_type = self.current_task.get('crop_type', DEFAULT_CROP_TYPE)
-            return tile.plant(crop_type)
-        elif task_type == 'harvest' and tile.can_harvest():
+            success = tile.plant(crop_type)
+            if success:
+                print(f"Employee {self.name}: Successfully planted {crop_type} at ({tile.x}, {tile.y})")
+            return success
+        elif task_type in ['harvest', 'harvesting'] and tile.can_harvest():
             crop_type, yield_amount = tile.harvest(grid_manager)  # Pass grid_manager for building bonuses
             if yield_amount > 0:
                 # Direct synchronous harvest processing to avoid race conditions
@@ -376,6 +397,7 @@ class Employee:
             # Clear task assignment from tile
             current_tile.task_assignment = None
             current_tile.task_assigned_to = None
+            print(f"Employee {self.name}: Completed work on tile ({current_tile.x}, {current_tile.y}), terrain now: {current_tile.terrain_type}")
         
         # Find next tile to work on
         remaining_tiles = [t for t in self.current_task['tiles'] 
@@ -387,9 +409,26 @@ class Employee:
             self._move_to_tile(next_tile.x, next_tile.y)
         else:
             # Task completed
+            completed_task = self.current_task.copy()  # Store reference before clearing
             self.current_task['status'] = 'completed'
             self.current_task = None
+            
+            # Notify completion for work order tracking
+            self._notify_task_completion(completed_task)
+            
             self._start_next_task()
+    
+    def _notify_task_completion(self, completed_task):
+        """Notify external systems about task completion"""
+        if hasattr(self, '_completion_callback') and self._completion_callback:
+            try:
+                self._completion_callback(self.id, completed_task)
+            except Exception as e:
+                print(f"Employee {self.name}: Task completion notification failed: {e}")
+    
+    def set_completion_callback(self, callback):
+        """Set callback for task completion notifications"""
+        self._completion_callback = callback
     
     def _cleanup_completed_tasks(self):
         """Remove completed tasks from the assigned_tasks list to prevent queue buildup"""

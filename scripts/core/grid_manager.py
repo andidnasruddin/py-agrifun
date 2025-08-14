@@ -109,10 +109,15 @@ class Tile:
     
     def till(self):
         """Till the soil"""
+        print(f"Tile.till() called on ({self.x}, {self.y}) - terrain: {self.terrain_type}, can_till: {self.can_till()}")
         if self.can_till():
+            print(f"Tile ({self.x}, {self.y}): Changing terrain from {self.terrain_type} to tilled")
             self.terrain_type = 'tilled'
+            print(f"Tile ({self.x}, {self.y}): Terrain changed to {self.terrain_type}")
             return True
-        return False
+        else:
+            print(f"Tile ({self.x}, {self.y}): Cannot till - terrain: {self.terrain_type}, crop: {self.current_crop}, occupied: {self.is_occupied}")
+            return False
     
     def plant(self, crop_type: str = 'corn'):
         """Plant a crop with soil health effects and rotation bonuses"""

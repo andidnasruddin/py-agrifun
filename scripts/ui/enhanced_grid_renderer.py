@@ -50,6 +50,7 @@ class EnhancedGridRenderer:
         self.show_soil_health_overlay = False
         self.show_irrigation_overlay = False
         self.show_building_efficiency = False
+        self.show_work_order_overlay = True  # Show work order assignments by default
         self.grid_line_alpha = 128  # Semi-transparent grid lines
         
         # Rendering optimization
@@ -62,6 +63,13 @@ class EnhancedGridRenderer:
             'active': (64, 164, 223, 180),    # Water blue with transparency
             'inactive': (128, 128, 128, 100), # Gray with transparency
             'pending': (255, 255, 0, 150)     # Yellow with transparency
+        }
+        self.work_order_colors = {
+            'tilling': (139, 69, 19, 80),      # Brown with reduced transparency for tilling
+            'planting': (34, 139, 34, 80),     # Green with reduced transparency for planting  
+            'harvesting': (255, 215, 0, 80),  # Gold with reduced transparency for harvesting
+            'watering': (30, 144, 255, 80),    # Blue with reduced transparency for watering
+            'fertilizing': (255, 165, 0, 80)  # Orange with reduced transparency for fertilizing
         }
         
         print("Enhanced Grid Renderer initialized with zoom/pan and advanced visualization")
@@ -236,6 +244,9 @@ class EnhancedGridRenderer:
         
         if self.show_building_efficiency:
             self._render_building_efficiency_overlay(screen, visible_tiles)
+        
+        if self.show_work_order_overlay:
+            self._render_work_order_overlay(screen, visible_tiles)
         
         # Render tile details based on zoom level
         self._render_tile_details(screen, visible_tiles)
@@ -421,6 +432,49 @@ class EnhancedGridRenderer:
         """Render building efficiency radius overlay when enabled"""
         # Implementation for building efficiency visualization
         pass
+    
+    def _render_work_order_overlay(self, screen: pygame.Surface, visible_tiles: Dict[str, int]):
+        """Render work order assignments with color-coded task types"""
+        scaled_tile_size = int(TILE_SIZE * self.zoom_factor)
+        
+        # Create overlay surface with per-pixel alpha
+        overlay = pygame.Surface((self.available_width, self.available_height), pygame.SRCALPHA)
+        
+        for y in range(visible_tiles['start_y'], visible_tiles['end_y']):
+            for x in range(visible_tiles['start_x'], visible_tiles['end_x']):
+                tile = self.grid_manager.grid[y][x]
+                
+                # Check if tile has task assignment (work order)
+                if hasattr(tile, 'task_assignment') and tile.task_assignment:
+                    task_type = tile.task_assignment.lower()
+                    
+                    # Get color for this task type
+                    color = self.work_order_colors.get(task_type, (200, 200, 200, 80))  # Default gray
+                    
+                    # Calculate screen position relative to overlay
+                    screen_x = int(x * scaled_tile_size + self.pan_offset_x)
+                    screen_y = int(y * scaled_tile_size + self.pan_offset_y)
+                    
+                    # Create tile rectangle
+                    tile_rect = pygame.Rect(screen_x, screen_y, scaled_tile_size, scaled_tile_size)
+                    
+                    # For tilling tasks that have already been completed, show only a border
+                    # to let the tilled soil color show through
+                    if (task_type == 'till' and 
+                        hasattr(tile, 'terrain_type') and 
+                        tile.terrain_type == 'tilled'):
+                        # Completed tilling - show strong border only
+                        border_color = (color[0], color[1], color[2], 200)
+                        pygame.draw.rect(overlay, border_color, tile_rect, max(2, int(self.zoom_factor * 2)))
+                    else:
+                        # Active work order - show light overlay + border
+                        pygame.draw.rect(overlay, color, tile_rect)
+                        # Draw border to make work orders more visible
+                        border_color = (color[0], color[1], color[2], min(255, color[3] + 80))
+                        pygame.draw.rect(overlay, border_color, tile_rect, max(1, int(self.zoom_factor)))
+        
+        # Blit the overlay to the screen
+        screen.blit(overlay, (0, self.hud_height))
     
     def _render_tile_details(self, screen: pygame.Surface, visible_tiles: Dict[str, int]):
         """Render detailed tile information when zoomed in enough"""

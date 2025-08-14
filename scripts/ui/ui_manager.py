@@ -37,6 +37,9 @@ class UIManager:
         # UI state
         self.show_debug = True
         
+        # Crop selection state
+        self.current_crop_type = DEFAULT_CROP_TYPE  # Initialize crop type for planting
+        
         # Applicant panel state
         self.current_applicants = []
         
@@ -96,6 +99,9 @@ class UIManager:
             WINDOW_WIDTH,
             WINDOW_HEIGHT
         )
+        
+        # Task integration reference (set later by game manager)
+        self.task_integration = None
         
         # Keep smart action system for advanced farming actions (can coexist)
         self.smart_action_system = SmartActionSystem(
@@ -203,6 +209,14 @@ class UIManager:
         self.event_system.emit('get_employee_count', {})
         
         print("UI Manager initialized with pygame-gui, enhanced HUD, and improved contrast theme")
+    
+    def set_task_integration(self, task_integration):
+        """Set the task integration system for direct access to work orders"""
+        self.task_integration = task_integration
+        # Pass the reference to the task assignment modal
+        if hasattr(self.task_assignment_modal, 'set_task_integration'):
+            self.task_assignment_modal.set_task_integration(task_integration)
+        print("UI Manager: Task integration system connected")
     
     def _setup_improved_theme(self):
         """Set up improved theme with better text contrast"""
@@ -1307,6 +1321,21 @@ class UIManager:
         # Let task assignment modal handle events first
         if self.task_assignment_modal.handle_event(event):
             return  # Event was handled by task assignment modal
+        
+        # Handle keyboard shortcuts for task assignment
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_t:
+                print("T key pressed - assigning till task")
+                self.event_system.emit('assign_task_to_selection', {'task_type': 'till'})
+                return
+            elif event.key == pygame.K_p:
+                print("P key pressed - assigning plant task")
+                self.event_system.emit('assign_task_to_selection', {'task_type': 'plant'})
+                return
+            elif event.key == pygame.K_h:
+                print("H key pressed - assigning harvest task")
+                self.event_system.emit('assign_task_to_selection', {'task_type': 'harvest'})
+                return
         
         # Handle our custom events
         if event.type == pygame_gui.UI_WINDOW_CLOSE:
