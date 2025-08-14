@@ -24,6 +24,9 @@
       "Bash(rg:*)"
     ],
     "deny": [],
-    "defaultMode": "acceptEdits"
+    "defaultMode": "acceptEdits",
+    "additionalDirectories": [
+      "C:\\c\\Users\\dirha\\Documents\\GameCreator"
+    ]
   }
 }

@@ -77,6 +77,9 @@ class WorkOrderManager:
         # Employee events
         self.event_system.subscribe('employee_hired', self._handle_employee_hired)
         self.event_system.subscribe('employee_fired', self._handle_employee_fired)
+        
+        # Multi-employee assignment events
+        self.event_system.subscribe('multi_employee_work_order_assignment', self._handle_multi_employee_assignment)
     
     def create_work_order(self, 
                          task_type: TaskType, 
@@ -168,20 +171,43 @@ class WorkOrderManager:
         
         return work_order
     
+    def _get_available_employees_direct(self, work_order: WorkOrder) -> List[Dict]:
+        """
+        Get available employees directly without going through event system
+        This avoids recursion issues during event processing
+        """
+        if not hasattr(self, 'task_integration') or not self.task_integration.employee_manager:
+            return []
+        
+        available_employees = []
+        for emp_id, employee in self.task_integration.employee_manager.employees.items():
+            if self.task_integration._is_employee_available(employee):
+                emp_data = {
+                    'id': emp_id,
+                    'name': employee.name,
+                    'task_efficiency': {}
+                }
+                
+                # Add specialization data if available
+                if ENABLE_EMPLOYEE_SPECIALIZATIONS and hasattr(employee, 'get_task_efficiency'):
+                    for task_type in TaskType:
+                        emp_data['task_efficiency'][task_type.value] = employee.get_task_efficiency(task_type.value)
+                
+                available_employees.append(emp_data)
+        
+        return available_employees
+    
     def _auto_assign_work_order(self, work_order: WorkOrder) -> Optional[str]:
         """
         Automatically assign work order to the best available employee
         Uses employee specializations to find optimal assignment
         """
-        # Get available employees through event system
-        available_employees = []
+        # Get available employees directly (bypass event system for synchronous access)
+        available_employees = self._get_available_employees_direct(work_order)
         
-        # Emit request for available employees
-        self.event_system.emit('get_available_employees_for_work_order', {
-            'work_order_id': work_order.id,
-            'task_type': work_order.task_type.value,
-            'callback': lambda employees: available_employees.extend(employees)
-        })
+        # Debug: Check what we received (can be removed in production)
+        if available_employees:
+            print(f"Auto-assigning work order to {available_employees[0].get('name', 'Unknown')}")
         
         if not available_employees:
             print(f"No available employees for work order {work_order.id}")
@@ -261,6 +287,66 @@ class WorkOrderManager:
         print(f"Assigned work order {work_order_id} to employee {employee_id}")
         return True
     
+    def assign_employee_to_work_order(self, work_order_id: str, employee_id: str, employee_skills: Dict = None) -> bool:
+        """Assign an additional employee to a work order (multi-employee support)"""
+        work_order = self.get_work_order(work_order_id)
+        if not work_order:
+            print(f"Work order {work_order_id} not found for multi-employee assignment")
+            return False
+        
+        # Use the new multi-employee assignment method from WorkOrder
+        success = work_order.assign_employee(employee_id)
+        if not success:
+            print(f"Employee {employee_id} already assigned to work order {work_order_id}")
+            return False
+        
+        # Update tracking
+        if employee_id not in self.employee_assignments:
+            self.employee_assignments[employee_id] = []
+        if work_order_id not in self.employee_assignments[employee_id]:
+            self.employee_assignments[employee_id].append(work_order_id)
+        
+        # Distribute plots based on skills if multiple employees
+        if len(work_order.assigned_employee_ids) > 1 and employee_skills:
+            skill_levels = {emp_id: employee_skills.get(emp_id, 1.0) 
+                           for emp_id in work_order.assigned_employee_ids}
+            work_order.distribute_plots_by_skill(skill_levels)
+            
+        # Emit multi-employee assignment event
+        self.event_system.emit('work_order_multi_assigned', {
+            'work_order_id': work_order_id,
+            'employee_id': employee_id,
+            'total_employees': len(work_order.assigned_employee_ids),
+            'task_type': work_order.task_type.value
+        })
+        
+        print(f"Added employee {employee_id} to work order {work_order_id} ({len(work_order.assigned_employee_ids)} total employees)")
+        return True
+    
+    def remove_employee_from_work_order(self, work_order_id: str, employee_id: str) -> bool:
+        """Remove an employee from a work order"""
+        work_order = self.get_work_order(work_order_id)
+        if not work_order:
+            return False
+        
+        success = work_order.remove_employee(employee_id)
+        if not success:
+            return False
+        
+        # Update tracking
+        if employee_id in self.employee_assignments:
+            if work_order_id in self.employee_assignments[employee_id]:
+                self.employee_assignments[employee_id].remove(work_order_id)
+        
+        # Redistribute plots among remaining employees
+        if len(work_order.assigned_employee_ids) > 0:
+            # Would need employee skill data for redistribution
+            # For now, just emit event for external handling
+            pass
+        
+        print(f"Removed employee {employee_id} from work order {work_order_id}")
+        return True
+    
     def complete_work_order(self, work_order_id: str) -> bool:
         """Mark a work order as completed"""
         work_order = self.get_work_order(work_order_id)
@@ -287,11 +373,23 @@ class WorkOrderManager:
             if plot in self.plot_assignments:
                 del self.plot_assignments[plot]
         
-        # Remove from employee assignments
+        # Remove from all employee assignments (support multi-employee work orders)
+        employees_to_clean = set()
+        
+        # Add primary assigned employee
         if work_order.assigned_employee_id:
-            employee_orders = self.employee_assignments.get(work_order.assigned_employee_id, [])
+            employees_to_clean.add(work_order.assigned_employee_id)
+        
+        # Add all multi-assigned employees
+        if hasattr(work_order, 'assigned_employee_ids'):
+            employees_to_clean.update(work_order.assigned_employee_ids)
+        
+        # Clean up assignments for all employees
+        for employee_id in employees_to_clean:
+            employee_orders = self.employee_assignments.get(employee_id, [])
             if work_order_id in employee_orders:
                 employee_orders.remove(work_order_id)
+                print(f"Removed work order {work_order_id} from employee {employee_id} assignments")
         
         # Emit completion event
         self.event_system.emit('work_order_completed', {
@@ -434,6 +532,7 @@ class WorkOrderManager:
         """Handle employee finishing a task"""
         work_order_id = event_data.get('work_order_id')
         employee_id = event_data.get('employee_id')
+        completed_tiles = event_data.get('completed_tiles', 0)
         
         if not work_order_id:
             return  # Not a work order task
@@ -443,17 +542,23 @@ class WorkOrderManager:
             print(f"Work order {work_order_id} not found for completion")
             return
         
-        # Mark work order as completed
-        if self.complete_work_order(work_order_id):
-            print(f"✓ Work order {work_order_id} completed by employee {employee_id}")
-            
-            # Emit completion event for UI refresh
-            self.event_system.emit('work_order_completed', {
-                'work_order_id': work_order_id,
-                'employee_id': employee_id
-            })
+        print(f"Employee {employee_id} completed their portion of work order {work_order_id} ({completed_tiles} tiles)")
+        
+        # Check if ALL plots in the work order are actually completed by checking the grid
+        if self._is_work_order_fully_completed(work_order):
+            print(f"All plots completed - marking work order {work_order_id} as complete")
+            if self.complete_work_order(work_order_id):
+                print(f"Work order {work_order_id} fully completed")
+                
+                # Emit completion event for UI refresh
+                self.event_system.emit('work_order_completed', {
+                    'work_order_id': work_order_id,
+                    'employee_id': employee_id
+                })
+            else:
+                print(f"✗ Failed to complete work order {work_order_id}")
         else:
-            print(f"✗ Failed to complete work order {work_order_id}")
+            print(f"Work order {work_order_id} still has uncompleted plots - keeping active")
     
     def _handle_crop_ready(self, event_data):
         """Handle crops becoming ready for harvest - auto-generate work orders"""
@@ -497,6 +602,101 @@ class WorkOrderManager:
                     order.assigned_employee_id = None
                     order.assigned_at = None
                     print(f"Work order {order_id} needs reassignment (employee fired)")
+    
+    def _handle_multi_employee_assignment(self, event_data):
+        """Handle multi-employee work order assignment events"""
+        work_order_id = event_data.get('work_order_id')
+        employee_id = event_data.get('employee_id')
+        action = event_data.get('action', 'assign')
+        
+        if not work_order_id or not employee_id:
+            print("Invalid multi-employee assignment event data")
+            return
+        
+        if action == 'assign':
+            # Get employee skill data for plot distribution
+            employee_skills = self._get_employee_skills_for_distribution(work_order_id)
+            success = self.assign_employee_to_work_order(work_order_id, employee_id, employee_skills)
+            
+            if success:
+                # Emit work order assignment for task integration
+                work_order = self.get_work_order(work_order_id)
+                if work_order:
+                    self.event_system.emit('work_order_assigned', {
+                        'work_order_id': work_order_id,
+                        'employee_id': employee_id,
+                        'task_type': work_order.task_type.value
+                    })
+        elif action == 'remove':
+            self.remove_employee_from_work_order(work_order_id, employee_id)
+    
+    def _get_employee_skills_for_distribution(self, work_order_id: str) -> Dict[str, float]:
+        """Get employee skill levels for plot distribution"""
+        work_order = self.get_work_order(work_order_id)
+        if not work_order:
+            return {}
+        
+        # Request skill data from employee system
+        # For now, return default values - this would be enhanced with actual skill data
+        skill_levels = {}
+        for emp_id in work_order.assigned_employee_ids:
+            # Default skill level - would be replaced with actual skill query
+            skill_levels[emp_id] = 1.0
+        
+        return skill_levels
+    
+    def _is_work_order_fully_completed(self, work_order: WorkOrder) -> bool:
+        """Check if all plots in a work order have been completed"""
+        if not work_order or not work_order.assigned_plots:
+            return True  # No plots means complete
+        
+        # Get grid manager to check actual plot status
+        grid_manager = None
+        if hasattr(self, 'task_integration') and self.task_integration:
+            grid_manager = self.task_integration.grid_manager
+        
+        if not grid_manager:
+            print(f"Cannot verify work order completion: No grid manager available")
+            return False  # Cannot verify, keep work order active
+        
+        completed_plots = 0
+        total_plots = len(work_order.assigned_plots)
+        
+        for plot_coord in work_order.assigned_plots:
+            x, y = plot_coord
+            if 0 <= x < 16 and 0 <= y < 16:  # GRID_WIDTH/HEIGHT validation
+                tile = grid_manager.get_tile(x, y)
+                if tile and self._is_plot_work_completed(tile, work_order.task_type.value):
+                    completed_plots += 1
+        
+        print(f"Work order completion check: {completed_plots}/{total_plots} plots completed")
+        return completed_plots == total_plots
+    
+    def _is_plot_work_completed(self, tile, task_type: str) -> bool:
+        """Check if a specific plot has the required work completed"""
+        try:
+            # Convert enhanced task type to legacy for checking
+            from .task_models import TaskType, convert_to_legacy_task
+            if task_type in [tt.value for tt in TaskType]:
+                # Convert enhanced task type back to legacy
+                task_enum = TaskType(task_type)
+                legacy_task = convert_to_legacy_task(task_enum)
+            else:
+                legacy_task = task_type.lower()
+            
+            # Use the same logic as employee collision detection
+            if legacy_task == 'till' or legacy_task == 'tilling':
+                return tile.terrain_type == 'tilled' or tile.current_crop is not None
+            elif legacy_task == 'plant' or legacy_task == 'planting':
+                return tile.current_crop is not None
+            elif legacy_task == 'harvest' or legacy_task == 'harvesting':
+                return tile.current_crop is None or tile.growth_stage < 4
+            else:
+                return False  # Unknown task type
+                
+        except Exception as e:
+            print(f"Error checking plot completion: {e}")
+            return False
     
     def get_status_summary(self) -> Dict[str, Any]:
         """Get comprehensive status summary for UI display"""

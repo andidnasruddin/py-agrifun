@@ -427,7 +427,7 @@ class EmployeeManager:
             effective_dt = dt
             
         for employee in self.employees.values():
-            employee.update(effective_dt, self.grid_manager)
+            employee.update(effective_dt, self.grid_manager, self)
             
             # Check if employee should seek buildings for their needs
             employee.check_and_seek_building()

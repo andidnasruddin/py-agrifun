@@ -127,8 +127,10 @@ class WorkOrder:
     required_certifications: List[str] = field(default_factory=list)
     required_equipment: List[str] = field(default_factory=list)
     
-    # Assignment
-    assigned_employee_id: Optional[str] = None
+    # Assignment (Enhanced for Multiple Employees)
+    assigned_employee_id: Optional[str] = None  # Legacy compatibility
+    assigned_employee_ids: List[str] = field(default_factory=list)  # Multiple employees
+    employee_assignments: Dict[str, Dict] = field(default_factory=dict)  # employee_id -> assignment details
     assigned_at: Optional[datetime] = None
     
     # Progress tracking
@@ -150,7 +152,7 @@ class WorkOrder:
     @property
     def is_assigned(self) -> bool:
         """Check if work order is assigned to an employee"""
-        return self.assigned_employee_id is not None
+        return self.assigned_employee_id is not None or len(self.assigned_employee_ids) > 0
     
     @property
     def is_in_progress(self) -> bool:
@@ -190,6 +192,102 @@ class WorkOrder:
             self.estimated_duration = base_time
         
         return self.estimated_duration
+    
+    # Multi-Employee Management Methods
+    def assign_employee(self, employee_id: str, plot_allocation: List[tuple] = None) -> bool:
+        """Assign an employee to this work order with optional plot allocation"""
+        if employee_id in self.assigned_employee_ids:
+            return False  # Already assigned
+        
+        self.assigned_employee_ids.append(employee_id)
+        
+        # Setup assignment details
+        self.employee_assignments[employee_id] = {
+            'assigned_at': datetime.now(),
+            'allocated_plots': plot_allocation or [],
+            'progress': 0.0,
+            'status': 'assigned'
+        }
+        
+        # Legacy compatibility
+        if not self.assigned_employee_id:
+            self.assigned_employee_id = employee_id
+            self.assigned_at = datetime.now()
+        
+        return True
+    
+    def remove_employee(self, employee_id: str) -> bool:
+        """Remove an employee from this work order"""
+        if employee_id not in self.assigned_employee_ids:
+            return False
+        
+        self.assigned_employee_ids.remove(employee_id)
+        del self.employee_assignments[employee_id]
+        
+        # Legacy compatibility cleanup
+        if self.assigned_employee_id == employee_id:
+            self.assigned_employee_id = self.assigned_employee_ids[0] if self.assigned_employee_ids else None
+        
+        return True
+    
+    def get_employee_assignment(self, employee_id: str) -> Optional[Dict]:
+        """Get assignment details for a specific employee"""
+        return self.employee_assignments.get(employee_id)
+    
+    def get_assigned_employee_count(self) -> int:
+        """Get total number of assigned employees"""
+        return len(self.assigned_employee_ids)
+    
+    def distribute_plots_by_skill(self, employee_skills: Dict[str, float]) -> Dict[str, List[tuple]]:
+        """Distribute plots among assigned employees based on their skill levels"""
+        if not self.assigned_employee_ids or not self.assigned_plots:
+            return {}
+        
+        # Calculate capacity ratios based on skills
+        total_capacity = 0
+        capacities = {}
+        
+        for emp_id in self.assigned_employee_ids:
+            skill_multiplier = employee_skills.get(emp_id, 1.0)
+            capacities[emp_id] = skill_multiplier
+            total_capacity += skill_multiplier
+        
+        # Distribute plots based on capacity ratios
+        plot_assignments = {emp_id: [] for emp_id in self.assigned_employee_ids}
+        total_plots = len(self.assigned_plots)
+        assigned_plots = 0
+        
+        for emp_id, capacity in capacities.items():
+            if total_capacity == 0:
+                plots_for_employee = total_plots // len(self.assigned_employee_ids)
+            else:
+                ratio = capacity / total_capacity
+                plots_for_employee = int(total_plots * ratio)
+            
+            # Assign plots to this employee
+            start_idx = assigned_plots
+            end_idx = min(start_idx + plots_for_employee, total_plots)
+            plot_assignments[emp_id] = self.assigned_plots[start_idx:end_idx]
+            assigned_plots = end_idx
+        
+        # Distribute remaining plots to most skilled employees
+        remaining_plots = self.assigned_plots[assigned_plots:]
+        if remaining_plots:
+            # Sort employees by skill (highest first)
+            sorted_employees = sorted(self.assigned_employee_ids, 
+                                    key=lambda x: capacities[x], 
+                                    reverse=True)
+            
+            for i, plot in enumerate(remaining_plots):
+                emp_id = sorted_employees[i % len(sorted_employees)]
+                plot_assignments[emp_id].append(plot)
+        
+        # Update assignment details
+        for emp_id, plots in plot_assignments.items():
+            if emp_id in self.employee_assignments:
+                self.employee_assignments[emp_id]['allocated_plots'] = plots
+        
+        return plot_assignments
 
 
 @dataclass

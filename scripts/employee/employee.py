@@ -101,11 +101,14 @@ class Employee:
     
     def assign_task(self, task_type: str, target_tiles: List, **kwargs):
         """Assign a new task to the employee with optional parameters"""
+        from datetime import datetime
+        
         task = {
             'type': task_type,
             'tiles': target_tiles,
             'completed_tiles': [],
             'status': 'pending',
+            'assigned_at': datetime.now(),  # Track assignment time for FIFO ordering
             **kwargs  # Allow additional task parameters like crop_type
         }
         self.assigned_tasks.append(task)
@@ -116,14 +119,25 @@ class Employee:
             self._start_next_task()
     
     def _start_next_task(self):
-        """Start working on the next available task"""
+        """Start working on the next available task in FIFO order"""
         if not self.assigned_tasks:
             self.current_task = None
             self.state = EmployeeState.IDLE
             return
         
-        # Find first incomplete task
-        for task in self.assigned_tasks:
+        # Sort tasks by assignment time to ensure FIFO order (first assigned = first completed)
+        pending_tasks = [task for task in self.assigned_tasks if task['status'] == 'pending']
+        if not pending_tasks:
+            self.current_task = None
+            self.state = EmployeeState.IDLE
+            return
+        
+        # Sort by assigned_at timestamp for true FIFO behavior
+        pending_tasks.sort(key=lambda t: t.get('assigned_at', t.get('work_order_id', '')))
+        print(f"Employee {self.name}: Processing {len(pending_tasks)} pending tasks in FIFO order")
+        
+        # Find first task with available work
+        for task in pending_tasks:
             if task['status'] == 'pending':
                 remaining_tiles = [t for t in task['tiles'] 
                                  if t not in task['completed_tiles']]
@@ -132,10 +146,18 @@ class Employee:
                     task['status'] = 'in_progress'
                     print(f"Employee {self.name}: Starting {task['type']} task with {len(remaining_tiles)} tiles remaining")
                     
-                    # Move to first tile that needs work
-                    target_tile = remaining_tiles[0]
-                    self._move_to_tile(target_tile.x, target_tile.y)
-                    return
+                    # Find first available tile (not occupied by other employees)
+                    target_tile = self._find_available_tile(remaining_tiles, self._current_employee_manager)
+                    if target_tile:
+                        self._move_to_tile(target_tile.x, target_tile.y)
+                        return
+                    else:
+                        # All tiles occupied, wait and retry later
+                        print(f"Employee {self.name}: All tiles occupied, waiting...")
+                        self.state = EmployeeState.IDLE
+                        # Set a retry timer
+                        self.task_retry_timer = 2.0  # Retry in 2 seconds
+                        return
                 else:
                     task['status'] = 'completed'
         
@@ -143,12 +165,103 @@ class Employee:
         self.current_task = None
         self.state = EmployeeState.IDLE
     
+    def _find_available_tile(self, tiles: List, employee_manager=None):
+        """Find the first tile not currently occupied by another employee"""
+        for tile in tiles:
+            if not self._is_tile_occupied(tile, employee_manager):
+                return tile
+        return None
+    
+    def _is_tile_occupied(self, tile, employee_manager=None) -> bool:
+        """Check if a tile is currently occupied by another employee or already completed for current task"""
+        # First check if the work is already completed for the current task type
+        if self.current_task and self._is_tile_work_completed(tile, self.current_task.get('type')):
+            tile_coord = (int(tile.x), int(tile.y))
+            print(f"Employee {self.name}: Tile ({tile_coord[0]},{tile_coord[1]}) work already completed for {self.current_task.get('type')}")
+            return True
+        
+        # Check if tile has a task assignment to another employee
+        if hasattr(tile, 'task_assigned_to') and tile.task_assigned_to and tile.task_assigned_to != self.id:
+            return True
+        
+        # Check if any other employee is currently working on this tile
+        tile_coord = (int(tile.x), int(tile.y))
+        
+        if employee_manager:
+            # Check all other employees to see if they're working on this tile
+            for emp_id, employee in employee_manager.employees.items():
+                if emp_id != self.id:  # Don't check ourselves
+                    # Check if this employee is working on this coordinate
+                    if (employee.state == EmployeeState.WORKING and
+                        hasattr(employee, 'target_x') and hasattr(employee, 'target_y') and
+                        int(employee.x) == tile_coord[0] and int(employee.y) == tile_coord[1]):
+                        print(f"Employee {self.name}: Tile ({tile_coord[0]},{tile_coord[1]}) occupied by {employee.name}")
+                        return True
+                    
+                    # Check occupied tiles set
+                    if hasattr(employee, 'occupied_tiles') and tile_coord in employee.occupied_tiles:
+                        print(f"Employee {self.name}: Tile ({tile_coord[0]},{tile_coord[1]}) marked as occupied by {employee.name}")
+                        return True
+        
+        return False
+    
+    def _is_tile_work_completed(self, tile, task_type: str) -> bool:
+        """Check if the tile already has the required work completed for the given task type"""
+        if not tile or not task_type:
+            return False
+            
+        try:
+            # Check based on task type and agricultural workflow
+            if task_type == 'till' or task_type == 'tilling':
+                # Tilling is complete if terrain is already tilled or has crops
+                return tile.terrain_type == 'tilled' or tile.current_crop is not None
+                
+            elif task_type == 'plant' or task_type == 'planting':
+                # Planting is complete if tile already has a crop
+                return tile.current_crop is not None
+                
+            elif task_type == 'harvest' or task_type == 'harvesting':
+                # Harvesting is complete if tile has no crop or crop is not mature
+                if tile.current_crop is None:
+                    return True  # Nothing to harvest
+                # Check if crop is mature (growth_stage 4 is harvestable)
+                return tile.growth_stage < 4  # Not ready to harvest yet
+                
+            else:
+                # For other task types, assume they need to be done
+                return False
+                
+        except Exception as e:
+            print(f"Error checking tile work completion: {e}")
+            return False
+    
+    def _mark_tile_occupied(self, x: int, y: int, occupied: bool):
+        """Mark a tile as occupied or released by this employee"""
+        # This would ideally be handled by the grid manager
+        # For now, we'll track occupation in the employee system
+        if not hasattr(self, 'occupied_tiles'):
+            self.occupied_tiles = set()
+        
+        tile_coord = (x, y)
+        if occupied:
+            self.occupied_tiles.add(tile_coord)
+            print(f"Employee {self.name}: Marking tile ({x},{y}) as occupied")
+        else:
+            self.occupied_tiles.discard(tile_coord)
+            print(f"Employee {self.name}: Released tile ({x},{y})")
+        
+        # Also try to set tile property if accessible
+        # This requires grid manager integration
+        # TODO: Integrate with grid manager for proper tile occupation tracking
+    
     def _move_to_tile(self, grid_x: int, grid_y: int):
         """Start moving to a specific grid tile using efficient direct movement"""
         if abs(self.x - grid_x) < 0.1 and abs(self.y - grid_y) < 0.1:
             # Already at target (within tolerance)
             self.state = EmployeeState.WORKING
             self.state_timer = 0.0
+            # Mark tile as occupied
+            self._mark_tile_occupied(grid_x, grid_y, True)
             return
         
         # Simple, efficient direct movement
@@ -159,8 +272,11 @@ class Employee:
         
         print(f"Employee {self.name}: Moving to ({grid_x}, {grid_y})")
     
-    def update(self, dt: float, grid_manager):
+    def update(self, dt: float, grid_manager, employee_manager=None):
         """Update employee AI and needs"""
+        # Store employee manager reference for collision detection
+        self._current_employee_manager = employee_manager
+        
         # Clean up completed tasks first
         self._cleanup_completed_tasks()
         
@@ -293,6 +409,8 @@ class Employee:
             self.y = self.target_y
             self.state = EmployeeState.WORKING
             self.state_timer = 0.0
+            # Mark tile as occupied
+            self._mark_tile_occupied(self.target_x, self.target_y, True)
         else:
             # Move closer
             self.x += (dx / distance) * move_distance
@@ -398,15 +516,24 @@ class Employee:
             current_tile.task_assignment = None
             current_tile.task_assigned_to = None
             print(f"Employee {self.name}: Completed work on tile ({current_tile.x}, {current_tile.y}), terrain now: {current_tile.terrain_type}")
+            
+            # Release tile occupation
+            self._mark_tile_occupied(current_tile.x, current_tile.y, False)
         
         # Find next tile to work on
         remaining_tiles = [t for t in self.current_task['tiles'] 
                           if t not in self.current_task['completed_tiles']]
         
         if remaining_tiles:
-            # Move to next tile
-            next_tile = remaining_tiles[0]
-            self._move_to_tile(next_tile.x, next_tile.y)
+            # Find next available tile (not occupied by other employees)
+            next_tile = self._find_available_tile(remaining_tiles, self._current_employee_manager)
+            if next_tile:
+                self._move_to_tile(next_tile.x, next_tile.y)
+            else:
+                # All remaining tiles occupied, wait and retry later
+                print(f"Employee {self.name}: All remaining tiles occupied, pausing...")
+                self.state = EmployeeState.IDLE
+                self.state_timer = 0.0
         else:
             # Task completed
             completed_task = self.current_task.copy()  # Store reference before clearing

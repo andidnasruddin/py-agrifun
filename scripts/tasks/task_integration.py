@@ -44,6 +44,8 @@ class TaskSystemIntegration:
         try:
             # Create work order manager
             self.work_order_manager = WorkOrderManager(self.event_system)
+            # Inject reference to task integration for direct employee access
+            self.work_order_manager.task_integration = self
             
             # Create dynamic work order generator if enabled
             if ENABLE_DYNAMIC_TASK_GENERATION:
@@ -95,6 +97,7 @@ class TaskSystemIntegration:
     
     def _assign_via_work_orders(self, task_type: str, plot_coords: List, employee_id: str = None) -> bool:
         """Assign task using work order system"""
+        
         if not self.work_order_manager:
             return False
         
@@ -246,19 +249,40 @@ class TaskSystemIntegration:
     def get_active_work_orders(self) -> List[Dict]:
         """Get active work orders for UI display"""
         if not ENABLE_WORK_ORDERS or not self.work_order_manager:
-            print("DEBUG: Work orders disabled or no work order manager")
             return []
-        
-        print(f"DEBUG: Work order manager has {len(self.work_order_manager.active_orders)} active orders")
         
         work_orders = []
         for order in self.work_order_manager.active_orders:
+            # Get assigned employees in the format expected by UI (support multi-employee)
+            assigned_employees = []
+            
+            # Check for multi-employee assignments first
+            if hasattr(order, 'assigned_employee_ids') and order.assigned_employee_ids:
+                for emp_id in order.assigned_employee_ids:
+                    employee_name = self._get_employee_name(emp_id)
+                    if employee_name:
+                        # Get individual employee progress if available
+                        emp_progress = order.employee_assignments.get(emp_id, {}).get('progress', order.progress)
+                        assigned_employees.append({
+                            'name': employee_name,
+                            'progress': emp_progress
+                        })
+            # Fall back to single employee assignment
+            elif order.assigned_employee_id:
+                employee_name = self._get_employee_name(order.assigned_employee_id)
+                if employee_name:
+                    assigned_employees.append({
+                        'name': employee_name,
+                        'progress': order.progress
+                    })
+            
             work_orders.append({
                 'id': order.id,
                 'task_type': order.task_type.value,
                 'plot_count': len(order.assigned_plots),
                 'priority': order.priority.name,
-                'assigned_to': self._get_employee_name(order.assigned_employee_id),
+                'status': 'Assigned' if (order.assigned_employee_id or (hasattr(order, 'assigned_employee_ids') and order.assigned_employee_ids)) else 'Unassigned',
+                'assigned_employees': assigned_employees,
                 'deadline': self._format_deadline(order.deadline),
                 'progress': order.progress,
                 'estimated_duration': order.estimated_duration
@@ -337,15 +361,22 @@ class TaskSystemIntegration:
     
     def _handle_selection_assignment(self, event_data):
         """Handle assignment to selected tiles"""
-        task_type = event_data.get('task_type')
-        
-        if self.grid_manager and hasattr(self.grid_manager, 'selected_tiles'):
-            success = self.assign_task(task_type, self.grid_manager.selected_tiles)
+        try:
+            task_type = event_data.get('task_type')
             
-            if success:
-                print(f"Successfully assigned {task_type} to {len(self.grid_manager.selected_tiles)} selected tiles")
+            if self.grid_manager and hasattr(self.grid_manager, 'selected_tiles'):
+                success = self.assign_task(task_type, self.grid_manager.selected_tiles)
+                
+                if success:
+                    print(f"Successfully assigned {task_type} to {len(self.grid_manager.selected_tiles)} selected tiles")
+                else:
+                    print(f"Failed to assign {task_type} to selected tiles")
             else:
-                print(f"Failed to assign {task_type} to selected tiles")
+                print("No grid manager or selected_tiles available")
+        except Exception as e:
+            print(f"Exception in _handle_selection_assignment: {e}")
+            import traceback
+            traceback.print_exc()
     
     def _handle_employee_request(self, event_data):
         """Handle requests for available employees"""
@@ -393,25 +424,39 @@ class TaskSystemIntegration:
             print(f"Cannot execute: Work order {work_order_id} not found")
             return
         
+        # Get employee's allocated plots (if distributed) or all plots (if single employee)
+        employee_plots = work_order.assigned_plots  # Default to all plots
+        
+        # Check if this employee has specific allocated plots from distribution
+        if hasattr(work_order, 'employee_assignments') and employee_id in work_order.employee_assignments:
+            allocated_plots = work_order.employee_assignments[employee_id].get('allocated_plots')
+            if allocated_plots:
+                employee_plots = allocated_plots
+                print(f"Using distributed plots for {employee_id}: {len(allocated_plots)} plots")
+            else:
+                print(f"No allocated plots found for {employee_id}, using all plots")
+        
         # Convert plot coordinates to tile objects for employee manager
         tiles = []
         if self.grid_manager:
-            for plot_coord in work_order.assigned_plots:
+            for plot_coord in employee_plots:
                 x, y = plot_coord
                 if 0 <= x < GRID_WIDTH and 0 <= y < GRID_HEIGHT:
-                    tile = self.grid_manager.grid[y][x]
-                    tiles.append(tile)
+                    tile = self.grid_manager.get_tile(x, y)
+                    if tile:
+                        tiles.append(tile)
         
         if not tiles:
             print(f"Cannot execute: No valid tiles found for work order {work_order_id}")
             return
         
         # Assign the actual task to the employee using the legacy task system
-        print(f"Executing work order: Assigning {task_type} task to employee {employee_id} for {len(tiles)} tiles")
+        plot_coords_str = ", ".join([f"({tile.x},{tile.y})" for tile in tiles])
+        print(f"Executing work order: Assigning {task_type} task to employee {employee_id} for {len(tiles)} tiles: {plot_coords_str}")
         success = self.employee_manager.assign_task_to_employee(employee_id, task_type, tiles, work_order_id=work_order_id)
         
         if success:
-            print(f"✓ Work order {work_order_id} successfully converted to employee task")
+            print(f"Work order {work_order_id} successfully converted to employee task")
             # Mark work order as started
             if hasattr(work_order, 'started_at') and not work_order.started_at:
                 from datetime import datetime

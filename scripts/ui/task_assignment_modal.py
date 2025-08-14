@@ -74,13 +74,18 @@ class TaskAssignmentModal:
         print("Task Assignment Modal: Connected to task integration system")
     
     def _create_modal_elements(self):
-        """Create all UI elements for the modal"""
+        """Create all UI elements for the enhanced two-panel assignment interface"""
         # Clear existing elements
         self._cleanup_elements()
         
-        # Main modal background panel
+        # Main modal background panel (larger for two-panel layout)
+        panel_width = 1000
+        panel_height = 700
+        panel_x = (self.screen_width - panel_width) // 2
+        panel_y = (self.screen_height - panel_height) // 2
+        
         self.background_panel = pygame_gui.elements.UIPanel(
-            relative_rect=pygame.Rect(self.modal_x, self.modal_y, self.modal_width, self.modal_height),
+            relative_rect=pygame.Rect(panel_x, panel_y, panel_width, panel_height),
             starting_height=10,  # High z-order for modal
             manager=self.gui_manager
         )
@@ -88,8 +93,8 @@ class TaskAssignmentModal:
         
         # Modal title
         self.title_label = pygame_gui.elements.UILabel(
-            relative_rect=pygame.Rect(20, 20, self.modal_width - 40, 40),
-            text="Task Assignment - Enhanced System",
+            relative_rect=pygame.Rect(20, 15, panel_width - 40, 35),
+            text="🚜 Agricultural Operations Management - Multi-Employee Assignment",
             manager=self.gui_manager,
             container=self.background_panel
         )
@@ -97,39 +102,256 @@ class TaskAssignmentModal:
         
         # Close button (top-right)
         self.close_button = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect(self.modal_width - 80, 20, 60, 30),
-            text="X",
+            relative_rect=pygame.Rect(panel_width - 80, 15, 60, 30),
+            text="✕",
             manager=self.gui_manager,
             container=self.background_panel
         )
         self.modal_elements.append(self.close_button)
         
-        # Instructions text - update based on enabled features
-        if ENABLE_WORK_ORDERS:
-            instructions = ("WORK ORDER SYSTEM: Select tiles → Press T/P/H → Work orders created. "
-                          "Use buttons below to assign/cancel orders. Auto-generated orders appear for ready crops.")
-        elif ENABLE_EMPLOYEE_SPECIALIZATIONS:
-            instructions = ("Employee Specializations Active: Assign tasks based on employee skills and roles. "
-                          "Priority suggestions are based on specialization efficiency.")
-        else:
-            instructions = ("Basic Task Assignment: Set task priorities (1=highest, 5=lowest). "
-                          "Enhanced features available in configuration.")
-        
+        # Assignment mode instructions
         self.instructions_label = pygame_gui.elements.UILabel(
-            relative_rect=pygame.Rect(20, 70, self.modal_width - 40, 80),
-            text=instructions,
+            relative_rect=pygame.Rect(20, 55, panel_width - 40, 25),
+            text="Assignment Mode: Select employee from pool → Click 'Add Employee' on work order → Multiple employees supported",
             manager=self.gui_manager,
             container=self.background_panel
         )
         self.modal_elements.append(self.instructions_label)
         
+        # Selection state tracker
+        self.selected_employee_id = None
+        
+        # Create the two-panel layout
+        self._create_work_orders_panel(panel_width, panel_height)
+        self._create_employee_pool_panel(panel_width, panel_height)
+    
+    def _create_work_orders_panel(self, panel_width: int, panel_height: int):
+        """Create the left panel for work orders"""
+        # Work Orders Panel (Left side - 60% width)
+        work_orders_width = int(panel_width * 0.6) - 30
+        work_orders_height = panel_height - 120
+        
+        self.work_orders_panel = pygame_gui.elements.UIPanel(
+            relative_rect=pygame.Rect(20, 90, work_orders_width, work_orders_height),
+            starting_height=1,
+            manager=self.gui_manager,
+            container=self.background_panel
+        )
+        self.modal_elements.append(self.work_orders_panel)
+        
+        # Work Orders Panel Title
+        self.work_orders_title = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect(10, 10, work_orders_width - 20, 30),
+            text="📋 WORK ORDERS",
+            manager=self.gui_manager,
+            container=self.work_orders_panel
+        )
+        self.modal_elements.append(self.work_orders_title)
+        
+        # Scrollable container for work orders
+        self.work_orders_scroll = pygame_gui.elements.UIScrollingContainer(
+            relative_rect=pygame.Rect(10, 50, work_orders_width - 20, work_orders_height - 60),
+            manager=self.gui_manager,
+            container=self.work_orders_panel
+        )
+        self.modal_elements.append(self.work_orders_scroll)
+    
+    def _create_employee_pool_panel(self, panel_width: int, panel_height: int):
+        """Create the right panel for employee pool"""
+        # Employee Pool Panel (Right side - 40% width)
+        employee_pool_width = int(panel_width * 0.4) - 30
+        employee_pool_height = panel_height - 120
+        employee_pool_x = int(panel_width * 0.6) + 10
+        
+        self.employee_pool_panel = pygame_gui.elements.UIPanel(
+            relative_rect=pygame.Rect(employee_pool_x, 90, employee_pool_width, employee_pool_height),
+            starting_height=1,
+            manager=self.gui_manager,
+            container=self.background_panel
+        )
+        self.modal_elements.append(self.employee_pool_panel)
+        
+        # Employee Pool Panel Title
+        self.employee_pool_title = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect(10, 10, employee_pool_width - 20, 30),
+            text="👥 EMPLOYEE POOL",
+            manager=self.gui_manager,
+            container=self.employee_pool_panel
+        )
+        self.modal_elements.append(self.employee_pool_title)
+        
+        # Scrollable container for employee cards
+        self.employee_pool_scroll = pygame_gui.elements.UIScrollingContainer(
+            relative_rect=pygame.Rect(10, 50, employee_pool_width - 20, employee_pool_height - 60),
+            manager=self.gui_manager,
+            container=self.employee_pool_panel
+        )
+        self.modal_elements.append(self.employee_pool_scroll)
+        
+        # Load employee and work order data
+        self._populate_interface_data()
+    
+    def _populate_interface_data(self):
+        """Load and display work orders and employees in the interface"""
         # Create work order display (Phase 2B) or task assignment grid
         if ENABLE_WORK_ORDERS:
             self._create_work_order_interface()
+            self._create_employee_cards_interface()
         else:
             self._create_task_grid()
+    
+    def _create_employee_cards_interface(self):
+        """Create employee cards with skills and availability"""
         
-        # Create control buttons at bottom
+        if not self.task_integration:
+            return
+        
+        # Request employee data
+        self.employee_cards = []
+        self._request_employee_pool_data()
+    
+    def _request_employee_pool_data(self):
+        """Request current employee data for the pool display"""
+        
+        def handle_employee_data(employees):
+            self._display_employee_cards(employees)
+        
+        if self.task_integration and hasattr(self.task_integration, 'get_employee_data'):
+            self.task_integration.get_employee_data(handle_employee_data)
+        else:
+            # Use direct access to get employee data
+            employees_data = self._get_employees_assignment_data()
+            self._display_employee_cards(employees_data)
+    
+    def _display_employee_cards(self, employees):
+        """Display employee cards in the pool panel"""
+        # Clear existing cards
+        for card in getattr(self, 'employee_cards', []):
+            if card in self.modal_elements:
+                self.modal_elements.remove(card)
+                card.kill()
+        
+        self.employee_cards = []
+        card_y = 10
+        card_height = 120
+        card_spacing = 10
+        
+        for i, employee in enumerate(employees):
+            # Employee card panel
+            # Employee pool scroll container is about 270px wide
+            card_width = 260
+            card_panel = pygame_gui.elements.UIPanel(
+                relative_rect=pygame.Rect(5, card_y, card_width, card_height),
+                starting_height=1,
+                manager=self.gui_manager,
+                container=self.employee_pool_scroll
+            )
+            self.modal_elements.append(card_panel)
+            self.employee_cards.append(card_panel)
+            
+            # Employee name and role
+            name_text = f"👤 {employee.get('name', 'Unknown')}"
+            role_text = employee.get('role', 'Field Worker')
+            
+            name_label = pygame_gui.elements.UILabel(
+                relative_rect=pygame.Rect(10, 5, card_width - 70, 25),
+                text=name_text,
+                manager=self.gui_manager,
+                container=card_panel
+            )
+            self.modal_elements.append(name_label)
+            self.employee_cards.append(name_label)
+            
+            role_label = pygame_gui.elements.UILabel(
+                relative_rect=pygame.Rect(10, 25, card_width - 70, 20),
+                text=f"🚜 {role_text}",
+                manager=self.gui_manager,
+                container=card_panel
+            )
+            self.modal_elements.append(role_label)
+            self.employee_cards.append(role_label)
+            
+            # Skills display
+            skills_text = self._format_employee_skills(employee)
+            skills_label = pygame_gui.elements.UILabel(
+                relative_rect=pygame.Rect(10, 45, card_width - 70, 40),
+                text=skills_text,
+                manager=self.gui_manager,
+                container=card_panel
+            )
+            self.modal_elements.append(skills_label)
+            self.employee_cards.append(skills_label)
+            
+            # Availability status
+            availability = self._get_employee_availability(employee)
+            status_color = self._get_availability_color(availability['status'])
+            
+            status_label = pygame_gui.elements.UILabel(
+                relative_rect=pygame.Rect(10, 85, card_width - 70, 20),
+                text=f"Status: {availability['text']}",
+                manager=self.gui_manager,
+                container=card_panel
+            )
+            self.modal_elements.append(status_label)
+            self.employee_cards.append(status_label)
+            
+            # Selection button
+            select_button = pygame_gui.elements.UIButton(
+                relative_rect=pygame.Rect(card_width - 50, 5, 40, 30),
+                text="●" if self.selected_employee_id == employee.get('id') else "○",
+                manager=self.gui_manager,
+                container=card_panel
+            )
+            select_button.employee_id = employee.get('id')
+            select_button.employee_name = employee.get('name')
+            self.modal_elements.append(select_button)
+            self.employee_cards.append(select_button)
+            
+            card_y += card_height + card_spacing
+        
+        # Update scroll container size
+        total_height = max(400, card_y)
+        self.employee_pool_scroll.set_scrollable_area_dimensions((300, total_height))
+    
+    def _format_employee_skills(self, employee):
+        """Format employee skills for display"""
+        specialization = employee.get('specialization', {})
+        skills = specialization.get('skills', {})
+        
+        if not skills:
+            return "Skills: Basic Farm Worker"
+        
+        # Get top 3 skills
+        skill_items = list(skills.items())[:3]
+        skill_lines = []
+        
+        for skill_name, skill_data in skill_items:
+            skill_level = skill_data.get('level', 1)
+            stars = "★" * skill_level + "☆" * (5 - skill_level)
+            skill_lines.append(f"{skill_name.title()}: {stars}")
+        
+        return "\n".join(skill_lines)
+    
+    def _get_employee_availability(self, employee):
+        """Get employee availability status"""
+        current_task = employee.get('current_task')
+        workload = employee.get('workload', 0)
+        
+        if not current_task:
+            return {'status': 'available', 'text': 'Available'}
+        elif workload < 2:
+            return {'status': 'busy', 'text': f'Busy ({workload} orders)'}
+        else:
+            return {'status': 'overloaded', 'text': f'Overloaded ({workload} orders)'}
+    
+    def _get_availability_color(self, status):
+        """Get color for availability status"""
+        colors = {
+            'available': '#00AA00',
+            'busy': '#AAAA00', 
+            'overloaded': '#AA0000'
+        }
+        return colors.get(status, '#888888')
         self._create_control_buttons()
     
     def _create_task_grid(self):
@@ -177,7 +399,7 @@ class TaskAssignmentModal:
         # Create rows for each employee (or placeholder if no employees)
         if not self.current_employees:
             # Show placeholder employees to demonstrate interface
-            placeholder_employees = ["Sam", "Barry More"]
+            placeholder_employees = ["Worker A", "Worker B"]
             self.current_employees = placeholder_employees
         
         for i, employee in enumerate(self.current_employees):
@@ -333,6 +555,14 @@ class TaskAssignmentModal:
                 action, work_order_id = self.work_order_buttons[event.ui_element]
                 self._handle_work_order_action(action, work_order_id)
                 return True
+            # Handle employee selection buttons
+            elif hasattr(event.ui_element, 'employee_id'):
+                self._handle_employee_selection(event.ui_element)
+                return True
+            # Handle enhanced work order buttons (Add Employee, Cancel Order)  
+            elif hasattr(event.ui_element, 'work_order_id') and hasattr(event.ui_element, 'action'):
+                self._handle_enhanced_work_order_action(event.ui_element)
+                return True
         
         # Handle dropdown changes
         if event.type == pygame_gui.UI_DROP_DOWN_MENU_CHANGED:
@@ -361,6 +591,82 @@ class TaskAssignmentModal:
         # Currently disabled - will be implemented in later phases
         print("Apply task assignments - feature not yet implemented")
     
+    def _handle_employee_selection(self, button):
+        """Handle employee selection in the pool"""
+        employee_id = button.employee_id
+        employee_name = button.employee_name
+        
+        # Update selection state
+        previous_selected = self.selected_employee_id
+        self.selected_employee_id = employee_id
+        
+        print(f"Selected employee: {employee_name} ({employee_id})")
+        
+        # Update button states - refresh the employee cards
+        self._request_employee_pool_data()
+        
+        # Provide user feedback
+        self.event_system.emit('show_notification', {
+            'message': f'Selected {employee_name} for assignment',
+            'category': 'info'
+        })
+    
+    def _handle_enhanced_work_order_action(self, button):
+        """Handle enhanced work order actions (Add Employee, Cancel Order)"""
+        work_order_id = button.work_order_id
+        action = button.action
+        
+        if action == 'add_employee':
+            if self.selected_employee_id:
+                self._assign_employee_to_work_order(work_order_id, self.selected_employee_id)
+            else:
+                self.event_system.emit('show_notification', {
+                    'message': 'Please select an employee from the pool first',
+                    'category': 'warning'
+                })
+        elif action == 'cancel':
+            self._cancel_work_order(work_order_id)
+    
+    def _assign_employee_to_work_order(self, work_order_id: str, employee_id: str):
+        """Assign the selected employee to a work order"""
+        print(f"Assigning employee {employee_id} to work order {work_order_id}")
+        
+        # Emit assignment event to work order system
+        self.event_system.emit('multi_employee_work_order_assignment', {
+            'work_order_id': work_order_id,
+            'employee_id': employee_id,
+            'action': 'assign'
+        })
+        
+        # Refresh interface
+        self._create_work_order_interface()
+        self._request_employee_pool_data()
+        
+        # Show confirmation
+        self.event_system.emit('show_notification', {
+            'message': f'Employee assigned to work order',
+            'category': 'success'
+        })
+    
+    def _cancel_work_order(self, work_order_id: str):
+        """Cancel a work order"""
+        print(f"Canceling work order {work_order_id}")
+        
+        # Emit cancellation event
+        self.event_system.emit('cancel_work_order', {
+            'work_order_id': work_order_id,
+            'reason': 'User cancelled from assignment interface'
+        })
+        
+        # Refresh interface
+        self._create_work_order_interface()
+        
+        # Show confirmation
+        self.event_system.emit('show_notification', {
+            'message': 'Work order cancelled',
+            'category': 'info'
+        })
+
     def _handle_work_order_action(self, action: str, work_order_id: str):
         """Handle work order action buttons (Reassign/Cancel)"""
         print(f"Work order action: {action} for order {work_order_id}")
@@ -382,9 +688,9 @@ class TaskAssignmentModal:
             print("No available employees for reassignment")
             return
         
-        # For now, assign to the first available employee (Sam)
+        # Assign to the first available employee (auto-assignment)
         # In a full implementation, this would show a selection dialog
-        target_employee = employees_data[0]  # Get first employee (Sam)
+        target_employee = employees_data[0]  # Get first available employee
         employee_id = target_employee['id']
         
         # Use the task integration system to assign the work order
@@ -503,7 +809,7 @@ class TaskAssignmentModal:
         """Create mock specialization data for placeholder employees"""
         name_lower = employee_name.lower()
         
-        if 'sam' in name_lower:
+        if 'worker a' in name_lower:
             return {
                 'role': 'Field Operator',
                 'skills': {
@@ -516,7 +822,7 @@ class TaskAssignmentModal:
                     {'task': 'planting', 'level': 3}
                 ]
             }
-        elif 'barry' in name_lower:
+        elif 'worker b' in name_lower:
             return {
                 'role': 'Harvest Specialist', 
                 'skills': {
@@ -584,30 +890,135 @@ class TaskAssignmentModal:
             return base_options
     
     def _create_work_order_interface(self):
-        """Create work order management interface (Phase 2B)"""
-        interface_start_y = 140  # Start below instructions
-        interface_height = 400   # Height for the work order interface
+        """Create enhanced work order management interface with multi-employee support"""
+        # Get work orders data
+        work_orders_data = self._get_work_orders_data()
         
-        # Work order section title
-        title_label = pygame_gui.elements.UILabel(
-            relative_rect=pygame.Rect(20, interface_start_y, 400, 30),
-            text="Active Work Orders & Task Management",
+        # Clear existing work order UI elements
+        for element in getattr(self, 'work_order_ui_elements', []):
+            if element in self.modal_elements:
+                self.modal_elements.remove(element)
+                element.kill()
+        
+        self.work_order_ui_elements = []
+        
+        # Create work order entries in the scroll container
+        entry_height = 140  # Increased height for multi-employee display
+        entry_spacing = 10
+        entry_y = 10
+        
+        for i, order_data in enumerate(work_orders_data):
+            entry_panel = self._create_enhanced_work_order_entry(
+                entry_y, entry_height, order_data
+            )
+            entry_y += entry_height + entry_spacing
+        
+        # Update scroll container size
+        total_height = max(400, entry_y)
+        if hasattr(self, 'work_orders_scroll'):
+            self.work_orders_scroll.set_scrollable_area_dimensions((580, total_height))
+    
+    def _create_enhanced_work_order_entry(self, y: int, height: int, order_data: Dict):
+        """Create enhanced work order entry with multi-employee support"""
+        
+        # Work order entry panel
+        # Get the actual container width for proper sizing
+        container_width = 570  # Work orders scroll container is about 570px wide
+        entry_panel = pygame_gui.elements.UIPanel(
+            relative_rect=pygame.Rect(5, y, container_width - 10, height),
+            starting_height=1,
             manager=self.gui_manager,
-            container=self.background_panel
+            container=self.work_orders_scroll
+        )
+        self.modal_elements.append(entry_panel)
+        self.work_order_ui_elements.append(entry_panel)
+        
+        # Order header
+        task_type = order_data.get('task_type', 'Unknown')
+        plot_count = order_data.get('plot_count', 0)
+        priority = order_data.get('priority', 'Normal')
+        
+        title_text = f"📋 {task_type.title()} Work Order ({plot_count} plots)"
+        title_label = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect(10, 5, container_width - 140, 25),
+            text=title_text,
+            manager=self.gui_manager,
+            container=entry_panel
         )
         self.modal_elements.append(title_label)
+        self.work_order_ui_elements.append(title_label)
         
-        # Create split interface: work orders on left, employee assignments on right
-        work_order_width = (self.modal_width - 60) // 2  # Split in half with margins
-        
-        # Left panel: Active work orders
-        self._create_work_order_list(20, interface_start_y + 40, work_order_width, interface_height - 40)
-        
-        # Right panel: Employee specializations and current assignments
-        self._create_employee_assignment_panel(
-            40 + work_order_width, interface_start_y + 40, 
-            work_order_width, interface_height - 40
+        # Priority and status
+        priority_text = f"Priority: {priority} | Status: {order_data.get('status', 'Unassigned')}"
+        priority_label = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect(10, 25, container_width - 140, 20),
+            text=priority_text,
+            manager=self.gui_manager,
+            container=entry_panel
         )
+        self.modal_elements.append(priority_label)
+        self.work_order_ui_elements.append(priority_label)
+        
+        # Assigned employees section
+        assigned_employees = order_data.get('assigned_employees', [])
+        if assigned_employees:
+            employees_text = "Assigned: " + ", ".join([f"[{emp['name']} ×]" for emp in assigned_employees])
+        else:
+            employees_text = "Assigned: None"
+        
+        employees_label = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect(10, 50, container_width - 140, 40),
+            text=employees_text,
+            manager=self.gui_manager,
+            container=entry_panel
+        )
+        self.modal_elements.append(employees_label)
+        self.work_order_ui_elements.append(employees_label)
+        
+        # Progress bars for each employee (if assigned)
+        if assigned_employees and len(assigned_employees) > 0:
+            progress_y = 95
+            for emp in assigned_employees:
+                emp_progress_text = f"{emp['name']}: {emp.get('plots_assigned', 0)} plots - Progress: {emp.get('progress', 0)}%"
+                progress_label = pygame_gui.elements.UILabel(
+                    relative_rect=pygame.Rect(15, progress_y, container_width - 145, 15),
+                    text=emp_progress_text,
+                    manager=self.gui_manager,
+                    container=entry_panel
+                )
+                self.modal_elements.append(progress_label)
+                self.work_order_ui_elements.append(progress_label)
+                progress_y += 18
+        
+        # Action buttons
+        button_width = 100
+        button_height = 30
+        
+        # Add Employee button
+        add_button = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect(container_width - 110, 10, button_width, button_height),
+            text="Add Employee",
+            manager=self.gui_manager,
+            container=entry_panel
+        )
+        add_button.work_order_id = order_data.get('id')
+        add_button.action = 'add_employee'
+        self.modal_elements.append(add_button)
+        self.work_order_ui_elements.append(add_button)
+        
+        # Cancel Work Order button
+        cancel_button = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect(container_width - 110, 50, button_width, button_height),
+            text="Cancel Order",
+            manager=self.gui_manager,
+            container=entry_panel
+        )
+        cancel_button.work_order_id = order_data.get('id')
+        cancel_button.action = 'cancel'
+        self.modal_elements.append(cancel_button)
+        self.work_order_ui_elements.append(cancel_button)
+        
+        return entry_panel
     
     def _create_work_order_list(self, x: int, y: int, width: int, height: int):
         """Create active work orders list"""
@@ -808,10 +1219,10 @@ class TaskAssignmentModal:
     
     def _get_work_orders_data(self) -> List[Dict]:
         """Get work orders data for display"""
+        
         # Use direct access if task integration is available
         if self.task_integration:
             work_orders_data = self.task_integration.get_active_work_orders()
-            print(f"UI: Direct access found {len(work_orders_data)} work orders")
             return work_orders_data
         
         # Fallback to event callback (original method)
@@ -823,11 +1234,11 @@ class TaskAssignmentModal:
             'callback': collect_work_orders
         })
         
-        print(f"UI: Event callback returned {len(work_orders_data)} work orders")
         return work_orders_data
     
     def _get_employees_assignment_data(self) -> List[Dict]:
         """Get employee assignment data for display"""
+        
         # Use direct access if task integration is available
         if self.task_integration:
             # Get employee assignment data directly
@@ -835,6 +1246,7 @@ class TaskAssignmentModal:
             workloads = self.task_integration.get_employee_workloads()
             
             if hasattr(self.task_integration, 'employee_manager') and self.task_integration.employee_manager:
+                
                 for emp_id, employee in self.task_integration.employee_manager.employees.items():
                     emp_data = {
                         'id': emp_id,
@@ -849,10 +1261,12 @@ class TaskAssignmentModal:
                     if hasattr(employee, 'get_specialization_summary'):
                         summary = employee.get_specialization_summary()
                         emp_data['role'] = summary.get('role', 'General Worker')
+                    elif hasattr(employee, 'specialization'):
+                        # Use specialization string directly
+                        emp_data['role'] = employee.specialization.replace('_', ' ').title()
                     
                     employees_data.append(emp_data)
             
-            print(f"UI: Direct access found {len(employees_data)} employees")
             return employees_data
         
         # Fallback to event callback
@@ -864,5 +1278,4 @@ class TaskAssignmentModal:
             'callback': collect_employee_data
         })
         
-        print(f"UI: Event callback returned {len(employees_data)} employees")
         return employees_data
