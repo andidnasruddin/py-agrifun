@@ -1,0 +1,33 @@
+flowchart TD
+    MAIN[🎮 AgriFun Farming Simulation]
+
+    subgraph Core Systems
+        MAIN --> CORE[🔧 Core Foundation]
+        MAIN --> EMPLOYEE_SYS[👥 Employee Management]
+        MAIN --> TASK_SYS[📋 Task Management]
+        MAIN --> AGRI_SYS[🌾 Agricultural Science]
+        MAIN --> ECONOMY_SYS[💰 Economic Management]
+    end
+
+    subgraph New Advanced Systems
+        MAIN --> PEST_DISEASE_SYS[🦠 Pest & Disease Mgmt]
+        MAIN --> FLEET_MGMT_SYS[🚜 Fleet Management]
+        MAIN -- Research --> TECH_PROG_SYS[🔬 Tech Progression]
+        MAIN -- Compliance --> ENV_REG_SYS[🌍 Environmental & Regulatory]
+    end
+    
+    %% How they connect
+    PEST_DISEASE_SYS -->|Adds tasks| TASK_SYS
+    PEST_DISEASE_SYS -->|Affects| AGRI_SYS
+    
+    FLEET_MGMT_SYS -->|Adds tasks & costs| TASK_SYS & ECONOMY_SYS
+    FLEET_MGMT_SYS -- "Links to" --> MACHINERY_SYS[🚜 Machinery System]
+    
+    TECH_PROG_SYS -->|Unlocks abilities in| AGRI_SYS & FLEET_MGMT_SYS & ECONOMY_SYS
+
+    ENV_REG_SYS -->|Adds constraints & goals| AGRI_SYS
+    ENV_REG_SYS -->|Affects| ECONOMY_SYS
+
+    %% Styling
+    classDef newSystem fill:#fff8e1,stroke:#f57f17,stroke-width:2px,color:#000
+    class PEST_DISEASE_SYS,FLEET_MGMT_SYS,TECH_PROG_SYS,ENV_REG_SYS newSystem

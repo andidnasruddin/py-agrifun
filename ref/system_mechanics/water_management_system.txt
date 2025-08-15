@@ -1,0 +1,86 @@
+flowchart TD
+    %% Main System Node
+    WATER_MGMT[💧 Water Management System]
+
+    %% Sub-systems
+    WATER_MGMT --> SOURCES[🏞️ Water Sources]
+    WATER_MGMT --> STORAGE[📦 Water Storage]
+    WATER_MGMT --> APPLICATION[🚿 Water Application]
+
+    %% ===== WATER SOURCES =====
+    subgraph Water Sources
+        SOURCES --> NATURAL[Natural Sources]
+        SOURCES --> CONSTRUCTED[Constructed Sources]
+
+        NATURAL --> RAIN[🌧️ Rain<br/>Free but unreliable<br/>Fills open storage]
+        NATURAL --> RIVER[🌊 River Access<br/>Requires Pump<br/>Infinite Supply<br/>Cost: Proximity to river]
+        NATURAL --> POND[ M Pond<br/>Natural water body<br/>Finite but refills with rain]
+
+        CONSTRUCTED --> WELLS[Drilled Wells]
+        CONSTRUCTED --> MUNICIPAL[🏙️ Municipal Supply<br/>Cost: $1,000 install<br/>$0.10/Liter<br/>Very reliable]
+        CONSTRUCTED --> RAIN_HARVEST[🏡 Rainwater Harvester<br/>Cost: $750/building<br/>Collects runoff from roofs]
+        
+        WELLS --> SHALLOW_WELL[Shallow Well<br/>Cost: $500<br/>Yield: 500L/day<br/>Risk: Can dry up]
+        WELLS --> DEEP_WELL[Deep Well / Borehole<br/>Cost: $3,000<br/>Yield: 2,500L/day<br/>Very reliable]
+    end
+
+    %% ===== WATER STORAGE =====
+    subgraph Water Storage
+        STORAGE --> SMALL_STORAGE[Small Capacity]
+        STORAGE --> MEDIUM_STORAGE[Medium Capacity]
+        STORAGE --> LARGE_STORAGE[Large Capacity]
+
+        SMALL_STORAGE --> RAIN_BARREL[Rain Barrel<br/>Capacity: 200L<br/>Cost: $50<br/>Collects direct rain]
+        SMALL_STORAGE --> IBC_TOTE[IBC Tote Tank<br/>Capacity: 1,000L<br/>Cost: $250]
+
+        MEDIUM_STORAGE --> WATER_TOWER[Water Tower<br/>Capacity: 5,000L<br/>Cost: $2,000<br/>Provides gravity pressure]
+        MEDIUM_STORAGE --> CISTERN[Underground Cistern<br/>Capacity: 10,000L<br/>Cost: $4,000<br/>Reduces evaporation]
+
+        LARGE_STORAGE --> FARM_RESERVOIR[Farm Reservoir<br/>Capacity: 50,000L<br/>Cost: $10,000<br/>Requires significant land]
+    end
+
+    %% ===== WATER APPLICATION =====
+    subgraph Water Application Tools & Infrastructure
+        APPLICATION --> MANUAL_TOOLS[Manual Tools]
+        APPLICATION --> POWERED_TOOLS[Powered Systems]
+        APPLICATION --> INFRASTRUCTURE[Fixed Infrastructure]
+
+        MANUAL_TOOLS --> WATERING_CAN[Watering Can<br/>Capacity: 20L<br/>Range: 1 Tile<br/>Labor: Very High]
+        MANUAL_TOOLS --> BUCKET[Bucket<br/>Capacity: 15L<br/>Range: 1 Tile<br/>Labor: Very High]
+
+        POWERED_TOOLS --> WATER_PUMP[Water Pump<br/>Required for River/Pond<br/>Powers sprinklers/hoses]
+        POWERED_TOOLS --> HOSE[Water Hose<br/>Range: 10 Tiles<br/>Requires Pump<br/>Labor: Medium]
+        POWERED_TOOLS --> SPRINKLER[Movable Sprinkler<br/>Area: 3x3 Tiles<br/>Requires Hose & Pump<br/>Efficiency: 70%]
+
+        INFRASTRUCTURE --> DRIP_IRRIGATION[💧 Drip Irrigation<br/>Cost: $200/tile<br/>Efficiency: 95%<br/>Labor: Very Low, Automated]
+        INFRASTRUCTURE --> SPRINKLER_SYS[Fixed Sprinkler System<br/>Cost: $150/tile<br/>Efficiency: 75%<br/>Labor: Very Low, Automated]
+        INFRASTRUCTURE --> FLOOD_IRRIGATION[Canal & Flood System<br/>Cost: $50/tile<br/>Efficiency: 50%<br/>Use Case: Specific crops like rice]
+    end
+
+    %% ===== SYSTEM FLOW - CORRECTED SYNTAX =====
+    subgraph "System Flow Examples"
+        %% Invalid link: RIVER -- Water Pump -->|Fills| FARM_RESERVOIR
+        %% Corrected version:
+        RIVER --> WATER_PUMP
+        WATER_PUMP -->|Fills| FARM_RESERVOIR
+
+        %% Invalid link: FARM_RESERVOIR -- Water Pump -->|Supplies| SPRINKLER_SYS
+        %% Corrected version:
+        FARM_RESERVOIR --> WATER_PUMP
+        WATER_PUMP -->|Supplies| SPRINKLER_SYS
+
+        %% Other valid examples
+        SHALLOW_WELL -->|Fills| WATER_TOWER
+        RAIN_HARVEST -->|Fills| CISTERN
+        WATER_TOWER -->|Gravity Pressure Supplies| DRIP_IRRIGATION
+        CISTERN -->|Used to manually fill| WATERING_CAN
+    end
+
+    %% Styling
+    classDef source fill:#a0d2eb,stroke:#006994,stroke-width:2px
+    classDef storage fill:#e5e5e5,stroke:#666,stroke-width:2px
+    classDef tool fill:#b3e0b3,stroke:#2e7d32,stroke-width:2px
+
+    class SOURCES,NATURAL,CONSTRUCTED,RAIN,RIVER,POND,WELLS,MUNICIPAL,RAIN_HARVEST,SHALLOW_WELL,DEEP_WELL source
+    class STORAGE,SMALL_STORAGE,MEDIUM_STORAGE,LARGE_STORAGE,RAIN_BARREL,IBC_TOTE,WATER_TOWER,CISTERN,FARM_RESERVOIR storage
+    class APPLICATION,MANUAL_TOOLS,POWERED_TOOLS,INFRASTRUCTURE,WATERING_CAN,BUCKET,WATER_PUMP,HOSE,SPRINKLER,DRIP_IRRIGATION,SPRINKLER_SYS,FLOOD_IRRIGATION tool
