@@ -62,7 +62,7 @@ import json
 from scripts.core.entity_component_system import System, Entity, Component
 from scripts.core.advanced_event_system import get_event_system, EventPriority
 from scripts.core.time_management import get_time_manager, Season, WeatherType
-from scripts.core.advanced_config_system import get_configuration_manager
+from scripts.core.advanced_config_system import get_config_manager
 from scripts.systems.economy_system import get_economy_system
 from scripts.systems.employee_system import get_employee_system
 
@@ -461,7 +461,7 @@ class CropSystem(System):
         # Core system references
         self.event_system = get_event_system()
         self.time_manager = get_time_manager()
-        self.config_manager = get_configuration_manager()
+        self.config_manager = get_config_manager()
         self.economy_system = get_economy_system()
         self.employee_system = get_employee_system()
         

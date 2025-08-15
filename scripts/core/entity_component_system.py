@@ -707,3 +707,171 @@ def initialize_entity_manager() -> EntityManager:
     global _global_entity_manager
     _global_entity_manager = EntityManager()
     return _global_entity_manager
+
+def get_entity_system() -> EntityManager:
+    """Alias for get_entity_manager for backward compatibility"""
+    return get_entity_manager()
+
+class Entity:
+    """
+    Entity representation in the ECS system
+    
+    In modern ECS, entities are typically just unique IDs, but this class
+    provides a convenient wrapper for systems that expect entity objects.
+    """
+    
+    def __init__(self, entity_id: str, entity_manager: 'EntityManager'):
+        """Initialize entity wrapper"""
+        self.id = entity_id
+        self.entity_manager = entity_manager
+    
+    def get_component(self, component_type: str) -> Optional[Component]:
+        """Get a component from this entity"""
+        return self.entity_manager.get_component(self.id, component_type)
+    
+    def set_component(self, component_type: str, component_data: Dict[str, Any]) -> bool:
+        """Set component data on this entity"""
+        return self.entity_manager.update_component(self.id, component_type, component_data)
+    
+    def add_component(self, component_type: str, component_data: Dict[str, Any]) -> bool:
+        """Add a component to this entity"""
+        return self.entity_manager.add_component(self.id, component_type, component_data)
+    
+    def remove_component(self, component_type: str) -> bool:
+        """Remove a component from this entity"""
+        return self.entity_manager.remove_component(self.id, component_type)
+    
+    def has_component(self, component_type: str) -> bool:
+        """Check if entity has a specific component"""
+        return self.entity_manager.has_component(self.id, component_type)
+    
+    def get_all_components(self) -> Dict[str, Component]:
+        """Get all components attached to this entity"""
+        return self.entity_manager.get_all_components(self.id)
+    
+    def destroy(self) -> bool:
+        """Destroy this entity and all its components"""
+        return self.entity_manager.destroy_entity(self.id)
+    
+    def __str__(self) -> str:
+        """String representation of entity"""
+        return f"Entity({self.id})"
+    
+    def __repr__(self) -> str:
+        """Debug representation of entity"""
+        components = list(self.get_all_components().keys())
+        return f"Entity(id={self.id}, components={components})"
+
+class System:
+    """
+    Base class for all ECS systems
+    
+    Systems contain the logic that processes entities with specific component combinations.
+    They operate on the data stored in components but don't store state themselves.
+    """
+    
+    def __init__(self):
+        """Initialize the system"""
+        self.system_name = "base_system"
+        self.entity_manager = get_entity_manager()
+        self.active = True
+        self.update_frequency = 1.0  # Updates per second
+        self.last_update_time = 0.0
+    
+    def initialize(self) -> bool:
+        """
+        Initialize the system with required dependencies
+        
+        Returns:
+            bool: True if initialization successful, False otherwise
+        """
+        return True
+    
+    def update(self, delta_time: float):
+        """
+        Update the system logic
+        
+        Args:
+            delta_time: Time elapsed since last update in seconds
+        """
+        pass
+    
+    def shutdown(self):
+        """Clean shutdown of the system"""
+        self.active = False
+    
+    def get_entities_with_components(self, component_types: List[str]) -> List[str]:
+        """
+        Get all entities that have the specified components
+        
+        Args:
+            component_types: List of component type names
+            
+        Returns:
+            List of entity IDs that have all specified components
+        """
+        return self.entity_manager.query(component_types)
+    
+    def get_component(self, entity_id: str, component_type: str) -> Optional[Component]:
+        """
+        Get a component from an entity
+        
+        Args:
+            entity_id: The entity to get the component from
+            component_type: The type of component to retrieve
+            
+        Returns:
+            The component instance or None if not found
+        """
+        return self.entity_manager.get_component(entity_id, component_type)
+    
+    def set_component(self, entity_id: str, component_type: str, component_data: Dict[str, Any]) -> bool:
+        """
+        Set component data on an entity
+        
+        Args:
+            entity_id: The entity to set the component on
+            component_type: The type of component to set
+            component_data: The component data to set
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        return self.entity_manager.update_component(entity_id, component_type, component_data)
+    
+    def remove_component(self, entity_id: str, component_type: str) -> bool:
+        """
+        Remove a component from an entity
+        
+        Args:
+            entity_id: The entity to remove the component from
+            component_type: The type of component to remove
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        return self.entity_manager.remove_component(entity_id, component_type)
+    
+    def create_entity(self, entity_data: Optional[Dict[str, Any]] = None) -> str:
+        """
+        Create a new entity with optional initial components
+        
+        Args:
+            entity_data: Optional dictionary of component data
+            
+        Returns:
+            The ID of the created entity
+        """
+        return self.entity_manager.create_entity(entity_data)
+    
+    def destroy_entity(self, entity_id: str) -> bool:
+        """
+        Destroy an entity and all its components
+        
+        Args:
+            entity_id: The entity to destroy
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        return self.entity_manager.destroy_entity(entity_id)

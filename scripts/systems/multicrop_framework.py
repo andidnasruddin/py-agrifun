@@ -60,7 +60,7 @@ import json
 from scripts.core.entity_component_system import System, Entity, Component
 from scripts.core.advanced_event_system import get_event_system, EventPriority
 from scripts.core.time_management import get_time_manager, Season
-from scripts.core.advanced_config_system import get_configuration_manager
+from scripts.core.advanced_config_system import get_config_manager
 from scripts.core.content_registry import get_content_registry
 
 # Import Phase 2 systems
@@ -432,7 +432,7 @@ class MultiCropFramework(System):
         # Core system references
         self.event_system = get_event_system()
         self.time_manager = get_time_manager()
-        self.config_manager = get_configuration_manager()
+        self.config_manager = get_config_manager()
         self.content_registry = get_content_registry()
         
         # Phase 2 system references

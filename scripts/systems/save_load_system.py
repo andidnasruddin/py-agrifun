@@ -62,7 +62,7 @@ import asyncio
 from scripts.core.entity_component_system import System, Entity, Component, get_entity_system
 from scripts.core.advanced_event_system import get_event_system, EventPriority
 from scripts.core.time_management import get_time_manager
-from scripts.core.advanced_config_system import get_configuration_manager
+from scripts.core.advanced_config_system import get_config_manager
 from scripts.core.state_management import get_state_manager
 
 # Import Phase 2 systems
@@ -186,7 +186,7 @@ class SaveLoadSystem(System):
         # Core system references
         self.event_system = get_event_system()
         self.time_manager = get_time_manager()
-        self.config_manager = get_configuration_manager()
+        self.config_manager = get_config_manager()
         self.state_manager = get_state_manager()
         self.entity_system = get_entity_system()
         

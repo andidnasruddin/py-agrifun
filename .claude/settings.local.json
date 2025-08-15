@@ -21,7 +21,8 @@
       "Bash(grep:*)",
       "Bash(sed:*)",
       "Bash(git restore:*)",
-      "Bash(rg:*)"
+      "Bash(rg:*)",
+      "Bash(pip install:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits",

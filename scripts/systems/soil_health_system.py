@@ -39,11 +39,11 @@ import math
 import random
 
 # Import Phase 1 systems
-from scripts.core.event_system import EventSystem
+from scripts.core.advanced_event_system import EventSystem
 from scripts.core.time_management import TimeManager
 from scripts.core.advanced_config_system import ConfigurationManager
 from scripts.core.content_registry import ContentRegistry
-from scripts.core.entity_component import System, Component
+from scripts.core.entity_component_system import System, Component
 
 # Phase 3 system imports
 from scripts.systems.multicrop_framework import (
@@ -403,14 +403,14 @@ class SoilHealthSystem(System):
         """Initialize the soil health system with required dependencies"""
         try:
             # Get system references
-            from scripts.core.event_system import get_event_system
+            from scripts.core.advanced_event_system import get_event_system
             from scripts.core.time_management import get_time_manager
-            from scripts.core.advanced_config_system import get_configuration_manager
+            from scripts.core.advanced_config_system import get_config_manager
             from scripts.core.content_registry import get_content_registry
             
             self.event_system = get_event_system()
             self.time_manager = get_time_manager()
-            self.config_manager = get_configuration_manager()
+            self.config_manager = get_config_manager()
             self.content_registry = get_content_registry()
             
             # Load nutrient definitions
