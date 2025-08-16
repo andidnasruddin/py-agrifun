@@ -1,1120 +1,641 @@
 """
 Economy & Market System - Comprehensive Economic Simulation for AgriFun Agricultural Game
 
-This system provides a realistic economic simulation with dynamic pricing, market forces,
-contracts, loans, subsidies, and comprehensive financial management. Integrates with the
-Time Management System for realistic market fluctuations and seasonal effects.
+This system provides realistic economic simulation with dynamic pricing, market forces,
+contracts, loans, subsidies, and comprehensive financial management. Integrates with
+the Time Management System for seasonal market fluctuations and realistic business cycles.
 
 Key Features:
 - Dynamic market pricing based on supply/demand
 - Contract system with buyers and delivery requirements
-- Loan and subsidy management with time-based calculations
+- Loan management with time-based interest calculations
+- Government subsidy programs
 - Market history tracking and trend analysis
-- Seasonal price variations and market events
-- Multi-crop economic simulation
-- Financial performance analytics
-- Economic crisis and boom cycle simulation
-
-Market Mechanics:
-- Supply/demand calculations affect daily prices
-- Weather events impact market conditions
-- Seasonal variations create realistic price cycles
-- Contract fulfillment affects reputation and future opportunities
-- Economic indicators influence loan availability and interest rates
-
-Integration Features:
-- Time-based loan interest calculations
-- Seasonal market adjustments
-- Weather-dependent price volatility
-- Contract deadline management
-- Historical price tracking
-
-Usage Example:
-    # Initialize economy system
-    economy = EconomySystem()
-    await economy.initialize()
-    
-    # Market operations
-    current_price = economy.get_current_price('corn')
-    economy.sell_crop('corn', 100, 'premium')
-    
-    # Contract management
-    contract_id = economy.create_contract('corn', 500, 'high', 30)
-    economy.fulfill_contract(contract_id, 500, 'high')
-    
-    # Financial management
-    loan_id = economy.apply_for_loan(10000, 365)
-    economy.make_loan_payment(loan_id, 500)
+- Economic indicators and market condition simulation
+- Seasonal price adjustments and market volatility
+- Credit rating system affecting loan terms
+- Transaction history and financial reporting
 """
 
 import time
 import math
 import random
-from typing import Dict, List, Set, Any, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Any
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
 from enum import Enum
-import json
+from datetime import datetime, timedelta
+import logging
 
-# Import Phase 1 architecture
-from scripts.core.entity_component_system import System
-from scripts.core.advanced_event_system import get_event_system, EventPriority
-from scripts.core.time_management import get_time_manager, Season, WeatherType
-from scripts.core.advanced_config_system import get_config_manager
+# Import foundation systems
+from ..core.event_system import get_global_event_system, EventPriority
+from ..core.entity_component_system import get_entity_manager
+from ..core.configuration_system import get_configuration_manager
+from ..core.state_management import get_state_manager
+from ..systems.time_system import get_time_system, Season
+
+
+class TransactionType(Enum):
+    """Types of financial transactions"""
+    CROP_SALE = "crop_sale"
+    EQUIPMENT_PURCHASE = "equipment_purchase"
+    LOAN_PAYMENT = "loan_payment"
+    LOAN_DISBURSEMENT = "loan_disbursement"
+    SUBSIDY_PAYMENT = "subsidy_payment"
+    CONTRACT_PAYMENT = "contract_payment"
+    OPERATING_EXPENSE = "operating_expense"
 
 
 class MarketCondition(Enum):
     """Overall market condition states"""
-    DEPRESSION = "depression"
-    RECESSION = "recession"
-    STABLE = "stable"
-    GROWTH = "growth"
-    BOOM = "boom"
+    BULL_MARKET = "bull_market"      # Rising prices, good demand
+    BEAR_MARKET = "bear_market"      # Falling prices, low demand
+    STABLE_MARKET = "stable_market"  # Normal conditions
+    VOLATILE_MARKET = "volatile_market"  # High price swings
 
 
-class CropQuality(Enum):
-    """Crop quality grades"""
-    POOR = "poor"
-    FAIR = "fair"
-    GOOD = "good"
-    HIGH = "high"
-    PREMIUM = "premium"
-
-
-class ContractStatus(Enum):
-    """Contract fulfillment status"""
-    ACTIVE = "active"
-    FULFILLED = "fulfilled"
-    FAILED = "failed"
-    CANCELLED = "cancelled"
-
-
-class LoanStatus(Enum):
-    """Loan repayment status"""
-    ACTIVE = "active"
-    PAID_OFF = "paid_off"
-    DEFAULTED = "defaulted"
-    REFINANCED = "refinanced"
+@dataclass
+class Transaction:
+    """Financial transaction record"""
+    transaction_id: str
+    transaction_type: TransactionType
+    amount: float               # Positive for income, negative for expenses
+    description: str
+    timestamp: int             # Game time in total minutes
+    category: str = "general"
+    metadata: Dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
 class MarketPrice:
-    """Current market price for a commodity"""
-    crop_type: str
-    base_price: float
-    current_price: float
-    quality_multipliers: Dict[CropQuality, float]
-    last_updated: int  # Game time in minutes
-    daily_change_percent: float = 0.0
-    weekly_change_percent: float = 0.0
-    volatility: float = 0.1  # Price volatility factor
-
-
-@dataclass
-class PriceHistory:
-    """Historical price data for analysis"""
-    crop_type: str
-    daily_prices: List[Tuple[int, float]]  # (game_time, price) pairs
-    weekly_averages: List[Tuple[int, float]]
-    seasonal_trends: Dict[Season, float]
-    max_price: float = 0.0
-    min_price: float = float('inf')
-    average_price: float = 0.0
+    """Market price information for a commodity"""
+    commodity: str
+    base_price: float          # Base price per unit
+    current_price: float       # Current market price
+    
+    # Market factors
+    supply_factor: float = 1.0    # Supply level (0.5 = low supply, 2.0 = oversupply)
+    demand_factor: float = 1.0    # Demand level (0.5 = low demand, 2.0 = high demand)
+    seasonal_factor: float = 1.0  # Seasonal price modifier
+    quality_premium: float = 0.0  # Premium for high quality (per quality point)
+    
+    # Price history
+    price_history: List[float] = field(default_factory=list)
+    volatility: float = 0.1       # Price volatility factor
+    
+    def get_price_for_quality(self, quality: float) -> float:
+        """Get price adjusted for quality (0.0 to 1.0)"""
+        quality_bonus = quality * self.quality_premium
+        return self.current_price * (1.0 + quality_bonus)
 
 
 @dataclass
 class Contract:
-    """Agricultural contract for crop delivery"""
+    """Market contract for crop sales"""
     contract_id: str
     buyer_name: str
-    crop_type: str
-    quantity_required: int
-    quality_required: CropQuality
-    price_per_unit: float
-    deadline_days: int
-    created_time: int  # Game time when created
-    status: ContractStatus = ContractStatus.ACTIVE
+    commodity: str
+    quantity_required: int     # Units required
+    price_per_unit: float     # Fixed price per unit
+    quality_requirement: float  # Minimum quality (0.0 to 1.0)
+    deadline_days: int        # Days to fulfill contract
     
-    # Performance tracking
+    # Progress tracking
     quantity_delivered: int = 0
-    average_quality_delivered: float = 0.0
-    completion_bonus: float = 0.0
-    penalty_amount: float = 0.0
     
-    # Contract terms
-    early_completion_bonus: float = 0.1  # 10% bonus for early delivery
-    late_penalty_rate: float = 0.05  # 5% penalty per day late
-    quality_bonus_rate: float = 0.15  # 15% bonus for exceeding quality
+    def get_contract_value(self) -> float:
+        """Get total contract value"""
+        return self.quantity_required * self.price_per_unit
+    
+    def get_remaining_quantity(self) -> int:
+        """Get remaining quantity to deliver"""
+        return max(0, self.quantity_required - self.quantity_delivered)
 
 
 @dataclass
 class Loan:
-    """Agricultural loan with time-based interest"""
+    """Farm loan information"""
     loan_id: str
-    principal_amount: float
-    current_balance: float
-    annual_interest_rate: float
-    term_days: int
-    daily_payment: float
+    principal: float           # Original loan amount
+    remaining_balance: float   # Current balance
+    interest_rate: float       # Annual interest rate
+    term_months: int          # Loan term in months
+    monthly_payment: float    # Required monthly payment
     
-    # Loan tracking
-    created_time: int  # Game time when created
-    last_payment_time: int
-    payments_made: int = 0
-    total_paid: float = 0.0
-    status: LoanStatus = LoanStatus.ACTIVE
+    def calculate_monthly_payment(self) -> float:
+        """Calculate required monthly payment"""
+        if self.interest_rate == 0:
+            return self.principal / self.term_months
+        
+        monthly_rate = self.interest_rate / 12
+        payment = self.principal * (monthly_rate * (1 + monthly_rate) ** self.term_months) / \
+                 ((1 + monthly_rate) ** self.term_months - 1)
+        return payment
+
+
+class MarketSimulator:
+    """Market dynamics simulation engine"""
     
-    # Payment terms
-    grace_period_days: int = 7
-    late_fee_rate: float = 0.02  # 2% late fee
-    default_threshold_days: int = 30
-
-
-@dataclass
-class Subsidy:
-    """Government subsidy program"""
-    subsidy_id: str
-    subsidy_name: str
-    daily_amount: float
-    total_amount: float
-    duration_days: int
+    def __init__(self, config_manager):
+        self.config = config_manager
+        self.logger = logging.getLogger('MarketSimulator')
+        
+        # Market state
+        self.market_condition = MarketCondition.STABLE_MARKET
+        self.global_price_modifier = 1.0
+        
+        # Commodity prices
+        self.market_prices: Dict[str, MarketPrice] = {}
+        
+        # Initialize default commodities
+        self._initialize_market_prices()
     
-    # Subsidy tracking
-    start_time: int  # Game time when started
-    amount_received: float = 0.0
-    days_remaining: int = 0
-    is_active: bool = True
+    def _initialize_market_prices(self):
+        """Initialize default commodity prices"""
+        default_commodities = {
+            'corn': {'base_price': 5.0, 'volatility': 0.15, 'quality_premium': 0.2},
+            'wheat': {'base_price': 6.0, 'volatility': 0.12, 'quality_premium': 0.25},
+            'tomatoes': {'base_price': 8.0, 'volatility': 0.25, 'quality_premium': 0.3},
+            'lettuce': {'base_price': 12.0, 'volatility': 0.3, 'quality_premium': 0.35}
+        }
+        
+        for commodity, data in default_commodities.items():
+            market_price = MarketPrice(
+                commodity=commodity,
+                base_price=data['base_price'],
+                current_price=data['base_price'],
+                volatility=data['volatility'],
+                quality_premium=data['quality_premium']
+            )
+            self.market_prices[commodity] = market_price
     
-    # Conditions
-    crop_requirements: List[str] = field(default_factory=list)
-    minimum_acreage: int = 0
-    sustainability_requirements: bool = False
-
-
-@dataclass
-class MarketEvent:
-    """Special market events that affect prices"""
-    event_id: str
-    event_name: str
-    description: str
-    affected_crops: List[str]
-    price_multiplier: float
-    duration_days: int
+    def update_market_prices(self, season: Season, weather_modifier: float = 1.0):
+        """Update market prices based on season and conditions"""
+        for commodity, price_info in self.market_prices.items():
+            # Apply seasonal factors
+            seasonal_factor = self._get_seasonal_factor(commodity, season)
+            
+            # Apply weather effects
+            weather_factor = weather_modifier
+            
+            # Apply market volatility
+            volatility_change = random.uniform(-price_info.volatility, price_info.volatility)
+            
+            # Calculate new price
+            base_price = price_info.base_price
+            new_price = base_price * seasonal_factor * weather_factor * self.global_price_modifier
+            new_price *= (1.0 + volatility_change)
+            
+            # Ensure price doesn't go below 20% or above 300% of base price
+            new_price = max(base_price * 0.2, min(base_price * 3.0, new_price))
+            
+            # Update price and history
+            price_info.current_price = new_price
+            price_info.seasonal_factor = seasonal_factor
+            price_info.price_history.append(new_price)
+            
+            # Keep only last 30 days of history
+            if len(price_info.price_history) > 30:
+                price_info.price_history.pop(0)
     
-    # Event tracking
-    start_time: int
-    is_active: bool = True
-    events_triggered: int = 0
+    def _get_seasonal_factor(self, commodity: str, season: Season) -> float:
+        """Get seasonal price modifier for commodity"""
+        # Different crops have different seasonal patterns
+        seasonal_factors = {
+            'corn': {
+                Season.SPRING: 1.1,  # Planting season - higher demand for seed
+                Season.SUMMER: 0.9,   # Growing season
+                Season.FALL: 1.3,     # Harvest time - high supply, but also high demand
+                Season.WINTER: 1.0    # Storage/processing
+            },
+            'wheat': {
+                Season.SPRING: 1.0,
+                Season.SUMMER: 0.8,
+                Season.FALL: 1.4,
+                Season.WINTER: 1.1
+            },
+            'tomatoes': {
+                Season.SPRING: 1.2,   # Fresh demand
+                Season.SUMMER: 0.8,   # Peak season
+                Season.FALL: 1.0,
+                Season.WINTER: 1.6    # Greenhouse premium
+            },
+            'lettuce': {
+                Season.SPRING: 0.9,
+                Season.SUMMER: 1.3,   # Hot weather premium
+                Season.FALL: 0.8,
+                Season.WINTER: 1.4
+            }
+        }
+        
+        return seasonal_factors.get(commodity, {}).get(season, 1.0)
 
 
-@dataclass
-class EconomicIndicators:
-    """Overall economic health indicators"""
-    market_condition: MarketCondition = MarketCondition.STABLE
-    inflation_rate: float = 0.02  # Annual inflation rate
-    interest_base_rate: float = 0.05  # Base interest rate
-    unemployment_rate: float = 0.06
-    gdp_growth_rate: float = 0.03
-    
-    # Market sentiment
-    consumer_confidence: float = 0.75  # 0.0 to 1.0
-    agricultural_outlook: float = 0.80  # 0.0 to 1.0
-    commodity_demand: float = 0.85  # 0.0 to 1.0
-    
-    # Volatility factors
-    political_stability: float = 0.90  # 0.0 to 1.0
-    weather_impact_factor: float = 1.0  # 0.5 to 2.0
-    global_trade_factor: float = 1.0  # 0.7 to 1.3
-
-
-class EconomySystem(System):
-    """Comprehensive economic simulation system"""
+class EconomySystem:
+    """Main economy and market management system"""
     
     def __init__(self):
-        super().__init__()
-        self.system_name = "economy_system"
+        # Core systems
+        self.event_system = get_global_event_system()
+        self.entity_manager = get_entity_manager()
+        self.config_manager = get_configuration_manager()
+        self.state_manager = get_state_manager()
+        self.time_system = get_time_system()
         
-        # Core system references
-        self.event_system = get_event_system()
-        self.time_manager = get_time_manager()
-        self.config_manager = get_config_manager()
+        # Financial state
+        self.current_cash = 1000.0
+        self.total_assets = 0.0
+        self.total_liabilities = 0.0
+        self.credit_rating = 650  # Starting credit score
         
-        # Economic data storage
-        self.market_prices: Dict[str, MarketPrice] = {}
-        self.price_history: Dict[str, PriceHistory] = {}
+        # Transaction history
+        self.transactions: List[Transaction] = []
+        self.transaction_counter = 0
+        
+        # Market system
+        self.market_simulator = MarketSimulator(self.config_manager)
+        
+        # Contracts
+        self.available_contracts: Dict[str, Contract] = {}
         self.active_contracts: Dict[str, Contract] = {}
+        self.contract_counter = 0
+        
+        # Loans
         self.active_loans: Dict[str, Loan] = {}
-        self.active_subsidies: Dict[str, Subsidy] = {}
-        self.market_events: Dict[str, MarketEvent] = {}
+        self.loan_counter = 0
         
-        # Economic state
-        self.economic_indicators = EconomicIndicators()
-        self.player_cash: float = 0.0
-        self.player_debt: float = 0.0
-        self.player_credit_rating: float = 0.75  # 0.0 to 1.0
-        self.total_revenue: float = 0.0
-        self.total_expenses: float = 0.0
+        # Subsidies
+        self.subsidy_balance = 3000.0  # Starting subsidy
+        self.subsidy_days_remaining = 30
         
-        # Market configuration
-        self.crop_types = ['corn', 'wheat', 'soybeans', 'tomatoes', 'potatoes']
-        self.quality_base_multipliers = {
-            CropQuality.POOR: 0.6,
-            CropQuality.FAIR: 0.8,
-            CropQuality.GOOD: 1.0,
-            CropQuality.HIGH: 1.3,
-            CropQuality.PREMIUM: 1.6
-        }
-        
-        # Performance tracking
-        self.transactions_processed = 0
-        self.contracts_completed = 0
-        self.loans_processed = 0
-        self.daily_update_count = 0
-        
-        # Market simulation parameters
-        self.base_volatility = 0.15
-        self.seasonal_amplitude = 0.25
-        self.weather_impact_range = 0.30
-        self.supply_demand_sensitivity = 0.20
-        
-        # Cache for performance
-        self.cached_calculations: Dict[str, Any] = {}
-        self.cache_expiry_time = 0
-        self.cache_duration_minutes = 5
-    
-    async def initialize(self):
-        """Initialize the economy system"""
-        # Load configuration
-        await self._load_economic_configuration()
-        
-        # Initialize market prices
-        await self._initialize_market_prices()
-        
-        # Initialize price history
-        await self._initialize_price_history()
+        self.logger = logging.getLogger('EconomySystem')
         
         # Subscribe to time events
-        self.event_system.subscribe('time_day_passed', self._on_day_passed)
-        self.event_system.subscribe('time_week_passed', self._on_week_passed)
-        self.event_system.subscribe('time_month_passed', self._on_month_passed)
-        self.event_system.subscribe('time_season_changed', self._on_season_changed)
-        self.event_system.subscribe('weather_changed', self._on_weather_changed)
+        self._subscribe_to_events()
         
-        # Subscribe to game events
-        self.event_system.subscribe('crop_harvested', self._on_crop_harvested)
-        self.event_system.subscribe('crop_planted', self._on_crop_planted)
-        
-        # Initialize starting financial state
-        await self._initialize_player_finances()
-        
-        self.logger.info("Economy System initialized successfully")
+        # Initialize with starting loan
+        self._initialize_economy()
     
-    async def _load_economic_configuration(self):
-        """Load economic parameters from configuration"""
-        try:
-            economy_config = self.config_manager.get_section('economy')
-            
-            # Update base parameters from config
-            self.base_volatility = economy_config.get('base_volatility', 0.15)
-            self.seasonal_amplitude = economy_config.get('seasonal_amplitude', 0.25)
-            self.weather_impact_range = economy_config.get('weather_impact_range', 0.30)
-            
-            # Load starting financial conditions
-            starting_config = economy_config.get('starting_conditions', {})
-            self.player_cash = starting_config.get('starting_cash', 0.0)
-            
-            # Load economic indicators
-            indicators_config = economy_config.get('economic_indicators', {})
-            self.economic_indicators.inflation_rate = indicators_config.get('inflation_rate', 0.02)
-            self.economic_indicators.interest_base_rate = indicators_config.get('base_interest_rate', 0.05)
-            
-        except Exception as e:
-            self.logger.warning(f"Failed to load economic configuration: {e}")
-            # Use default values
+    def _subscribe_to_events(self):
+        """Subscribe to relevant system events"""
+        self.event_system.subscribe('day_changed', self._on_day_changed)
+        self.event_system.subscribe('season_changed', self._on_season_changed)
     
-    async def _initialize_market_prices(self):
-        """Initialize base market prices for all crops"""
-        base_prices = {
-            'corn': 4.50,
-            'wheat': 6.20,
-            'soybeans': 12.80,
-            'tomatoes': 2.30,
-            'potatoes': 3.75
-        }
+    def _initialize_economy(self):
+        """Initialize economy with starting conditions"""
+        # Create mandatory starting loan
+        starting_loan = 10000.0
+        loan = Loan(
+            loan_id="startup_loan_001",
+            principal=starting_loan,
+            remaining_balance=starting_loan,
+            interest_rate=0.06,  # 6% annual
+            term_months=60,  # 5 year term
+            monthly_payment=0
+        )
+        loan.monthly_payment = loan.calculate_monthly_payment()
+        self.active_loans[loan.loan_id] = loan
         
-        for crop_type, base_price in base_prices.items():
-            self.market_prices[crop_type] = MarketPrice(
-                crop_type=crop_type,
-                base_price=base_price,
-                current_price=base_price,
-                quality_multipliers=self.quality_base_multipliers.copy(),
-                last_updated=self.time_manager.get_current_time().total_minutes,
-                volatility=self.base_volatility + random.uniform(-0.05, 0.05)
-            )
-    
-    async def _initialize_price_history(self):
-        """Initialize price history tracking"""
-        for crop_type in self.crop_types:
-            self.price_history[crop_type] = PriceHistory(
-                crop_type=crop_type,
-                daily_prices=[],
-                weekly_averages=[],
-                seasonal_trends={season: 1.0 for season in Season},
-                average_price=self.market_prices[crop_type].base_price
-            )
-    
-    async def _initialize_player_finances(self):
-        """Initialize player's starting financial state"""
-        # Create starting loan if configured
-        if self.player_cash <= 0:
-            starting_loan = await self.create_loan(
-                principal=10000.0,
-                annual_rate=0.08,
-                term_days=365,
-                loan_type="startup_loan"
-            )
-            self.player_cash = 10000.0
-            self.logger.info("Created starting loan for player")
-        
-        # Create starting subsidy
-        startup_subsidy = await self.create_subsidy(
-            name="New Farmer Assistance",
-            daily_amount=100.0,
-            duration_days=30,
-            requirements=[]
+        # Add starting cash from loan
+        self.current_cash += starting_loan
+        self.add_transaction(
+            TransactionType.LOAN_DISBURSEMENT,
+            starting_loan,
+            "Starting farm loan disbursement"
         )
         
-        self.logger.info(f"Player starting finances: ${self.player_cash:.2f}")
+        # Generate initial contracts
+        self._generate_contracts()
+        
+        self.logger.info(f"Economy initialized: ${self.current_cash:.2f} cash, ${starting_loan:.2f} loan")
     
-    def get_current_price(self, crop_type: str, quality: CropQuality = CropQuality.GOOD) -> float:
-        """Get current market price for a crop with quality adjustment"""
-        if crop_type not in self.market_prices:
-            self.logger.error(f"Unknown crop type: {crop_type}")
-            return 0.0
-        
-        market_price = self.market_prices[crop_type]
-        quality_multiplier = market_price.quality_multipliers.get(quality, 1.0)
-        
-        return market_price.current_price * quality_multiplier
+    def get_current_price(self, commodity: str) -> float:
+        """Get current market price for commodity"""
+        if commodity in self.market_simulator.market_prices:
+            return self.market_simulator.market_prices[commodity].current_price
+        return 0.0
     
-    def get_price_trend(self, crop_type: str, days: int = 7) -> Dict[str, float]:
-        """Get price trend analysis for a crop"""
-        if crop_type not in self.price_history:
-            return {'trend': 0.0, 'volatility': 0.0, 'confidence': 0.0}
-        
-        history = self.price_history[crop_type]
-        
-        if len(history.daily_prices) < 2:
-            return {'trend': 0.0, 'volatility': 0.0, 'confidence': 0.0}
-        
-        # Calculate trend over specified days
-        recent_prices = history.daily_prices[-days:] if len(history.daily_prices) >= days else history.daily_prices
-        
-        if len(recent_prices) < 2:
-            return {'trend': 0.0, 'volatility': 0.0, 'confidence': 0.0}
-        
-        # Linear regression for trend
-        x_values = list(range(len(recent_prices)))
-        y_values = [price for _, price in recent_prices]
-        
-        n = len(recent_prices)
-        sum_x = sum(x_values)
-        sum_y = sum(y_values)
-        sum_xy = sum(x * y for x, y in zip(x_values, y_values))
-        sum_x2 = sum(x * x for x in x_values)
-        
-        # Calculate slope (trend)
-        if n * sum_x2 - sum_x * sum_x != 0:
-            slope = (n * sum_xy - sum_x * sum_y) / (n * sum_x2 - sum_x * sum_x)
-            trend_percent = (slope / (sum_y / n)) * 100 if sum_y != 0 else 0.0
-        else:
-            trend_percent = 0.0
-        
-        # Calculate volatility
-        avg_price = sum_y / n
-        variance = sum((price - avg_price) ** 2 for _, price in recent_prices) / n
-        volatility = math.sqrt(variance) / avg_price if avg_price > 0 else 0.0
-        
-        # Calculate confidence based on data points and consistency
-        confidence = min(1.0, n / days) * (1.0 - min(0.5, volatility))
-        
-        return {
-            'trend': trend_percent,
-            'volatility': volatility,
-            'confidence': confidence
-        }
+    def get_price_for_quality(self, commodity: str, quality: float) -> float:
+        """Get price adjusted for quality"""
+        if commodity in self.market_simulator.market_prices:
+            return self.market_simulator.market_prices[commodity].get_price_for_quality(quality)
+        return 0.0
     
-    async def sell_crop(self, crop_type: str, quantity: int, quality: CropQuality) -> Dict[str, Any]:
-        """Sell crops to the market"""
+    def get_market_info(self, commodity: str) -> Optional[MarketPrice]:
+        """Get complete market information for commodity"""
+        return self.market_simulator.market_prices.get(commodity)
+    
+    def sell_crops(self, commodity: str, quantity: int, quality: float = 1.0) -> Dict[str, Any]:
+        """Sell crops at current market price"""
         if quantity <= 0:
-            return {'success': False, 'error': 'Invalid quantity'}
+            return {'success': False, 'message': 'Invalid quantity'}
         
-        current_price = self.get_current_price(crop_type, quality)
-        total_revenue = current_price * quantity
+        if commodity not in self.market_simulator.market_prices:
+            return {'success': False, 'message': f'Unknown commodity: {commodity}'}
         
-        # Apply market conditions
-        market_modifier = self._get_market_condition_modifier()
-        total_revenue *= market_modifier
+        # Calculate sale price
+        unit_price = self.get_price_for_quality(commodity, quality)
+        total_value = quantity * unit_price
         
-        # Update player finances
-        self.player_cash += total_revenue
-        self.total_revenue += total_revenue
-        self.transactions_processed += 1
+        # Add transaction
+        transaction_id = self.add_transaction(
+            TransactionType.CROP_SALE,
+            total_value,
+            f"Sold {quantity} units of {commodity}",
+            metadata={
+                'commodity': commodity,
+                'quantity': quantity,
+                'unit_price': unit_price,
+                'quality': quality
+            }
+        )
         
-        # Update market supply (affects future prices)
-        await self._update_market_supply(crop_type, quantity)
-        
-        # Create transaction record
-        transaction = {
-            'type': 'sale',
-            'crop_type': crop_type,
-            'quantity': quantity,
-            'quality': quality.value,
-            'unit_price': current_price,
-            'total_revenue': total_revenue,
-            'market_modifier': market_modifier,
-            'timestamp': self.time_manager.get_current_time().total_minutes
-        }
+        self.logger.info(f"Sold {quantity} {commodity} for ${total_value:.2f}")
         
         # Emit sale event
-        self.event_system.emit('crop_sold', transaction, priority=EventPriority.NORMAL)
-        
-        self.logger.info(f"Sold {quantity} units of {quality.value} {crop_type} for ${total_revenue:.2f}")
-        
-        return {
-            'success': True,
-            'revenue': total_revenue,
-            'unit_price': current_price,
-            'transaction': transaction
-        }
-    
-    async def create_contract(self, crop_type: str, quantity: int, quality: CropQuality, 
-                            deadline_days: int, buyer_name: str = None) -> str:
-        """Create a new crop delivery contract"""
-        contract_id = f"contract_{int(time.time())}_{random.randint(1000, 9999)}"
-        
-        # Calculate contract price (usually better than market price)
-        base_price = self.get_current_price(crop_type, quality)
-        contract_price = base_price * (1.0 + random.uniform(0.05, 0.15))  # 5-15% premium
-        
-        # Generate buyer name if not provided
-        if not buyer_name:
-            buyers = [
-                "AgriCorp Industries", "Farm Fresh Foods", "Golden Harvest Co.",
-                "Prairie Valley Distributors", "Sunrise Agricultural", "GreenField Partners"
-            ]
-            buyer_name = random.choice(buyers)
-        
-        contract = Contract(
-            contract_id=contract_id,
-            buyer_name=buyer_name,
-            crop_type=crop_type,
-            quantity_required=quantity,
-            quality_required=quality,
-            price_per_unit=contract_price,
-            deadline_days=deadline_days,
-            created_time=self.time_manager.get_current_time().total_minutes
-        )
-        
-        self.active_contracts[contract_id] = contract
-        
-        # Emit contract creation event
-        self.event_system.emit('contract_created', {
-            'contract_id': contract_id,
-            'buyer_name': buyer_name,
-            'crop_type': crop_type,
+        self.event_system.publish('crop_sold', {
+            'commodity': commodity,
             'quantity': quantity,
-            'quality': quality.value,
-            'price': contract_price,
-            'deadline_days': deadline_days
-        }, priority=EventPriority.NORMAL)
-        
-        self.logger.info(f"Created contract {contract_id}: {quantity} {crop_type} for ${contract_price:.2f}/unit")
-        
-        return contract_id
-    
-    async def fulfill_contract(self, contract_id: str, quantity: int, quality: CropQuality) -> Dict[str, Any]:
-        """Fulfill a contract with delivered crops"""
-        if contract_id not in self.active_contracts:
-            return {'success': False, 'error': 'Contract not found'}
-        
-        contract = self.active_contracts[contract_id]
-        
-        if contract.status != ContractStatus.ACTIVE:
-            return {'success': False, 'error': 'Contract not active'}
-        
-        # Check if crop type matches
-        if contract.crop_type != contract.crop_type:  # This seems like a bug, should compare with delivered crop
-            return {'success': False, 'error': 'Wrong crop type'}
-        
-        # Calculate quality adjustment
-        quality_bonus = 0.0
-        if quality.value > contract.quality_required.value:
-            quality_levels = list(CropQuality)
-            quality_diff = quality_levels.index(quality) - quality_levels.index(contract.quality_required)
-            quality_bonus = quality_diff * contract.quality_bonus_rate
-        
-        # Calculate timing bonus/penalty
-        current_time = self.time_manager.get_current_time().total_minutes
-        contract_age_days = (current_time - contract.created_time) / 1440.0
-        timing_modifier = 1.0
-        
-        if contract_age_days < contract.deadline_days * 0.8:  # Early completion
-            timing_modifier = 1.0 + contract.early_completion_bonus
-        elif contract_age_days > contract.deadline_days:  # Late delivery
-            days_late = contract_age_days - contract.deadline_days
-            timing_modifier = 1.0 - (days_late * contract.late_penalty_rate)
-            timing_modifier = max(0.5, timing_modifier)  # Minimum 50% payment
-        
-        # Calculate payment
-        base_payment = contract.price_per_unit * quantity
-        quality_payment = base_payment * quality_bonus
-        final_payment = (base_payment + quality_payment) * timing_modifier
-        
-        # Update contract progress
-        contract.quantity_delivered += quantity
-        contract.average_quality_delivered = (
-            (contract.average_quality_delivered * (contract.quantity_delivered - quantity) + 
-             list(CropQuality).index(quality) * quantity) / contract.quantity_delivered
-        )
-        
-        # Check if contract is complete
-        if contract.quantity_delivered >= contract.quantity_required:
-            contract.status = ContractStatus.FULFILLED
-            self.contracts_completed += 1
-            
-            # Update credit rating based on performance
-            performance_factor = min(1.0, final_payment / base_payment)
-            credit_adjustment = (performance_factor - 0.8) * 0.02  # ±2% max adjustment
-            self.player_credit_rating = max(0.0, min(1.0, self.player_credit_rating + credit_adjustment))
-        
-        # Update player finances
-        self.player_cash += final_payment
-        self.total_revenue += final_payment
-        self.transactions_processed += 1
-        
-        # Create fulfillment record
-        fulfillment = {
-            'contract_id': contract_id,
-            'quantity_delivered': quantity,
-            'quality_delivered': quality.value,
-            'payment_received': final_payment,
-            'quality_bonus': quality_payment,
-            'timing_modifier': timing_modifier,
-            'contract_completed': contract.status == ContractStatus.FULFILLED,
-            'timestamp': current_time
-        }
-        
-        # Emit contract fulfillment event
-        self.event_system.emit('contract_fulfilled', fulfillment, priority=EventPriority.NORMAL)
-        
-        self.logger.info(f"Fulfilled contract {contract_id}: {quantity} units for ${final_payment:.2f}")
+            'unit_price': unit_price,
+            'total_value': total_value,
+            'quality': quality,
+            'transaction_id': transaction_id
+        }, EventPriority.NORMAL, 'economy_system')
         
         return {
             'success': True,
-            'payment': final_payment,
-            'contract_completed': contract.status == ContractStatus.FULFILLED,
-            'fulfillment': fulfillment
+            'total_value': total_value,
+            'unit_price': unit_price,
+            'transaction_id': transaction_id
         }
     
-    async def create_loan(self, principal: float, annual_rate: float, term_days: int, 
-                         loan_type: str = "agricultural") -> str:
-        """Create a new agricultural loan"""
-        loan_id = f"loan_{int(time.time())}_{random.randint(1000, 9999)}"
+    def apply_for_loan(self, amount: float, term_months: int, purpose: str = "Farm operations") -> Dict[str, Any]:
+        """Apply for a new loan"""
+        if amount <= 0 or term_months <= 0:
+            return {'success': False, 'message': 'Invalid loan parameters'}
         
-        # Adjust interest rate based on credit rating
-        credit_adjustment = (1.0 - self.player_credit_rating) * 0.03  # Up to 3% adjustment
-        adjusted_rate = annual_rate + credit_adjustment
+        # Simple credit check based on current debt
+        current_debt = sum(loan.remaining_balance for loan in self.active_loans.values())
+        debt_ratio = current_debt / max(self.current_cash + current_debt, 1000)
         
-        # Calculate daily payment (simple interest for agricultural loans)
-        daily_rate = adjusted_rate / 365.0
-        daily_payment = (principal * (1 + adjusted_rate * (term_days / 365.0))) / term_days
+        if debt_ratio > 0.8:  # Debt-to-asset ratio too high
+            return {'success': False, 'message': 'Loan application denied - too much existing debt'}
+        
+        # Create loan
+        self.loan_counter += 1
+        loan_id = f"loan_{self.loan_counter:03d}"
         
         loan = Loan(
             loan_id=loan_id,
-            principal_amount=principal,
-            current_balance=principal,
-            annual_interest_rate=adjusted_rate,
-            term_days=term_days,
-            daily_payment=daily_payment,
-            created_time=self.time_manager.get_current_time().total_minutes,
-            last_payment_time=self.time_manager.get_current_time().total_minutes
+            principal=amount,
+            remaining_balance=amount,
+            interest_rate=0.06,  # 6% base rate
+            term_months=term_months,
+            monthly_payment=0
         )
+        loan.monthly_payment = loan.calculate_monthly_payment()
         
         self.active_loans[loan_id] = loan
-        self.player_debt += principal
-        self.loans_processed += 1
         
-        # Emit loan creation event
-        self.event_system.emit('loan_created', {
-            'loan_id': loan_id,
-            'principal': principal,
-            'interest_rate': adjusted_rate,
-            'term_days': term_days,
-            'daily_payment': daily_payment,
-            'loan_type': loan_type
-        }, priority=EventPriority.NORMAL)
+        # Add loan disbursement transaction
+        transaction_id = self.add_transaction(
+            TransactionType.LOAN_DISBURSEMENT,
+            amount,
+            f"Loan disbursement: {purpose}",
+            metadata={'loan_id': loan_id, 'purpose': purpose}
+        )
         
-        self.logger.info(f"Created loan {loan_id}: ${principal:.2f} at {adjusted_rate:.2%} for {term_days} days")
-        
-        return loan_id
-    
-    async def make_loan_payment(self, loan_id: str, amount: float) -> Dict[str, Any]:
-        """Make a payment on a loan"""
-        if loan_id not in self.active_loans:
-            return {'success': False, 'error': 'Loan not found'}
-        
-        loan = self.active_loans[loan_id]
-        
-        if loan.status != LoanStatus.ACTIVE:
-            return {'success': False, 'error': 'Loan not active'}
-        
-        if amount <= 0:
-            return {'success': False, 'error': 'Invalid payment amount'}
-        
-        if self.player_cash < amount:
-            return {'success': False, 'error': 'Insufficient funds'}
-        
-        # Process payment
-        payment_amount = min(amount, loan.current_balance)
-        loan.current_balance -= payment_amount
-        loan.total_paid += payment_amount
-        loan.payments_made += 1
-        loan.last_payment_time = self.time_manager.get_current_time().total_minutes
-        
-        # Update player finances
-        self.player_cash -= payment_amount
-        self.player_debt -= payment_amount
-        self.total_expenses += payment_amount
-        
-        # Check if loan is paid off
-        if loan.current_balance <= 0.01:  # Account for floating point precision
-            loan.status = LoanStatus.PAID_OFF
-            loan.current_balance = 0.0
-            
-            # Improve credit rating for paying off loan
-            self.player_credit_rating = min(1.0, self.player_credit_rating + 0.05)
-        
-        # Create payment record
-        payment_record = {
-            'loan_id': loan_id,
-            'payment_amount': payment_amount,
-            'remaining_balance': loan.current_balance,
-            'loan_paid_off': loan.status == LoanStatus.PAID_OFF,
-            'timestamp': self.time_manager.get_current_time().total_minutes
-        }
-        
-        # Emit payment event
-        self.event_system.emit('loan_payment_made', payment_record, priority=EventPriority.NORMAL)
-        
-        self.logger.info(f"Loan payment {loan_id}: ${payment_amount:.2f}, balance: ${loan.current_balance:.2f}")
+        self.logger.info(f"Loan approved: ${amount:.2f} for {term_months} months")
         
         return {
             'success': True,
-            'payment_amount': payment_amount,
-            'remaining_balance': loan.current_balance,
-            'loan_paid_off': loan.status == LoanStatus.PAID_OFF,
-            'payment_record': payment_record
+            'loan_id': loan_id,
+            'amount': amount,
+            'monthly_payment': loan.monthly_payment,
+            'transaction_id': transaction_id
         }
     
-    async def create_subsidy(self, name: str, daily_amount: float, duration_days: int, 
-                           requirements: List[str]) -> str:
-        """Create a new government subsidy"""
-        subsidy_id = f"subsidy_{int(time.time())}_{random.randint(1000, 9999)}"
+    def make_loan_payment(self, loan_id: str, amount: float) -> Dict[str, Any]:
+        """Make payment on a loan"""
+        if loan_id not in self.active_loans:
+            return {'success': False, 'message': 'Loan not found'}
         
-        subsidy = Subsidy(
-            subsidy_id=subsidy_id,
-            subsidy_name=name,
-            daily_amount=daily_amount,
-            total_amount=daily_amount * duration_days,
-            duration_days=duration_days,
-            start_time=self.time_manager.get_current_time().total_minutes,
-            days_remaining=duration_days,
-            crop_requirements=requirements
+        loan = self.active_loans[loan_id]
+        
+        if amount > self.current_cash:
+            return {'success': False, 'message': 'Insufficient funds'}
+        
+        # Simple payment processing
+        payment_to_principal = min(amount, loan.remaining_balance)
+        loan.remaining_balance -= payment_to_principal
+        
+        # Deduct from cash
+        self.current_cash -= amount
+        
+        # Add transaction
+        transaction_id = self.add_transaction(
+            TransactionType.LOAN_PAYMENT,
+            -amount,
+            f"Loan payment for {loan_id}",
+            metadata={'loan_id': loan_id, 'principal_paid': payment_to_principal}
         )
         
-        self.active_subsidies[subsidy_id] = subsidy
-        
-        # Emit subsidy creation event
-        self.event_system.emit('subsidy_created', {
-            'subsidy_id': subsidy_id,
-            'name': name,
-            'daily_amount': daily_amount,
-            'duration_days': duration_days,
-            'total_amount': subsidy.total_amount
-        }, priority=EventPriority.NORMAL)
-        
-        self.logger.info(f"Created subsidy {subsidy_id}: ${daily_amount:.2f}/day for {duration_days} days")
-        
-        return subsidy_id
-    
-    def get_market_summary(self) -> Dict[str, Any]:
-        """Get comprehensive market summary"""
-        current_time = self.time_manager.get_current_time()
-        
-        # Crop prices summary
-        crop_prices = {}
-        for crop_type, market_price in self.market_prices.items():
-            trend = self.get_price_trend(crop_type)
-            crop_prices[crop_type] = {
-                'current_price': market_price.current_price,
-                'daily_change': market_price.daily_change_percent,
-                'trend': trend['trend'],
-                'volatility': trend['volatility']
-            }
-        
-        # Contract summary
-        active_contract_count = len([c for c in self.active_contracts.values() if c.status == ContractStatus.ACTIVE])
-        
-        # Loan summary
-        total_debt = sum(loan.current_balance for loan in self.active_loans.values() if loan.status == LoanStatus.ACTIVE)
-        
-        # Subsidy summary
-        active_subsidies = [s for s in self.active_subsidies.values() if s.is_active]
-        total_subsidy_remaining = sum(s.daily_amount * s.days_remaining for s in active_subsidies)
+        # Remove loan if paid off
+        loan_paid_off = loan.remaining_balance <= 0
+        if loan_paid_off:
+            del self.active_loans[loan_id]
+            self.logger.info(f"Loan {loan_id} paid off!")
         
         return {
-            'market_condition': self.economic_indicators.market_condition.value,
-            'crop_prices': crop_prices,
-            'contracts': {
-                'active_count': active_contract_count,
-                'total_completed': self.contracts_completed
-            },
-            'loans': {
-                'total_debt': total_debt,
-                'credit_rating': self.player_credit_rating
-            },
-            'subsidies': {
-                'active_count': len(active_subsidies),
-                'total_remaining': total_subsidy_remaining
-            },
-            'finances': {
-                'cash': self.player_cash,
-                'total_revenue': self.total_revenue,
-                'total_expenses': self.total_expenses,
-                'net_income': self.total_revenue - self.total_expenses
+            'success': True,
+            'principal_paid': payment_to_principal,
+            'remaining_balance': loan.remaining_balance,
+            'loan_paid_off': loan_paid_off,
+            'transaction_id': transaction_id
+        }
+    
+    def accept_contract(self, contract_id: str) -> Dict[str, Any]:
+        """Accept an available contract"""
+        if contract_id not in self.available_contracts:
+            return {'success': False, 'message': 'Contract not found'}
+        
+        contract = self.available_contracts[contract_id]
+        
+        # Move to active contracts
+        self.active_contracts[contract_id] = contract
+        del self.available_contracts[contract_id]
+        
+        self.logger.info(f"Contract accepted: {contract.commodity} x{contract.quantity_required}")
+        
+        return {'success': True, 'contract': contract}
+    
+    def fulfill_contract(self, contract_id: str, quantity: int, quality: float) -> Dict[str, Any]:
+        """Fulfill part or all of a contract"""
+        if contract_id not in self.active_contracts:
+            return {'success': False, 'message': 'Contract not found'}
+        
+        contract = self.active_contracts[contract_id]
+        
+        if quality < contract.quality_requirement:
+            return {'success': False, 'message': 'Quality does not meet contract requirements'}
+        
+        # Calculate delivery amount
+        remaining = contract.get_remaining_quantity()
+        delivery_quantity = min(quantity, remaining)
+        
+        if delivery_quantity <= 0:
+            return {'success': False, 'message': 'Contract already fulfilled'}
+        
+        # Update contract progress
+        contract.quantity_delivered += delivery_quantity
+        
+        # Calculate payment
+        payment = delivery_quantity * contract.price_per_unit
+        
+        # Add transaction
+        transaction_id = self.add_transaction(
+            TransactionType.CONTRACT_PAYMENT,
+            payment,
+            f"Contract fulfillment: {contract.commodity} x{delivery_quantity}",
+            metadata={
+                'contract_id': contract_id,
+                'quantity_delivered': delivery_quantity,
+                'quality': quality,
+                'unit_price': contract.price_per_unit
             }
+        )
+        
+        # Check if contract complete
+        contract_completed = contract.get_remaining_quantity() == 0
+        if contract_completed:
+            del self.active_contracts[contract_id]
+            self.logger.info(f"Contract {contract_id} completed!")
+        
+        return {
+            'success': True,
+            'payment': payment,
+            'remaining_quantity': contract.get_remaining_quantity(),
+            'contract_completed': contract_completed,
+            'transaction_id': transaction_id
         }
     
-    def _update_daily_prices(self):
-        """Update daily market prices based on various factors"""
-        current_time = self.time_manager.get_current_time()
-        current_season = self.time_manager.get_current_season()
-        current_weather = self.time_manager.get_current_weather()
+    def add_transaction(self, transaction_type: TransactionType, amount: float, 
+                       description: str, category: str = "general", 
+                       metadata: Dict[str, Any] = None) -> str:
+        """Add a financial transaction"""
+        self.transaction_counter += 1
+        transaction_id = f"txn_{self.transaction_counter:06d}"
         
-        for crop_type, market_price in self.market_prices.items():
-            # Base price adjustment
-            base_change = random.gauss(0, market_price.volatility)
-            
-            # Seasonal adjustment
-            seasonal_factor = self._get_seasonal_price_factor(crop_type, current_season)
-            
-            # Weather adjustment
-            weather_factor = self._get_weather_price_factor(crop_type, current_weather.weather_type)
-            
-            # Market condition adjustment
-            condition_factor = self._get_market_condition_factor()
-            
-            # Calculate total price change
-            total_factor = (1.0 + base_change) * seasonal_factor * weather_factor * condition_factor
-            new_price = market_price.current_price * total_factor
-            
-            # Apply bounds (prevent extreme price swings)
-            min_price = market_price.base_price * 0.3
-            max_price = market_price.base_price * 3.0
-            new_price = max(min_price, min(max_price, new_price))
-            
-            # Calculate change percentage
-            daily_change = ((new_price - market_price.current_price) / market_price.current_price) * 100
-            
-            # Update market price
-            market_price.current_price = new_price
-            market_price.daily_change_percent = daily_change
-            market_price.last_updated = current_time.total_minutes
-            
-            # Update price history
-            history = self.price_history[crop_type]
-            history.daily_prices.append((current_time.total_minutes, new_price))
-            
-            # Keep only last 365 days of history
-            if len(history.daily_prices) > 365:
-                history.daily_prices = history.daily_prices[-365:]
-            
-            # Update min/max/average
-            history.max_price = max(history.max_price, new_price)
-            history.min_price = min(history.min_price, new_price)
-            if history.daily_prices:
-                history.average_price = sum(price for _, price in history.daily_prices) / len(history.daily_prices)
+        current_time = self.time_system.get_current_time().total_minutes
+        
+        transaction = Transaction(
+            transaction_id=transaction_id,
+            transaction_type=transaction_type,
+            amount=amount,
+            description=description,
+            timestamp=current_time,
+            category=category,
+            metadata=metadata or {}
+        )
+        
+        self.transactions.append(transaction)
+        
+        # Update cash balance
+        self.current_cash += amount
+        
+        return transaction_id
     
-    def _get_seasonal_price_factor(self, crop_type: str, season: Season) -> float:
-        """Get seasonal price adjustment factor"""
-        # Simplified seasonal adjustments - in reality this would be more complex
-        seasonal_factors = {
-            'corn': {Season.SPRING: 1.1, Season.SUMMER: 0.95, Season.FALL: 0.85, Season.WINTER: 1.15},
-            'wheat': {Season.SPRING: 0.9, Season.SUMMER: 1.2, Season.FALL: 0.8, Season.WINTER: 1.1},
-            'soybeans': {Season.SPRING: 1.05, Season.SUMMER: 0.9, Season.FALL: 0.85, Season.WINTER: 1.2},
-            'tomatoes': {Season.SPRING: 1.3, Season.SUMMER: 0.7, Season.FALL: 1.1, Season.WINTER: 1.4},
-            'potatoes': {Season.SPRING: 1.1, Season.SUMMER: 0.9, Season.FALL: 0.8, Season.WINTER: 1.3}
+    def get_financial_summary(self) -> Dict[str, Any]:
+        """Get comprehensive financial summary"""
+        # Calculate loan totals
+        total_loan_balance = sum(loan.remaining_balance for loan in self.active_loans.values())
+        total_monthly_payments = sum(loan.monthly_payment for loan in self.active_loans.values())
+        
+        # Calculate asset value
+        asset_value = self.current_cash
+        
+        # Calculate net worth
+        net_worth = asset_value - total_loan_balance
+        
+        return {
+            'current_cash': self.current_cash,
+            'total_assets': asset_value,
+            'total_liabilities': total_loan_balance,
+            'net_worth': net_worth,
+            'credit_rating': self.credit_rating,
+            'monthly_loan_payments': total_monthly_payments,
+            'subsidy_balance': self.subsidy_balance,
+            'subsidy_days_remaining': self.subsidy_days_remaining,
+            'active_loans': len(self.active_loans),
+            'active_contracts': len(self.active_contracts),
+            'total_transactions': len(self.transactions),
+            'market_prices': {k: v.current_price for k, v in self.market_simulator.market_prices.items()}
         }
+    
+    def _generate_contracts(self):
+        """Generate available contracts"""
+        # Generate 2-3 random contracts
+        num_contracts = random.randint(2, 3)
         
-        return seasonal_factors.get(crop_type, {}).get(season, 1.0)
-    
-    def _get_weather_price_factor(self, crop_type: str, weather_type: WeatherType) -> float:
-        """Get weather-based price adjustment factor"""
-        # Weather affects prices through supply concerns
-        weather_factors = {
-            WeatherType.DROUGHT: 1.25,
-            WeatherType.EXTREME_HEAT: 1.15,
-            WeatherType.EXTREME_COLD: 1.10,
-            WeatherType.HEAVY_RAIN: 1.05,
-            WeatherType.STORM: 1.08,
-            WeatherType.CLEAR: 1.0,
-            WeatherType.PARTLY_CLOUDY: 1.0,
-            WeatherType.CLOUDY: 0.98,
-            WeatherType.LIGHT_RAIN: 0.95,
-            WeatherType.SNOW: 1.02,
-            WeatherType.FOG: 0.98
-        }
+        buyers = ['AgriCorp', 'FarmFresh Inc', 'Green Valley Co-op']
+        commodities = list(self.market_simulator.market_prices.keys())
         
-        return weather_factors.get(weather_type, 1.0)
-    
-    def _get_market_condition_factor(self) -> float:
-        """Get market condition adjustment factor"""
-        condition_factors = {
-            MarketCondition.DEPRESSION: 0.7,
-            MarketCondition.RECESSION: 0.85,
-            MarketCondition.STABLE: 1.0,
-            MarketCondition.GROWTH: 1.15,
-            MarketCondition.BOOM: 1.3
-        }
-        
-        return condition_factors.get(self.economic_indicators.market_condition, 1.0)
-    
-    def _get_market_condition_modifier(self) -> float:
-        """Get current market condition modifier for transactions"""
-        return self._get_market_condition_factor()
-    
-    async def _update_market_supply(self, crop_type: str, quantity_sold: int):
-        """Update market supply data (affects future prices)"""
-        # Simple supply tracking - selling crops increases supply, lowering future prices
-        if crop_type in self.market_prices:
-            supply_impact = quantity_sold * 0.0001  # Small impact per unit
-            volatility_increase = supply_impact * 0.1
+        for i in range(num_contracts):
+            self.contract_counter += 1
+            contract_id = f"contract_{self.contract_counter:03d}"
             
-            market_price = self.market_prices[crop_type]
-            market_price.volatility = min(0.5, market_price.volatility + volatility_increase)
+            commodity = random.choice(commodities)
+            base_price = self.market_simulator.market_prices[commodity].current_price
+            
+            # Contract price is usually 10-20% above market price
+            contract_price = base_price * random.uniform(1.1, 1.2)
+            
+            contract = Contract(
+                contract_id=contract_id,
+                buyer_name=random.choice(buyers),
+                commodity=commodity,
+                quantity_required=random.randint(50, 150),
+                price_per_unit=contract_price,
+                quality_requirement=random.uniform(0.7, 0.9),
+                deadline_days=random.randint(14, 45)
+            )
+            
+            self.available_contracts[contract_id] = contract
     
-    # Event handlers
-    async def _on_day_passed(self, event_data):
-        """Handle daily economic updates"""
-        self.daily_update_count += 1
+    def _on_day_changed(self, event_data: Dict[str, Any]):
+        """Handle daily economy updates"""
+        # Process subsidies
+        if self.subsidy_days_remaining > 0:
+            daily_subsidy = 100.0
+            self.add_transaction(
+                TransactionType.SUBSIDY_PAYMENT,
+                daily_subsidy,
+                "Daily government subsidy",
+                category="subsidy"
+            )
+            self.subsidy_days_remaining -= 1
+            self.subsidy_balance += daily_subsidy
         
         # Update market prices
-        self._update_daily_prices()
+        current_season = self.time_system.get_current_season()
+        weather = self.time_system.get_current_weather()
+        weather_modifier = weather.crop_growth_modifier if weather else 1.0
         
-        # Process loan interest
-        await self._process_daily_loan_interest()
+        self.market_simulator.update_market_prices(current_season, weather_modifier)
         
-        # Process subsidies
-        await self._process_daily_subsidies()
-        
-        # Update economic indicators
-        await self._update_economic_indicators()
-        
-        # Check contract deadlines
-        await self._check_contract_deadlines()
-        
-        # Emit daily economic update
-        self.event_system.emit('economy_daily_update', {
-            'day': self.daily_update_count,
-            'market_summary': self.get_market_summary()
-        }, priority=EventPriority.LOW)
+        # Generate new contracts occasionally
+        if random.random() < 0.2:  # 20% chance daily
+            self._generate_contracts()
     
-    async def _on_week_passed(self, event_data):
-        """Handle weekly economic updates"""
-        # Update weekly price averages
-        current_time = self.time_manager.get_current_time().total_minutes
+    def _on_season_changed(self, event_data: Dict[str, Any]):
+        """Handle seasonal economy changes"""
+        self.logger.info(f"Season changed to {event_data['new_season']}")
         
-        for crop_type, history in self.price_history.items():
-            if len(history.daily_prices) >= 7:
-                recent_prices = [price for _, price in history.daily_prices[-7:]]
-                weekly_average = sum(recent_prices) / len(recent_prices)
-                history.weekly_averages.append((current_time, weekly_average))
-                
-                # Keep only last 52 weeks
-                if len(history.weekly_averages) > 52:
-                    history.weekly_averages = history.weekly_averages[-52:]
-    
-    async def _on_month_passed(self, event_data):
-        """Handle monthly economic updates"""
-        # Update credit ratings based on payment history
-        # Generate new contracts
-        # Update economic indicators
-        pass
-    
-    async def _on_season_changed(self, event_data):
-        """Handle seasonal economic changes"""
-        new_season = Season(event_data.get('new_season'))
-        
-        # Update seasonal price trends
-        for crop_type, history in self.price_history.items():
-            if crop_type in self.market_prices:
-                current_price = self.market_prices[crop_type].current_price
-                base_price = self.market_prices[crop_type].base_price
-                seasonal_trend = current_price / base_price
-                history.seasonal_trends[new_season] = seasonal_trend
+        # Major market update for new season
+        new_season = Season(event_data['new_season'])
+        self.market_simulator.update_market_prices(new_season)
         
         # Generate seasonal contracts
-        await self._generate_seasonal_contracts(new_season)
-    
-    async def _on_weather_changed(self, event_data):
-        """Handle weather-related economic impacts"""
-        weather_type = WeatherType(event_data.get('weather_type'))
-        
-        # Immediate price reactions to severe weather
-        if weather_type in [WeatherType.DROUGHT, WeatherType.EXTREME_HEAT, WeatherType.STORM]:
-            # Create temporary price volatility
-            for market_price in self.market_prices.values():
-                market_price.volatility *= 1.2  # Increase volatility
-    
-    async def _on_crop_harvested(self, event_data):
-        """Handle crop harvest events for market impact"""
-        crop_type = event_data.get('crop_type')
-        quantity = event_data.get('quantity', 0)
-        
-        # Large harvests can affect market prices
-        if quantity > 100:  # Significant harvest
-            await self._update_market_supply(crop_type, quantity // 2)  # Partial impact
-    
-    async def _on_crop_planted(self, event_data):
-        """Handle crop planting events for future market predictions"""
-        # Track planting data for supply forecasting
-        pass
-    
-    async def _process_daily_loan_interest(self):
-        """Process daily loan payments and interest"""
-        current_time = self.time_manager.get_current_time().total_minutes
-        
-        for loan in self.active_loans.values():
-            if loan.status == LoanStatus.ACTIVE:
-                # Check for missed payments
-                days_since_payment = (current_time - loan.last_payment_time) / 1440.0
-                
-                if days_since_payment >= 1.0:  # Payment due
-                    if self.player_cash >= loan.daily_payment:
-                        # Automatic payment
-                        await self.make_loan_payment(loan.loan_id, loan.daily_payment)
-                    else:
-                        # Late payment - apply penalties
-                        if days_since_payment > loan.grace_period_days:
-                            late_fee = loan.daily_payment * loan.late_fee_rate
-                            self.player_debt += late_fee
-                            self.total_expenses += late_fee
-                            
-                            # Check for default
-                            if days_since_payment > loan.default_threshold_days:
-                                loan.status = LoanStatus.DEFAULTED
-                                self.player_credit_rating = max(0.0, self.player_credit_rating - 0.2)
-                                
-                                self.event_system.emit('loan_defaulted', {
-                                    'loan_id': loan.loan_id,
-                                    'outstanding_balance': loan.current_balance
-                                }, priority=EventPriority.HIGH)
-    
-    async def _process_daily_subsidies(self):
-        """Process daily subsidy payments"""
-        current_time = self.time_manager.get_current_time().total_minutes
-        
-        for subsidy in self.active_subsidies.values():
-            if subsidy.is_active and subsidy.days_remaining > 0:
-                # Pay daily subsidy
-                self.player_cash += subsidy.daily_amount
-                subsidy.amount_received += subsidy.daily_amount
-                subsidy.days_remaining -= 1
-                
-                if subsidy.days_remaining <= 0:
-                    subsidy.is_active = False
-                    
-                    self.event_system.emit('subsidy_completed', {
-                        'subsidy_id': subsidy.subsidy_id,
-                        'total_received': subsidy.amount_received
-                    }, priority=EventPriority.NORMAL)
-    
-    async def _update_economic_indicators(self):
-        """Update overall economic health indicators"""
-        # Simple economic indicator updates
-        # In a full game, these would be more sophisticated
-        
-        # Random walk for economic indicators
-        self.economic_indicators.consumer_confidence += random.gauss(0, 0.01)
-        self.economic_indicators.consumer_confidence = max(0.0, min(1.0, self.economic_indicators.consumer_confidence))
-        
-        self.economic_indicators.agricultural_outlook += random.gauss(0, 0.005)
-        self.economic_indicators.agricultural_outlook = max(0.0, min(1.0, self.economic_indicators.agricultural_outlook))
-        
-        # Update market condition based on indicators
-        avg_confidence = (self.economic_indicators.consumer_confidence + 
-                         self.economic_indicators.agricultural_outlook) / 2
-        
-        if avg_confidence < 0.4:
-            self.economic_indicators.market_condition = MarketCondition.DEPRESSION
-        elif avg_confidence < 0.6:
-            self.economic_indicators.market_condition = MarketCondition.RECESSION
-        elif avg_confidence > 0.8:
-            self.economic_indicators.market_condition = MarketCondition.BOOM
-        elif avg_confidence > 0.7:
-            self.economic_indicators.market_condition = MarketCondition.GROWTH
-        else:
-            self.economic_indicators.market_condition = MarketCondition.STABLE
-    
-    async def _check_contract_deadlines(self):
-        """Check for contract deadline violations"""
-        current_time = self.time_manager.get_current_time().total_minutes
-        
-        for contract in self.active_contracts.values():
-            if contract.status == ContractStatus.ACTIVE:
-                contract_age_days = (current_time - contract.created_time) / 1440.0
-                
-                if contract_age_days > contract.deadline_days:
-                    # Contract failed due to deadline
-                    contract.status = ContractStatus.FAILED
-                    
-                    # Credit rating penalty
-                    self.player_credit_rating = max(0.0, self.player_credit_rating - 0.1)
-                    
-                    self.event_system.emit('contract_failed', {
-                        'contract_id': contract.contract_id,
-                        'buyer_name': contract.buyer_name,
-                        'penalty_amount': contract.penalty_amount
-                    }, priority=EventPriority.HIGH)
-    
-    async def _generate_seasonal_contracts(self, season: Season):
-        """Generate seasonal contract opportunities"""
-        # Generate 1-3 new contracts each season
-        num_contracts = random.randint(1, 3)
-        
-        for _ in range(num_contracts):
-            crop_type = random.choice(self.crop_types)
-            quantity = random.randint(50, 500)
-            quality = random.choice(list(CropQuality)[2:])  # Good or better
-            deadline_days = random.randint(30, 90)
-            
-            await self.create_contract(crop_type, quantity, quality, deadline_days)
-    
-    async def shutdown(self):
-        """Shutdown the economy system"""
-        self.logger.info("Shutting down Economy System")
-        
-        # Save final economic state
-        final_summary = self.get_market_summary()
-        
-        self.event_system.emit('economy_shutdown', {
-            'final_summary': final_summary,
-            'transactions_processed': self.transactions_processed,
-            'contracts_completed': self.contracts_completed
-        }, priority=EventPriority.HIGH)
-        
-        self.logger.info("Economy System shutdown complete")
+        self._generate_contracts()
 
 
 # Global economy system instance
@@ -1132,3 +653,20 @@ def initialize_economy_system() -> EconomySystem:
     global _global_economy_system
     _global_economy_system = EconomySystem()
     return _global_economy_system
+
+# Convenience functions
+def get_current_price(commodity: str) -> float:
+    """Get current market price for commodity"""
+    return get_economy_system().get_current_price(commodity)
+
+def sell_crops(commodity: str, quantity: int, quality: float = 1.0) -> Dict[str, Any]:
+    """Sell crops at current market price"""
+    return get_economy_system().sell_crops(commodity, quantity, quality)
+
+def get_financial_summary() -> Dict[str, Any]:
+    """Get current financial summary"""
+    return get_economy_system().get_financial_summary()
+
+def apply_for_loan(amount: float, term_months: int, purpose: str = "Farm operations") -> Dict[str, Any]:
+    """Apply for a new loan"""
+    return get_economy_system().apply_for_loan(amount, term_months, purpose)

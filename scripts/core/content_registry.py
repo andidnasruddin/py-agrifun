@@ -91,7 +91,7 @@ import logging
 
 # Import our ECS and event system
 from .entity_component_system import get_entity_manager, EntityManager
-from .advanced_event_system import get_event_system, EventPriority
+from .event_system import get_global_event_system, EventPriority
 
 
 @dataclass
@@ -192,7 +192,7 @@ class ContentRegistry:
     def __init__(self, content_directory: str = "data/"):
         self.content_directory = Path(content_directory)
         self.entity_manager = get_entity_manager()
-        self.event_system = get_event_system()
+        self.event_system = get_global_event_system()
         self.validator = ContentValidator()
         
         # Content storage
@@ -313,10 +313,10 @@ class ContentRegistry:
             self.load_stats['last_load_time'] = (end_time - start_time).total_seconds()
             
             # Emit content loaded event
-            self.event_system.emit('content_loaded', {
+            self.event_system.publish('content_loaded', {
                 'categories_loaded': content_categories,
                 'statistics': self.load_stats
-            }, priority=EventPriority.HIGH)
+            }, EventPriority.HIGH, 'content_registry')
             
             self.logger.info(
                 f"Content loading complete: {self.load_stats['content_items']} items "
@@ -492,6 +492,51 @@ class ContentRegistry:
         
         return resolved_data
     
+    def _resolve_item_inheritance_sync(self, category: str, content_id: str, 
+                                     visited: Optional[Set[str]] = None) -> Dict[str, Any]:
+        """Resolve inheritance for a single content item (synchronous version)"""
+        if visited is None:
+            visited = set()
+        
+        # Prevent circular inheritance
+        full_id = f"{category}:{content_id}"
+        if full_id in visited:
+            self.logger.error(f"Circular inheritance detected: {full_id}")
+            return self.content[category][content_id].copy()
+        
+        visited.add(full_id)
+        
+        content_data = self.content[category][content_id].copy()
+        
+        # If no inheritance, return as-is
+        if 'inherits' not in content_data:
+            return content_data
+        
+        parent_id = content_data['inherits']
+        
+        # Check if parent exists
+        if parent_id not in self.content[category]:
+            self.logger.error(f"Parent content not found: {parent_id} for {content_id}")
+            return content_data
+        
+        # Recursively resolve parent inheritance
+        parent_data = self._resolve_item_inheritance_sync(category, parent_id, visited)
+        
+        # Merge parent data with child data (child overrides parent)
+        resolved_data = parent_data.copy()
+        resolved_data.update(content_data)
+        
+        # Remove inheritance marker from resolved data
+        resolved_data.pop('inherits', None)
+        
+        # Update inheritance chain metadata
+        metadata = self.metadata[category][content_id]
+        if parent_id in self.metadata[category]:
+            parent_metadata = self.metadata[category][parent_id]
+            metadata.inheritance_chain = parent_metadata.inheritance_chain + [parent_id]
+        
+        return resolved_data
+    
     async def _validate_all_content(self):
         """Validate all loaded content against schemas"""
         self.logger.info("Validating all content...")
@@ -591,10 +636,10 @@ class ContentRegistry:
         if cache_key in self.resolved_content_cache:
             return self.resolved_content_cache[cache_key].copy()
         
-        # If not cached, resolve on demand
+        # If not cached, resolve synchronously
         if content_id in self.content[category]:
             try:
-                resolved_data = asyncio.run(self._resolve_item_inheritance(category, content_id))
+                resolved_data = self._resolve_item_inheritance_sync(category, content_id)
                 self.resolved_content_cache[cache_key] = resolved_data
                 return resolved_data.copy()
             except Exception as e:
@@ -684,11 +729,11 @@ class ContentRegistry:
         entity_id = self.entity_manager.create_entity(entity_components)
         
         # Emit entity creation from content event
-        self.event_system.emit('entity_created_from_content', {
+        self.event_system.publish('entity_created_from_content', {
             'entity_id': entity_id,
             'content_category': content_category,
             'content_id': content_id
-        }, priority=EventPriority.NORMAL)
+        }, EventPriority.NORMAL, 'content_registry')
         
         return entity_id
     
@@ -705,7 +750,7 @@ class ContentRegistry:
     def set_locale(self, locale: str):
         """Set current localization locale"""
         self.current_locale = locale
-        self.event_system.emit('locale_changed', {'locale': locale}, priority=EventPriority.NORMAL)
+        self.event_system.publish('locale_changed', {'locale': locale}, EventPriority.NORMAL, 'content_registry')
     
     async def reload_content_type(self, category: str) -> bool:
         """Hot-reload content for a specific category"""
@@ -729,10 +774,10 @@ class ContentRegistry:
             await self._resolve_inheritance()
             
             # Emit reload event
-            self.event_system.emit('content_reloaded', {
+            self.event_system.publish('content_reloaded', {
                 'category': category,
                 'item_count': len(self.content[category])
-            }, priority=EventPriority.HIGH)
+            }, EventPriority.HIGH, 'content_registry')
             
             self.logger.info(f"Successfully reloaded {category} content")
             return True

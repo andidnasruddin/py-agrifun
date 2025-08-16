@@ -76,7 +76,7 @@ class SaveFormat(Enum):
     """Save file formats supported"""
     JSON = "json"           # Human-readable, larger files
     PICKLE = "pickle"       # Python native, faster
-    COMPRESSED = "gz"       # Compressed binary
+    COMPRESSED = "compressed"  # Compressed binary
     BINARY = "bin"          # Custom binary format
 
 
@@ -183,18 +183,52 @@ class SaveLoadSystem(System):
         super().__init__()
         self.system_name = "save_load_system"
         
-        # Core system references
-        self.event_system = get_event_system()
-        self.time_manager = get_time_manager()
-        self.config_manager = get_config_manager()
-        self.state_manager = get_state_manager()
-        self.entity_system = get_entity_system()
+        # Core system references - initialize safely
+        try:
+            self.event_system = get_event_system()
+        except:
+            self.event_system = None
+            
+        try:
+            self.time_manager = get_time_manager()
+        except:
+            self.time_manager = None
+            
+        try:
+            self.config_manager = get_config_manager()
+        except:
+            self.config_manager = None
+            
+        try:
+            self.state_manager = get_state_manager()
+        except:
+            self.state_manager = None
+            
+        try:
+            self.entity_system = get_entity_system()
+        except:
+            self.entity_system = None
         
-        # Phase 2 system references
-        self.economy_system = get_economy_system()
-        self.employee_system = get_employee_system()
-        self.crop_system = get_crop_system()
-        self.building_system = get_building_system()
+        # Phase 2 system references - initialize safely
+        try:
+            self.economy_system = get_economy_system()
+        except:
+            self.economy_system = None
+            
+        try:
+            self.employee_system = get_employee_system()
+        except:
+            self.employee_system = None
+            
+        try:
+            self.crop_system = get_crop_system()
+        except:
+            self.crop_system = None
+            
+        try:
+            self.building_system = get_building_system()
+        except:
+            self.building_system = None
         
         # Save management
         self.save_directory: str = "saves"
@@ -235,6 +269,10 @@ class SaveLoadSystem(System):
             "entity_system",
             "state_manager"
         ]
+        
+        # Initialize logger
+        import logging
+        self.logger = logging.getLogger('SaveLoadSystem')
     
     async def initialize(self):
         """Initialize the save/load system"""
@@ -248,9 +286,10 @@ class SaveLoadSystem(System):
         await self._scan_existing_saves()
         
         # Subscribe to events
-        self.event_system.subscribe('time_minute_passed', self._on_minute_passed)
-        self.event_system.subscribe('game_shutdown', self._on_game_shutdown)
-        self.event_system.subscribe('system_error', self._on_system_error)
+        if self.event_system:
+            self.event_system.subscribe('time_minute_passed', self._on_minute_passed)
+            self.event_system.subscribe('game_shutdown', self._on_game_shutdown)
+            self.event_system.subscribe('system_error', self._on_system_error)
         
         # Create initial checkpoint
         await self.create_checkpoint("game_start")
@@ -271,18 +310,23 @@ class SaveLoadSystem(System):
     async def _load_save_configuration(self):
         """Load save system configuration"""
         try:
-            save_config = self.config_manager.get_section('save_system')
-            
-            # Load settings
-            self.auto_save_enabled = save_config.get('auto_save_enabled', True)
-            self.auto_save_interval = save_config.get('auto_save_interval', 300)
-            self.max_auto_saves = save_config.get('max_auto_saves', 5)
-            self.max_checkpoints = save_config.get('max_checkpoints', 10)
-            self.compression_level = save_config.get('compression_level', 6)
-            
-            # Load format preference
-            format_str = save_config.get('default_format', 'compressed')
-            self.default_format = SaveFormat(format_str)
+            if self.config_manager:
+                save_config = self.config_manager.get_section('save_system')
+                
+                # Load settings
+                self.auto_save_enabled = save_config.get('auto_save_enabled', True)
+                self.auto_save_interval = save_config.get('auto_save_interval', 300)
+                self.max_auto_saves = save_config.get('max_auto_saves', 5)
+                self.max_checkpoints = save_config.get('max_checkpoints', 10)
+                self.compression_level = save_config.get('compression_level', 6)
+                
+                # Load format preference
+                format_str = save_config.get('default_format', 'compressed')
+                if format_str in [f.value for f in SaveFormat]:
+                    self.default_format = SaveFormat(format_str)
+            else:
+                # Use defaults if no config manager
+                self.logger.info("No config manager available, using default save settings")
             
         except Exception as e:
             self.logger.warning(f"Failed to load save configuration: {e}")
@@ -525,29 +569,44 @@ class SaveLoadSystem(System):
         }
         
         # Time Management System
-        if hasattr(self.time_manager, 'get_save_state'):
-            game_state['systems']['time_manager'] = self.time_manager.get_save_state()
-        else:
-            game_state['systems']['time_manager'] = {
-                'current_time': self.time_manager.get_current_time().total_minutes,
-                'current_season': self.time_manager.get_current_season().value,
-                'current_weather': self.time_manager.get_current_weather().weather_type.value,
-                'time_speed': getattr(self.time_manager, 'time_speed', 1.0)
-            }
+        if self.time_manager:
+            if hasattr(self.time_manager, 'get_save_state'):
+                game_state['systems']['time_manager'] = self.time_manager.get_save_state()
+            else:
+                try:
+                    current_time = self.time_manager.get_current_time()
+                    current_season = self.time_manager.get_current_season()
+                    current_weather = self.time_manager.get_current_weather()
+                    
+                    game_state['systems']['time_manager'] = {
+                        'current_time': current_time.total_minutes,
+                        'current_season': current_season.value,
+                        'current_weather': current_weather.weather_type.value if current_weather else 'clear',
+                        'time_speed': getattr(self.time_manager, 'time_speed', 1.0)
+                    }
+                except Exception as e:
+                    self.logger.warning(f"Failed to collect time manager state: {e}")
+                    game_state['systems']['time_manager'] = {'error': str(e)}
         
         # Economy System
-        if hasattr(self.economy_system, 'get_save_state'):
-            game_state['systems']['economy_system'] = self.economy_system.get_save_state()
-        else:
-            game_state['systems']['economy_system'] = {
-                'player_cash': self.economy_system.player_cash,
-                'player_debt': self.economy_system.player_debt,
-                'total_revenue': self.economy_system.total_revenue,
-                'total_expenses': self.economy_system.total_expenses,
-                'market_prices': {crop: asdict(price) for crop, price in self.economy_system.market_prices.items()},
-                'active_contracts': {cid: asdict(contract) for cid, contract in self.economy_system.active_contracts.items()},
-                'active_loans': {lid: asdict(loan) for lid, loan in self.economy_system.active_loans.items()}
-            }
+        if self.economy_system:
+            if hasattr(self.economy_system, 'get_save_state'):
+                game_state['systems']['economy_system'] = self.economy_system.get_save_state()
+            else:
+                try:
+                    game_state['systems']['economy_system'] = {
+                        'current_cash': getattr(self.economy_system, 'current_cash', 0.0),
+                        'total_assets': getattr(self.economy_system, 'total_assets', 0.0),
+                        'total_liabilities': getattr(self.economy_system, 'total_liabilities', 0.0),
+                        'credit_rating': getattr(self.economy_system, 'credit_rating', 650),
+                        'subsidy_balance': getattr(self.economy_system, 'subsidy_balance', 0.0),
+                        'transactions_count': len(getattr(self.economy_system, 'transactions', [])),
+                        'active_contracts_count': len(getattr(self.economy_system, 'active_contracts', {})),
+                        'active_loans_count': len(getattr(self.economy_system, 'active_loans', {}))
+                    }
+                except Exception as e:
+                    self.logger.warning(f"Failed to collect economy system state: {e}")
+                    game_state['systems']['economy_system'] = {'error': str(e)}
         
         # Employee System
         if hasattr(self.employee_system, 'get_save_state'):

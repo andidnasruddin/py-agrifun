@@ -65,8 +65,8 @@ from collections import defaultdict
 from abc import ABC, abstractmethod
 from enum import Enum
 
-# Import the advanced event system
-from .advanced_event_system import get_event_system, EventPriority
+# Import the enhanced event system
+from .event_system import get_global_event_system, EventPriority
 
 
 # Type definitions for generic programming
@@ -401,7 +401,7 @@ class EntityManager:
     
     def __init__(self):
         self.component_registry = ComponentRegistry()
-        self.event_system = get_event_system()
+        self.event_system = get_global_event_system()
         
         # Entity management
         self._entities: Set[str] = set()
@@ -450,10 +450,10 @@ class EntityManager:
                 self.add_component(entity_id, component_name, component_data)
         
         # Emit entity creation event
-        self.event_system.emit('entity_created', {
+        self.event_system.publish('entity_created', {
             'entity_id': entity_id,
             'components': list(self._entity_components[entity_id])
-        }, priority=EventPriority.NORMAL)
+        }, EventPriority.NORMAL, 'ecs')
         
         return entity_id
     
@@ -478,9 +478,9 @@ class EntityManager:
         self._entity_count -= 1
         
         # Emit entity destruction event
-        self.event_system.emit('entity_destroyed', {
+        self.event_system.publish('entity_destroyed', {
             'entity_id': entity_id
-        }, priority=EventPriority.NORMAL)
+        }, EventPriority.NORMAL, 'ecs')
     
     def add_component(self, entity_id: str, component_name: str, 
                      component_data: Union[Dict[str, Any], Component]):
@@ -520,11 +520,11 @@ class EntityManager:
         self._modified_components[component_name].add(entity_id)
         
         # Emit component addition event
-        self.event_system.emit('component_added', {
+        self.event_system.publish('component_added', {
             'entity_id': entity_id,
             'component_type': component_name,
             'component_data': asdict(component) if is_dataclass(component) else {}
-        }, priority=EventPriority.NORMAL)
+        }, EventPriority.NORMAL, 'ecs')
     
     def remove_component(self, entity_id: str, component_name: str):
         """Remove a component from an entity"""
@@ -549,10 +549,10 @@ class EntityManager:
         self._modified_entities.add(entity_id)
         
         # Emit component removal event
-        self.event_system.emit('component_removed', {
+        self.event_system.publish('component_removed', {
             'entity_id': entity_id,
             'component_type': component_name
-        }, priority=EventPriority.NORMAL)
+        }, EventPriority.NORMAL, 'ecs')
     
     def get_component(self, entity_id: str, component_name: str) -> Optional[Component]:
         """Get a component from an entity"""
@@ -579,11 +579,11 @@ class EntityManager:
         self._modified_components[component_name].add(entity_id)
         
         # Emit component update event
-        self.event_system.emit('component_updated', {
+        self.event_system.publish('component_updated', {
             'entity_id': entity_id,
             'component_type': component_name,
             'updated_fields': list(update_data.keys())
-        }, priority=EventPriority.NORMAL)
+        }, EventPriority.NORMAL, 'ecs')
     
     def query(self, required_components: List[str]) -> List[str]:
         """Query entities that have all required components"""
@@ -677,10 +677,10 @@ class EntityManager:
     def shutdown(self):
         """Clean shutdown of entity manager"""
         # Emit shutdown event
-        self.event_system.emit('entity_manager_shutdown', {
+        self.event_system.publish('entity_manager_shutdown', {
             'final_entity_count': self._entity_count,
             'final_component_count': self._component_count
-        }, priority=EventPriority.CRITICAL)
+        }, EventPriority.CRITICAL, 'ecs')
         
         # Clear all data
         self._entities.clear()

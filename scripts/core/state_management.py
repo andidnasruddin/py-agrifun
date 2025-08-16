@@ -78,7 +78,7 @@ import logging
 from pathlib import Path
 
 # Import our core systems
-from .advanced_event_system import get_event_system, EventPriority
+from .event_system import get_global_event_system, EventPriority
 from .entity_component_system import get_entity_manager, Component
 from .advanced_grid_system import get_grid_system, TileData, GridLayer
 from .content_registry import get_content_registry
@@ -471,7 +471,7 @@ class StateManager:
         self.entity_manager = get_entity_manager()
         self.grid_system = get_grid_system()
         self.content_registry = get_content_registry()
-        self.event_system = get_event_system()
+        self.event_system = get_global_event_system()
         
         # Command history
         self.max_undo_history = max_undo_history
@@ -537,13 +537,13 @@ class StateManager:
                     self.command_history.append(command)
                     
                     # Emit command executed event
-                    self.event_system.emit('command_executed', {
+                    self.event_system.publish('command_executed', {
                         'command_id': command.command_id,
                         'command_type': command.command_type.value,
                         'execution_time_ms': execution_time,
                         'affected_entities': list(command.get_affected_entities()),
                         'affected_tiles': list(command.get_affected_tiles())
-                    }, priority=EventPriority.LOW)
+                    }, EventPriority.LOW, 'state_manager')
                     
                     # Check if auto-checkpoint is needed
                     self._check_auto_checkpoint()
@@ -569,10 +569,10 @@ class StateManager:
                     self.redo_stack.append(command)
                     
                     # Emit undo event
-                    self.event_system.emit('command_undone', {
+                    self.event_system.publish('command_undone', {
                         'command_id': command.command_id,
                         'command_type': command.command_type.value
-                    }, priority=EventPriority.NORMAL)
+                    }, EventPriority.NORMAL, 'state_manager')
                     
                     return True
                 else:
@@ -598,10 +598,10 @@ class StateManager:
                     self.undo_stack.append(command)
                     
                     # Emit redo event
-                    self.event_system.emit('command_redone', {
+                    self.event_system.publish('command_redone', {
                         'command_id': command.command_id,
                         'command_type': command.command_type.value
-                    }, priority=EventPriority.NORMAL)
+                    }, EventPriority.NORMAL, 'state_manager')
                     
                     return True
                 else:
@@ -648,11 +648,11 @@ class StateManager:
                     self._save_snapshot_to_disk(snapshot)
                 
                 # Emit checkpoint created event
-                self.event_system.emit('checkpoint_created', {
+                self.event_system.publish('checkpoint_created', {
                     'checkpoint_id': checkpoint_id,
                     'description': description,
                     'snapshot_size': snapshot.compressed_size
-                }, priority=EventPriority.HIGH)
+                }, EventPriority.HIGH, 'state_manager')
                 
                 self.logger.info(f"Created checkpoint: {checkpoint_id}")
                 return checkpoint_id
@@ -682,10 +682,10 @@ class StateManager:
                 
                 if success:
                     # Emit checkpoint restored event
-                    self.event_system.emit('checkpoint_restored', {
+                    self.event_system.publish('checkpoint_restored', {
                         'checkpoint_id': checkpoint_id,
                         'description': snapshot.description
-                    }, priority=EventPriority.HIGH)
+                    }, EventPriority.HIGH, 'state_manager')
                     
                     self.logger.info(f"Restored checkpoint: {checkpoint_id}")
                 

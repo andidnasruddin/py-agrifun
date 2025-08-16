@@ -79,11 +79,15 @@ from collections import defaultdict
 from enum import Enum
 import logging
 import threading
-import resource
+# Resource monitoring - platform specific
+try:
+    import resource
+except ImportError:
+    resource = None  # Windows doesn't have resource module
 import gc
 
 # Import our core systems
-from .advanced_event_system import get_event_system, EventPriority
+from .event_system import get_global_event_system, EventPriority
 from .entity_component_system import get_entity_manager, Component
 from .content_registry import get_content_registry
 
@@ -231,7 +235,7 @@ class PluginAPI:
     def __init__(self, plugin_context: PluginContext, plugin_system: 'PluginSystem'):
         self.context = plugin_context
         self.plugin_system = plugin_system
-        self.event_system = get_event_system()
+        self.event_system = get_global_event_system()
         self.entity_manager = get_entity_manager()
         self.content_registry = get_content_registry()
         
@@ -270,11 +274,11 @@ class PluginAPI:
             self.content_registry.content[content_type][content_id] = content_data
             
             # Emit registration event
-            self.event_system.emit('plugin_content_registered', {
+            self.event_system.publish('plugin_content_registered', {
                 'plugin_id': self.context.manifest.plugin_id,
                 'content_type': content_type,
                 'content_id': content_id
-            }, priority=EventPriority.NORMAL)
+            }, EventPriority.NORMAL, f'plugin_{self.context.manifest.plugin_id}')
             
             return True
             
@@ -317,10 +321,10 @@ class PluginAPI:
             entity_id = self.entity_manager.create_entity(entity_data)
             
             # Emit creation event
-            self.event_system.emit('plugin_entity_created', {
+            self.event_system.publish('plugin_entity_created', {
                 'plugin_id': self.context.manifest.plugin_id,
                 'entity_id': entity_id
-            }, priority=EventPriority.NORMAL)
+            }, EventPriority.NORMAL, f'plugin_{self.context.manifest.plugin_id}')
             
             return entity_id
             
@@ -374,7 +378,7 @@ class PluginAPI:
             # Add plugin metadata to event
             event_data['_source_plugin'] = self.context.manifest.plugin_id
             
-            self.event_system.emit(event_type, event_data, priority)
+            self.event_system.publish(event_type, event_data, priority, f'plugin_{self.context.manifest.plugin_id}')
             return True
             
         except Exception as e:
@@ -413,10 +417,10 @@ class PluginAPI:
             self.entity_manager.component_registry.register_component(component_class)
             
             # Emit registration event
-            self.event_system.emit('plugin_component_registered', {
+            self.event_system.publish('plugin_component_registered', {
                 'plugin_id': self.context.manifest.plugin_id,
                 'component_type': component_class.__name__
-            }, priority=EventPriority.NORMAL)
+            }, EventPriority.NORMAL, f'plugin_{self.context.manifest.plugin_id}')
             
             return True
             
@@ -460,7 +464,7 @@ class PluginSystem:
     
     def __init__(self, plugins_directory: str = "plugins/"):
         self.plugins_directory = Path(plugins_directory)
-        self.event_system = get_event_system()
+        self.event_system = get_global_event_system()
         self.entity_manager = get_entity_manager()
         self.content_registry = get_content_registry()
         
@@ -542,10 +546,10 @@ class PluginSystem:
         self._calculate_load_order()
         
         # Emit discovery event
-        self.event_system.emit('plugins_discovered', {
+        self.event_system.publish('plugins_discovered', {
             'discovered_count': len(discovered_plugins),
             'plugin_ids': discovered_plugins
-        }, priority=EventPriority.HIGH)
+        }, EventPriority.HIGH, 'plugin_system')
         
         return discovered_plugins
     
@@ -640,12 +644,12 @@ class PluginSystem:
             self.average_plugin_load_time = self.total_load_time / self.total_plugins_loaded
             
             # Emit load success event
-            self.event_system.emit('plugin_loaded', {
+            self.event_system.publish('plugin_loaded', {
                 'plugin_id': plugin_id,
                 'plugin_name': context.manifest.name,
                 'load_time_ms': context.load_time * 1000,
                 'initialization_time_ms': context.initialization_time_ms
-            }, priority=EventPriority.HIGH)
+            }, EventPriority.HIGH, 'plugin_system')
             
             self.logger.info(
                 f"Successfully loaded plugin {context.manifest.name} "
@@ -692,10 +696,10 @@ class PluginSystem:
             gc.collect()
             
             # Emit unload event
-            self.event_system.emit('plugin_unloaded', {
+            self.event_system.publish('plugin_unloaded', {
                 'plugin_id': plugin_id,
                 'plugin_name': context.manifest.name
-            }, priority=EventPriority.HIGH)
+            }, EventPriority.HIGH, 'plugin_system')
             
             self.logger.info(f"Successfully unloaded plugin {context.manifest.name}")
             return True
@@ -738,10 +742,10 @@ class PluginSystem:
         success = await self.load_plugin(plugin_id)
         
         if success:
-            self.event_system.emit('plugin_reloaded', {
+            self.event_system.publish('plugin_reloaded', {
                 'plugin_id': plugin_id,
                 'plugin_name': context.manifest.name
-            }, priority=EventPriority.HIGH)
+            }, EventPriority.HIGH, 'plugin_system')
         
         return success
     

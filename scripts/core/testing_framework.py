@@ -89,16 +89,20 @@ import json
 import yaml
 import unittest
 from unittest.mock import Mock, MagicMock, patch
-import psutil
+# Performance monitoring - platform specific  
+try:
+    import psutil
+except ImportError:
+    psutil = None  # Performance monitoring disabled without psutil
 
-# Import our core systems for testing
-from .advanced_event_system import AdvancedEventSystem, EventPriority
-from .entity_component_system import EntityManager, Component
-from .advanced_grid_system import AdvancedGridSystem, GridLayer
-from .content_registry import ContentRegistry
-from .plugin_system import PluginSystem
-from .state_management import StateManager
-from .advanced_config_system import ConfigurationManager
+# Import our core systems for testing  
+from .event_system import get_global_event_system, EventPriority
+from .entity_component_system import get_entity_manager, Component
+from .advanced_grid_system import get_grid_system, GridLayer
+from .content_registry import get_content_registry  
+from .plugin_system import get_plugin_system
+from .state_management import get_state_manager
+from .configuration_system import get_configuration_manager
 
 
 class TestCategory(Enum):
@@ -312,7 +316,10 @@ class PerformanceBenchmark:
     """Performance benchmarking utilities"""
     
     def __init__(self):
-        self.process = psutil.Process()
+        if psutil:
+            self.process = psutil.Process()
+        else:
+            self.process = None
         self.start_time = 0.0
         self.start_memory = 0.0
         self.start_cpu = 0.0
@@ -320,14 +327,23 @@ class PerformanceBenchmark:
     def start_benchmark(self):
         """Start performance benchmark"""
         self.start_time = time.time()
-        self.start_memory = self.process.memory_info().rss / (1024 * 1024)  # MB
-        self.start_cpu = self.process.cpu_percent()
+        if self.process:
+            self.start_memory = self.process.memory_info().rss / (1024 * 1024)  # MB
+            self.start_cpu = self.process.cpu_percent()
+        else:
+            self.start_memory = 0.0
+            self.start_cpu = 0.0
     
     def end_benchmark(self) -> Dict[str, float]:
         """End benchmark and return metrics"""
         end_time = time.time()
-        end_memory = self.process.memory_info().rss / (1024 * 1024)  # MB
-        end_cpu = self.process.cpu_percent()
+        
+        if self.process:
+            end_memory = self.process.memory_info().rss / (1024 * 1024)  # MB
+            end_cpu = self.process.cpu_percent()
+        else:
+            end_memory = 0.0
+            end_cpu = 0.0
         
         return {
             'execution_time_ms': (end_time - self.start_time) * 1000,

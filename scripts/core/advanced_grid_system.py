@@ -74,7 +74,7 @@ import heapq
 
 # Import our core systems
 from .entity_component_system import get_entity_manager, TransformComponent
-from .advanced_event_system import get_event_system, EventPriority
+from .event_system import get_global_event_system, EventPriority
 
 
 class GridLayer(Enum):
@@ -406,7 +406,7 @@ class AdvancedGridSystem:
     
     def __init__(self, initial_size: Tuple[int, int] = (32, 32), region_size: int = 16):
         self.entity_manager = get_entity_manager()
-        self.event_system = get_event_system()
+        self.event_system = get_global_event_system()
         
         # Grid configuration
         self.width, self.height = initial_size
@@ -498,11 +498,11 @@ class AdvancedGridSystem:
         self.regions[region_coords].add_tile(x, y, tile)
         
         # Emit tile creation event
-        self.event_system.emit('tile_created', {
+        self.event_system.publish('tile_created', {
             'x': x, 'y': y,
             'region_x': region_coords[0],
             'region_y': region_coords[1]
-        }, priority=EventPriority.NORMAL)
+        }, EventPriority.NORMAL, 'grid_system')
         
         return tile
     
@@ -552,12 +552,12 @@ class AdvancedGridSystem:
         self.statistics['entities_tracked'] += 1
         
         # Emit entity placement event
-        self.event_system.emit('entity_placed_on_grid', {
+        self.event_system.publish('entity_placed_on_grid', {
             'entity_id': entity_id,
             'x': x, 'y': y,
             'layer': layer.value,
             'tile_x': tile_x, 'tile_y': tile_y
-        }, priority=EventPriority.NORMAL)
+        }, EventPriority.NORMAL, 'grid_system')
     
     def remove_entity_from_grid(self, entity_id: str, layer: GridLayer = GridLayer.CROPS):
         """Remove entity from grid"""
@@ -585,11 +585,11 @@ class AdvancedGridSystem:
         self.statistics['entities_tracked'] -= 1
         
         # Emit entity removal event
-        self.event_system.emit('entity_removed_from_grid', {
+        self.event_system.publish('entity_removed_from_grid', {
             'entity_id': entity_id,
             'x': transform.x, 'y': transform.y,
             'layer': layer.value
-        }, priority=EventPriority.NORMAL)
+        }, EventPriority.NORMAL, 'grid_system')
     
     def move_entity(self, entity_id: str, new_x: float, new_y: float, 
                    layer: GridLayer = GridLayer.CROPS):
@@ -706,12 +706,12 @@ class AdvancedGridSystem:
         self.statistics['regions_active'] = len(self.active_regions)
         
         # Emit active region change event
-        self.event_system.emit('active_region_changed', {
+        self.event_system.publish('active_region_changed', {
             'center_x': center_x,
             'center_y': center_y,
             'radius': radius,
             'active_region_count': len(self.active_regions)
-        }, priority=EventPriority.LOW)
+        }, EventPriority.LOW, 'grid_system')
     
     def process_active_regions(self):
         """Process all active regions that need updates"""
@@ -807,10 +807,10 @@ class AdvancedGridSystem:
             spatial_index.height = self.height
         
         # Emit grid expansion event
-        self.event_system.emit('grid_expanded', {
+        self.event_system.publish('grid_expanded', {
             'old_size': (old_width, old_height),
             'new_size': (self.width, self.height)
-        }, priority=EventPriority.HIGH)
+        }, EventPriority.HIGH, 'grid_system')
     
     def clear_cache(self):
         """Clear spatial query cache"""
